@@ -10,9 +10,11 @@ class Maquina extends Model
     /** @use HasFactory<\Database\Factories\MaquinaFactory> */
     use HasFactory;
 
+    protected $table = 'maquinas';
+
     protected $fillable = [
         'nombre',
-        'tipo',
+        'descripcion',
         'estado',
         'ubicacion',
     ];

@@ -52,22 +52,15 @@ class User extends Authenticatable
         return $this->hasMany(Clase::class);
     }
 
-    public function horariosClases()
-    {
-        return $this->belongsToMany(HorarioClase::class, 'horario_clase_user')
-            ->withPivot('estado')
-            ->withTimestamps();
-    }
-
-    public function clasesImpartidas()
-    {
-        return $this->hasMany(HorarioClase::class, 'entrenador_id');
-    }
-
     public function clasesReservadas()
     {
         return $this->belongsToMany(HorarioClase::class, 'horario_clase_user')
             ->withPivot('estado')
             ->withTimestamps();
+    }
+
+    public function horariosClases()
+    {
+        return $this->hasMany(HorarioClase::class, 'user_id');
     }
 }

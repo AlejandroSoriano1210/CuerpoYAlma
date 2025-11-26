@@ -10,9 +10,12 @@ class HorarioClaseUser extends Model
     /** @use HasFactory<\Database\Factories\HorarioClaseUserFactory> */
     use HasFactory;
 
+    protected $table = 'horario_clase_user';
+
     protected $fillable = [
         'horario_clase_id',
         'user_id',
+        'estado',
     ];
 
     public function horarioClase()

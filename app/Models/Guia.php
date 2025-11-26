@@ -15,7 +15,7 @@ class Guia extends Model
         'contenido',
     ];
 
-    public function ejercicios()
+    public function guiaEjercicio()
     {
         return $this->hasMany(GuiaEjercicio::class);
     }

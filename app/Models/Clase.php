@@ -20,4 +20,14 @@ class Clase extends Model
     {
         return $this->hasMany(HorarioClase::class);
     }
+
+    public function entrenador()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function claseEjercicios()
+    {
+        return $this->hasMany(ClaseEjercicio::class);
+    }
 }

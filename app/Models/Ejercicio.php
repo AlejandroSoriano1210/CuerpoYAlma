@@ -16,7 +16,12 @@ class Ejercicio extends Model
         'musculo_objetivo',
     ];
 
-    public function guias()
+    public function claseEjercicios()
+    {
+        return $this->hasMany(ClaseEjercicio::class);
+    }
+
+    public function guiaEjercicio()
     {
         return $this->hasMany(GuiaEjercicio::class);
     }

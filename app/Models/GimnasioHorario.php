@@ -15,4 +15,9 @@ class GimnasioHorario extends Model
         'hora_apertura',
         'hora_cierre',
     ];
+
+    protected $casts = [
+        'hora_apertura' => 'datetime:H:i',
+        'hora_cierre' => 'datetime:H:i',
+    ];
 }
