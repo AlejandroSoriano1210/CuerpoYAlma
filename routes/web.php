@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\ClaseController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReservaClaseController;
+use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,4 +27,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+Route::middleware('auth')->group(function () {
+    // Crear reserva (ya lo tienes si seguiste lo anterior)
+    Route::post('/reservas', [ReservaClaseController::class, 'store']);
+
+    // Cancelar reserva: POST /api/reservas/{id}/cancelar
+    Route::post('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar']);
+});
+
+Route::middleware('auth')->get('/clases', [ClaseController::class, 'index']);
+
+Route::middleware(['auth', 'role:entrenador'])->group(function () {
+    Route::get('/entrenador/clases', [UserController::class, 'clasesEntrenador']);
+});
+
+require __DIR__ . '/auth.php';
