@@ -63,4 +63,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(HorarioClase::class, 'user_id');
     }
+
+    public function horarioTrabajo()
+    {
+        return $this->hasMany(HorarioTrabajo::class, 'user_id');
+    }
 }
