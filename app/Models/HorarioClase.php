@@ -37,12 +37,10 @@ class HorarioClase extends Model
 
     public function clientes()
     {
-        return $this->belongsToMany(User::class, 'horario_clase_user')
-            ->withPivot('estado')
-            ->withTimestamps();
+        return $this->belongsToMany(User::class,'horario_clase_user','horario_clase_id','user_id')->withPivot('estado')->withTimestamps();
     }
 
-    public function entrenadore()
+    public function entrenadores()
     {
         return $this->user()->whereHas('roles', function ($query) {
             $query->where('name', 'entrenador');

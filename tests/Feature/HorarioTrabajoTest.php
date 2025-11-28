@@ -41,12 +41,11 @@ class HorarioTrabajoTest extends TestCase
 
         $response = $this
             ->actingAs($superusuario)
-            ->postJson("/entrenador/{$entrenador->id}/horario-trabajo", $payload);
+            ->postJson("/entrenadores/{$entrenador->id}/horario-trabajo", $payload);
 
         $response->assertStatus(200)
             ->assertJson(['status' => 'ok']);
 
-        // Comprueba que se han guardado los bloques correctos
         $this->assertDatabaseHas('horario_trabajos', [
             'user_id'     => $entrenador->id,
             'dia_semana'  => 'lunes',
@@ -84,7 +83,7 @@ class HorarioTrabajoTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->postJson("/entrenador/{$entrenador->id}/horario-trabajo", $payload);
+            ->postJson("/entrenadores/{$entrenador->id}/horario-trabajo", $payload);
 
         $response->assertStatus(403);
 
@@ -105,7 +104,7 @@ class HorarioTrabajoTest extends TestCase
 
         $response = $this
             ->actingAs($entrenador)
-            ->getJson('/entrenador/horario-trabajo');
+            ->getJson("/entrenadores/{$entrenador->id}/horario-trabajo");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -120,10 +119,12 @@ class HorarioTrabajoTest extends TestCase
     public function test_usuario_sin_rol_entrenador_no_puede_ver_horario()
     {
         $user = User::factory()->create();
+        $entrenador = User::factory()->create();
+        $entrenador->assignRole('entrenador');
 
         $response = $this
             ->actingAs($user)
-            ->getJson('/entrenador/horario-trabajo');
+            ->getJson("/entrenadores/{$entrenador->id}/horario-trabajo");
 
         $response->assertStatus(403);
     }

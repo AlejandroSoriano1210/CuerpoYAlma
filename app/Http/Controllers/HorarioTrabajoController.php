@@ -15,7 +15,6 @@ class HorarioTrabajoController extends Controller
     {
         $user = $request->user();
 
-        // Opcional: reforzar que sea entrenador
         if (! $user->hasRole('entrenador')) {
             return response()->json(['message' => 'No autorizado'], 403);
         }
@@ -84,13 +83,30 @@ class HorarioTrabajoController extends Controller
         return response()->json(['status' => 'ok'], 200);
     }
 
-
     /**
      * Display the specified resource.
      */
-    public function show(HorarioTrabajo $horarioTrabajo)
+    public function show(User $entrenador)
     {
-        //
+        if (!auth()->user()->hasRole('superusuario') && auth()->id() !== $entrenador->id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        $bloques = $entrenador->horarioTrabajo()
+            ->orderBy('dia_semana')
+            ->orderBy('hora_inicio')
+            ->get()
+            ->groupBy('dia_semana')
+            ->map(
+                fn($items) =>
+                $items->map(fn($item) => [
+                    'id'          => $item->id,
+                    'hora_inicio' => $item->hora_inicio,
+                    'hora_fin'    => $item->hora_fin,
+                ])->values()
+            );
+
+        return response()->json(['semanal' => $bloques]);
     }
 
     /**
