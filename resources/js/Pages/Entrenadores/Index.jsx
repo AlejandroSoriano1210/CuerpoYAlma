@@ -1,9 +1,18 @@
 import React from "react";
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link, usePage, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 export default function Index({ entrenadores }) {
     const { flash } = usePage().props;
+    const eliminar = (id, name) => {
+        if (confirm(`¿Estás seguro de que deseas eliminar a ${name}?`)) {
+            router.delete(route("entrenadores.destroy", id), {
+                onError: () => {
+                    alert("Error al eliminar el entrenador");
+                },
+            });
+        }
+    };
 
     return (
         <AuthenticatedLayout>
@@ -77,14 +86,7 @@ export default function Index({ entrenadores }) {
                                                 Editar
                                             </Link>
                                             <button
-                                                onClick={() => {
-                                                    if (
-                                                        confirm(
-                                                            "¿Estás seguro de que deseas eliminar este entrenador?"
-                                                        )
-                                                    ) {
-                                                    }
-                                                }}
+                                                onClick={() => eliminar(entrenador.id, entrenador.name)}
                                                 className="text-red-600 hover:text-red-900"
                                             >
                                                 Eliminar
