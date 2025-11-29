@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ClaseController;
+use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservaClaseController;
@@ -29,9 +29,15 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/clases', [ClaseController::class, 'index'])->name('clases.index');
-    Route::get('/clases/{horarioClase}', [ClaseController::class, 'show'])->name('clases.show');
-
+    Route::get('/clases', [HorarioClaseController::class, 'index'])->name('clases.index');
+    Route::middleware('role:superusuario|entrenador')->group(function () {
+        Route::get('/clases/crear', [HorarioClaseController::class, 'create'])->name('clases.create');
+        Route::post('/clases', [HorarioClaseController::class, 'store'])->name('clases.store');
+        Route::get('/clases/{horarioClase}/editar', [HorarioClaseController::class, 'edit'])->name('clases.edit');
+        Route::patch('/clases/{horarioClase}', [HorarioClaseController::class, 'update'])->name('clases.update');
+        Route::delete('/clases/{horarioClase}', [HorarioClaseController::class, 'destroy'])->name('clases.destroy');
+    });
+    Route::get('/clases/{horarioClase}', [HorarioClaseController::class, 'show'])->name('clases.show');
     Route::post('/reservas', [ReservaClaseController::class, 'store'])->name('reservas.store');
     Route::patch('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar'])->name('reservas.cancelar');
 });
@@ -48,21 +54,9 @@ Route::middleware(['auth', 'role:superusuario'])->group(function () {
     Route::get('/entrenadores/{entrenador}/editar', [UserController::class, 'edit'])->name('entrenadores.edit');
     Route::patch('/entrenadores/{entrenador}', [UserController::class, 'update'])->name('entrenadores.update');
     Route::delete('/entrenadores/{entrenador}', [UserController::class, 'destroy'])->name('entrenadores.destroy');
+    Route::get('/entrenadores/{entrenador}', [UserController::class, 'show'])->name('entrenadores.show');
     Route::get('/entrenador/horario-trabajo', [HorarioTrabajoController::class, 'index']);
     Route::post('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'store']);
-
-});
-
-Route::middleware(['auth', 'role:superusuario|entrenador'])->group(function () {
-    Route::get('/entrenadrores/{entrenador}', [UserController::class, 'show'])->name('entrenadores.show');
-
-    Route::get('/clases/crear', [ClaseController::class, 'create'])->name('clases.create');
-    Route::post('/clases', [ClaseController::class, 'store'])->name('clases.store');
-    Route::get('/clases/horario/crear', [ClaseController::class, 'createHorario'])->name('clases.horario.create');
-    Route::post('/clases/horario', [ClaseController::class, 'storeHorario'])->name('clases.horario.store');
-    Route::get('/clases/{horarioClase}/editar', [ClaseController::class, 'editHorario'])->name('clases.horario.edit');
-    Route::patch('/clases/{horarioClase}', [ClaseController::class, 'updateHorario'])->name('clases.horario.update');
-    Route::delete('/clases/{horarioClase}', [ClaseController::class, 'destroyHorario'])->name('clases.horario.destroy');
 });
 
 require __DIR__ . '/auth.php';

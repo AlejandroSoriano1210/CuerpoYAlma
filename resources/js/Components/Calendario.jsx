@@ -2,22 +2,21 @@ import React from 'react';
 
 export default function Calendario({ mes, ano, horarios, onSelectDate, selectedDate }) {
     const daysInMonth = (m, y) => new Date(y, m, 0).getDate();
-    const firstDay = new Date(ano, mes - 1, 1).getDay();
+    let firstDay = new Date(ano, mes - 1, 1).getDay();
+    firstDay = (firstDay === 0) ? 6 : firstDay - 1;
     const totalDays = daysInMonth(mes, ano);
 
     const dias = [];
-    // Días vacíos del mes anterior
     for (let i = 0; i < firstDay; i++) {
         dias.push(null);
     }
-    // Días del mes actual
     for (let i = 1; i <= totalDays; i++) {
         dias.push(i);
     }
 
     const getClasesDelDia = (day) => {
         const fecha = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        return horarios.filter(h => h.fecha === fecha).length;
+        return horarios.filter(h => h.fecha.substring(0, 10) === fecha).length;
     };
 
     const handleSelectDate = (day) => {
@@ -31,7 +30,6 @@ export default function Calendario({ mes, ano, horarios, onSelectDate, selectedD
 
     return (
         <div className="w-full">
-            {/* Encabezado del calendario */}
             <div className="grid grid-cols-7 gap-2 mb-4">
                 {diasSemana.map((dia) => (
                     <div key={dia} className="text-center font-bold text-gray-600 py-2">
@@ -40,7 +38,6 @@ export default function Calendario({ mes, ano, horarios, onSelectDate, selectedD
                 ))}
             </div>
 
-            {/* Días del calendario */}
             <div className="grid grid-cols-7 gap-2">
                 {dias.map((day, idx) => {
                     const clasesCount = day ? getClasesDelDia(day) : 0;

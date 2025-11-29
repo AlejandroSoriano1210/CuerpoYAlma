@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import Calendario from '@/Components/Calendario';
 
 export default function ClasesIndex({ horarios, calendario, mes, ano, mesNombre }) {
     const { hasRole } = usaRoleUser();
-    const { flash } = usePage().props;
+    const { auth, flash } = usePage().props;
     const [selectedDate, setSelectedDate] = useState(null);
 
-    // Obtener clases para una fecha específica
+    const mesAnterior = mes === 1 ? 12 : mes - 1;
+    const anoAnterior = mes === 1 ? ano - 1 : ano;
+
+    const mesSiguiente = mes === 12 ? 1 : mes + 1;
+    const anoSiguiente = mes === 12 ? ano + 1 : ano;
+
     const clasesDelDia = selectedDate
-        ? horarios.filter(h => h.fecha === selectedDate)
+        ? horarios.filter(h => h.fecha.substring(0, 10) === selectedDate)
         : [];
+
+    const canEdit = (clase) => {
+        return auth.user.id === clase.entrenador_id || hasRole('superusuario');
+    };
 
     return (
         <AuthenticatedLayout>
@@ -21,15 +30,33 @@ export default function ClasesIndex({ horarios, calendario, mes, ano, mesNombre 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
+                    {/* Header con navegación de meses */}
                     <div className="mb-6 flex justify-between items-center">
+                        <Link
+                            href={route('clases.index', { mes: mesAnterior, ano: anoAnterior })}
+                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            ← Anterior
+                        </Link>
+
                         <h1 className="text-3xl font-bold text-gray-900">
                             Calendario de Clases - {mesNombre} {ano}
                         </h1>
 
+                        <Link
+                            href={route('clases.index', { mes: mesSiguiente, ano: anoSiguiente })}
+                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            Siguiente →
+                        </Link>
+                    </div>
+
+                    {/* Botón crear clase */}
+                    <div className="mb-6 text-right">
                         {hasRole('entrenador') && (
                             <Link
-                                href={route('clases.horario.create')}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                                href={route('clases.create')}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block"
                             >
                                 + Crear Clase
                             </Link>
@@ -79,7 +106,7 @@ export default function ClasesIndex({ horarios, calendario, mes, ano, mesNombre 
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <h3 className="font-bold text-gray-900">
-                                                        {clase.nombre_clase}
+                                                        {clase.nombre}
                                                     </h3>
                                                     <p className="text-sm text-gray-600">
                                                         Entrenador: {clase.entrenador}
@@ -95,16 +122,44 @@ export default function ClasesIndex({ horarios, calendario, mes, ano, mesNombre 
                                             </div>
 
                                             <div className="text-sm text-gray-600 mb-3">
-                                                <p>{clase.hora_inicio} - {clase.hora_fin}</p>
-                                                <p>{clase.inscritos}/{clase.capacidad} inscritos</p>
+                                                <p>⏰ {clase.hora_inicio} - {clase.hora_fin}</p>
+                                                <p>👥 {clase.inscritos}/{clase.capacidad} inscritos</p>
                                             </div>
 
-                                            <Link
-                                                href={route('clases.show', clase.id)}
-                                                className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center"
-                                            >
-                                                Ver Detalles
-                                            </Link>
+                                            {/* Botones de acción */}
+                                            <div className="space-y-2">
+                                                <Link
+                                                    href={route('clases.show', clase.id)}
+                                                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                >
+                                                    Ver Detalles
+                                                </Link>
+
+                                                {canEdit(clase) && (
+                                                    <div className="flex gap-2">
+                                                        <Link
+                                                            href={route('clases.edit', clase.id)}
+                                                            className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                        >
+                                                            Editar
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (confirm('¿Estás seguro de que deseas eliminar esta clase?')) {
+                                                                    router.delete(route('clases.destroy', clase.id), {
+                                                                        onSuccess: () => {
+                                                                            // El mensaje flash se muestra automáticamente
+                                                                        },
+                                                                    });
+                                                                }
+                                                            }}
+                                                            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     ))
                                 ) : (

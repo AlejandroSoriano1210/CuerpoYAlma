@@ -1,30 +1,35 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function ClasesShow({ horario }) {
     const { auth } = usePage().props;
     const [isReservando, setIsReservando] = useState(false);
-    const { post } = useForm();
 
-    // Verificar si el usuario ya está inscrito
     const yaInscrito = horario.clientes?.some(c => c.id === auth.user.id);
 
     const handleReserva = () => {
         if (confirm('¿Deseas reservar un lugar en esta clase?')) {
             setIsReservando(true);
-            post(route('reservas.store'), {
-                data: { horario_clase_id: horario.id },
-                onSuccess: () => {
-                    setIsReservando(false);
-                },
-            });
+
+            router.post(route('reservas.store'),
+                { horario_clase_id: horario.id },
+                {
+                    onSuccess: () => {
+                        setIsReservando(false);
+                    },
+                    onError: () => {
+                        setIsReservando(false);
+                        alert('Error al realizar la reserva');
+                    },
+                }
+            );
         }
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title={horario.nombre_clase} />
+            <Head title={horario.nombre} />
 
             <div className="py-12">
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,7 +42,7 @@ export default function ClasesShow({ horario }) {
                         </Link>
 
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                            {horario.nombre_clase}
+                            {horario.nombre}
                         </h1>
 
                         <div className="mb-6 pb-6 border-b">
@@ -48,7 +53,7 @@ export default function ClasesShow({ horario }) {
 
                         <div className="grid grid-cols-2 gap-6 mb-8">
                             <div className="bg-blue-50 p-6 rounded-lg">
-                                <h3 className="text-sm font-medium text-gray-600 mb-2">Fecha</h3>
+                                <h3 className="text-sm font-medium text-gray-600 mb-2">📅 Fecha</h3>
                                 <p className="text-2xl font-bold text-gray-900">
                                     {new Date(horario.fecha).toLocaleDateString('es-ES', {
                                         weekday: 'long',
@@ -60,14 +65,14 @@ export default function ClasesShow({ horario }) {
                             </div>
 
                             <div className="bg-green-50 p-6 rounded-lg">
-                                <h3 className="text-sm font-medium text-gray-600 mb-2">Horario</h3>
+                                <h3 className="text-sm font-medium text-gray-600 mb-2">⏰ Horario</h3>
                                 <p className="text-2xl font-bold text-gray-900">
                                     {horario.hora_inicio} - {horario.hora_fin}
                                 </p>
                             </div>
 
                             <div className={`p-6 rounded-lg ${horario.completa ? 'bg-red-50' : 'bg-green-50'}`}>
-                                <h3 className="text-sm font-medium text-gray-600 mb-2">Inscritos</h3>
+                                <h3 className="text-sm font-medium text-gray-600 mb-2">👥 Inscritos</h3>
                                 <p className="text-2xl font-bold text-gray-900">
                                     {horario.inscritos} / {horario.capacidad}
                                 </p>
@@ -94,7 +99,7 @@ export default function ClasesShow({ horario }) {
 
                         {yaInscrito && (
                             <div className="w-full bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded text-lg font-bold text-center">
-                                Ya estás inscrito en esta clase
+                                ✓ Ya estás inscrito en esta clase
                             </div>
                         )}
 
@@ -104,7 +109,7 @@ export default function ClasesShow({ horario }) {
                             </div>
                         )}
 
-                        {/* Lista de inscritos (solo para el entrenador) */}
+                        {/* Lista de inscritos */}
                         {horario.clientes && horario.clientes.length > 0 && (
                             <div className="mt-8 pt-8 border-t">
                                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Inscritos</h2>
