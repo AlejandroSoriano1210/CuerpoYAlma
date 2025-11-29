@@ -4,11 +4,11 @@ import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
 import { useState } from "react";
+import { usaRoleUser } from '@/Hooks/usaRoleUser';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
-    const esSuperuser = user?.roles?.includes('superusuario');
-
+    const { hasRole } = usaRoleUser();
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
@@ -31,16 +31,20 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Dashboard
                                 </NavLink>
-                                {esSuperuser && (
+                                {hasRole('superusuario') && (
                                     <NavLink
                                         href={route("entrenadores.index")}
-                                        active={route().current(
-                                            "entrenadores.index"
-                                        )}
+                                        active={route().current("entrenadores.index")}
                                     >
                                         Entrenadores
                                     </NavLink>
                                 )}
+                                <NavLink
+                                    href={route("clases.index")}
+                                    active={route().current("clases.index")}
+                                >
+                                    Clases
+                                </NavLink>
                             </div>
                         </div>
 

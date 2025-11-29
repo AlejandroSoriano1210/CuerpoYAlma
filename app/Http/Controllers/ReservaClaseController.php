@@ -2,35 +2,51 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HorarioClase;
 use App\Models\HorarioClaseUser;
 use Illuminate\Http\Request;
 
 class ReservaClaseController extends Controller
 {
+    // Crear reserva
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'horario_clase_id' => ['required', 'exists:horario_clases,id'],
+        $validated = $request->validate([
+            'horario_clase_id' => 'required|exists:horario_clases,id',
         ]);
 
-        $reserva = HorarioClaseUser::create([
-            'horario_clase_id' => $data['horario_clase_id'],
-            'user_id'          => $request->user()->id,
-            'estado'           => 'pendiente',
+        $horarioClase = HorarioClase::findOrFail($validated['horario_clase_id']);
+
+        // Verificar capacidad
+        $inscritos = $horarioClase->clientes()->count();
+        if ($inscritos >= $horarioClase->clase->capacidad) {
+            return redirect()->back()->with('error', 'La clase está completa.');
+        }
+
+        // Verificar que no esté ya inscrito
+        if ($horarioClase->clientes()->where('user_id', auth()->id())->exists()) {
+            return redirect()->back()->with('error', 'Ya estás inscrito en esta clase.');
+        }
+
+        // Crear reserva
+        HorarioClaseUser::create([
+            'horario_clase_id' => $validated['horario_clase_id'],
+            'user_id' => auth()->id(),
+            'estado' => 'confirmado',
         ]);
 
-        return response()->json($reserva, 201);
+        return redirect()->back()->with('success', '¡Reserva realizada correctamente!');
     }
 
-    public function cancelar(Request $request, HorarioClaseUser $reserva)
+    // Cancelar reserva
+    public function cancelar(HorarioClaseUser $reserva)
     {
-        // Opcional: validar que la reserva pertenece al usuario autenticado
-        if ($reserva->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'No autorizado'], 403);
+        if ($reserva->user_id !== auth()->id()) {
+            return redirect()->back()->with('error', 'No tienes permiso.');
         }
 
         $reserva->update(['estado' => 'cancelado']);
 
-        return response()->json($reserva);
+        return redirect()->back()->with('success', 'Reserva cancelada correctamente.');
     }
 }

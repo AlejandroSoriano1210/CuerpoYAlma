@@ -29,34 +29,40 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::post('/reservas', [ReservaClaseController::class, 'store']);
+    Route::get('/clases', [ClaseController::class, 'index'])->name('clases.index');
+    Route::get('/clases/{horarioClase}', [ClaseController::class, 'show'])->name('clases.show');
 
-    Route::post('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar']);
+    Route::post('/reservas', [ReservaClaseController::class, 'store'])->name('reservas.store');
+    Route::patch('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar'])->name('reservas.cancelar');
 });
-
-Route::middleware('auth')->get('/clases', [ClaseController::class, 'index']);
 
 Route::middleware(['auth', 'role:entrenador'])->group(function () {
     Route::get('/entrenadores/clases', [UserController::class, 'clasesEntrenador']);
     Route::get('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'show']);
 });
 
-// Obtener horario semanal del entrenador autenticado
-Route::get('/entrenador/horario-trabajo', [HorarioTrabajoController::class, 'index']);
 Route::middleware(['auth', 'role:superusuario'])->group(function () {
     Route::get('/entrenadores', [UserController::class, 'index'])->name('entrenadores.index');
     Route::get('/entrenadores/crear', [UserController::class, 'create'])->name('entrenadores.create');
     Route::post('/entrenadores', [UserController::class, 'store'])->name('entrenadores.store');
-    Route::get('/entrenadrores/{entrenador}', [UserController::class, 'show'])->name('entrenadores.show');
     Route::get('/entrenadores/{entrenador}/editar', [UserController::class, 'edit'])->name('entrenadores.edit');
     Route::patch('/entrenadores/{entrenador}', [UserController::class, 'update'])->name('entrenadores.update');
     Route::delete('/entrenadores/{entrenador}', [UserController::class, 'destroy'])->name('entrenadores.destroy');
+    Route::get('/entrenador/horario-trabajo', [HorarioTrabajoController::class, 'index']);
     Route::post('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'store']);
+
 });
 
 Route::middleware(['auth', 'role:superusuario|entrenador'])->group(function () {
     Route::get('/entrenadrores/{entrenador}', [UserController::class, 'show'])->name('entrenadores.show');
 
+    Route::get('/clases/crear', [ClaseController::class, 'create'])->name('clases.create');
+    Route::post('/clases', [ClaseController::class, 'store'])->name('clases.store');
+    Route::get('/clases/horario/crear', [ClaseController::class, 'createHorario'])->name('clases.horario.create');
+    Route::post('/clases/horario', [ClaseController::class, 'storeHorario'])->name('clases.horario.store');
+    Route::get('/clases/{horarioClase}/editar', [ClaseController::class, 'editHorario'])->name('clases.horario.edit');
+    Route::patch('/clases/{horarioClase}', [ClaseController::class, 'updateHorario'])->name('clases.horario.update');
+    Route::delete('/clases/{horarioClase}', [ClaseController::class, 'destroyHorario'])->name('clases.horario.destroy');
 });
 
 require __DIR__ . '/auth.php';
