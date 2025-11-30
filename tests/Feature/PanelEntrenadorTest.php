@@ -31,7 +31,7 @@ class PanelEntrenadorTest extends TestCase
 
         $response = $this
             ->actingAs($trainer)
-            ->get('/entrenador/clases');
+            ->get('/entrenadores/clases');
 
         $response->assertStatus(200);
     }
