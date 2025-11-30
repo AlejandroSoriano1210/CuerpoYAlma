@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\EntrenadorController;
 use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservaClaseController;
-use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -43,20 +44,28 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'role:entrenador'])->group(function () {
-    Route::get('/entrenadores/clases', [UserController::class, 'clasesEntrenador']);
+    Route::get('/entrenadores/clases', [EntrenadorController::class, 'clasesEntrenador']);
     Route::get('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'show']);
 });
 
-Route::middleware(['auth', 'role:superusuario'])->group(function () {
-    Route::get('/entrenadores', [UserController::class, 'index'])->name('entrenadores.index');
-    Route::get('/entrenadores/crear', [UserController::class, 'create'])->name('entrenadores.create');
-    Route::post('/entrenadores', [UserController::class, 'store'])->name('entrenadores.store');
-    Route::get('/entrenadores/{entrenador}/editar', [UserController::class, 'edit'])->name('entrenadores.edit');
-    Route::patch('/entrenadores/{entrenador}', [UserController::class, 'update'])->name('entrenadores.update');
-    Route::delete('/entrenadores/{entrenador}', [UserController::class, 'destroy'])->name('entrenadores.destroy');
-    Route::get('/entrenadores/{entrenador}', [UserController::class, 'show'])->name('entrenadores.show');
+Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () {
+    Route::get('/entrenadores', [EntrenadorController::class, 'index'])->name('entrenadores.index');
+    Route::get('/entrenadores/crear', [EntrenadorController::class, 'create'])->name('entrenadores.create');
+    Route::post('/entrenadores', [EntrenadorController::class, 'store'])->name('entrenadores.store');
+    Route::get('/entrenadores/{entrenador}', [EntrenadorController::class, 'show'])->name('entrenadores.show');
+    Route::get('/entrenadores/{entrenador}/editar', [EntrenadorController::class, 'edit'])->name('entrenadores.edit');
+    Route::patch('/entrenadores/{entrenador}', [EntrenadorController::class, 'update'])->name('entrenadores.update');
+    Route::delete('/entrenadores/{entrenador}', [EntrenadorController::class, 'destroy'])->name('entrenadores.destroy');
+
     Route::get('/entrenador/horario-trabajo', [HorarioTrabajoController::class, 'index']);
     Route::post('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'store']);
+
+    Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
+    Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+    Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
+    Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
+    Route::patch('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
+    Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
 });
 
 require __DIR__ . '/auth.php';

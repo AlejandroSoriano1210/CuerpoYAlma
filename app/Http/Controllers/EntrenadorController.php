@@ -6,8 +6,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class UserController extends Controller
+class EntrenadorController extends Controller
 {
+    // Listar entrenadores
     public function index()
     {
         $entrenadores = User::role('entrenador')->get();
@@ -17,6 +18,7 @@ class UserController extends Controller
         ]);
     }
 
+    // Mostrar formulario crear
     public function create()
     {
         return Inertia::render('Entrenadores/Create');
@@ -51,15 +53,40 @@ class UserController extends Controller
 
     public function show(User $entrenador)
     {
-        $entrenador->load('clases', 'horarioTrabajo');
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        }
+
+        $entrenador->load('clasesCreadas', 'horarioTrabajo');
 
         return Inertia::render('Entrenadores/Show', [
-            'entrenador' => $entrenador,
+            'entrenador' => [
+                'id' => $entrenador->id,
+                'name' => $entrenador->name,
+                'email' => $entrenador->email,
+                'created_at' => $entrenador->created_at,
+                'updated_at' => $entrenador->updated_at,
+                'clasesCreadas' => $entrenador->clasesCreadas->map(function ($clase) {
+                    return [
+                        'id' => $clase->id,
+                        'nombre' => $clase->nombre,
+                        'fecha' => $clase->fecha,
+                        'hora_inicio' => substr($clase->hora_inicio, 0, 5),
+                        'hora_fin' => substr($clase->hora_fin, 0, 5),
+                        'capacidad' => $clase->capacidad,
+                        'inscritos' => $clase->clientes()->count(),
+                    ];
+                }),
+            ],
         ]);
     }
 
     public function edit(User $entrenador)
     {
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        }
+
         return Inertia::render('Entrenadores/Edit', [
             'entrenador' => $entrenador,
         ]);
@@ -67,6 +94,10 @@ class UserController extends Controller
 
     public function update(Request $request, User $entrenador)
     {
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $entrenador->id,
@@ -81,6 +112,10 @@ class UserController extends Controller
 
     public function destroy(User $entrenador)
     {
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        }
+
         $entrenador->delete();
 
         return redirect()
@@ -92,8 +127,8 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        $clases = $user->clases()
-            ->with(['horarios.clientes'])
+        $clases = $user->clasesCreadas()
+            ->with('clientes')
             ->get();
 
         return response()->json($clases);
