@@ -2,50 +2,39 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class HorarioClase extends Model
 {
-    /** @use HasFactory<\Database\Factories\HorarioClaseFactory> */
     use HasFactory;
 
     protected $table = 'horario_clases';
 
     protected $fillable = [
-        'clase_id',
         'user_id',
+        'nombre',
+        'capacidad',
         'fecha',
         'hora_inicio',
         'hora_fin',
+        'descripcion',
     ];
 
     protected $casts = [
-        'hora_inicio' => 'datetime:H:i',
-        'hora_fin' => 'datetime:H:i',
+        'fecha' => 'date:Y-m-d',
     ];
 
-    public function user()
+    public function entrenador()
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function clase()
-    {
-        return $this->belongsTo(Clase::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function clientes()
     {
         return $this->belongsToMany(User::class, 'horario_clase_user')
+            ->select('users.id', 'users.name', 'users.email')
             ->withPivot('estado')
             ->withTimestamps();
-    }
-
-    public function entrenadore()
-    {
-        return $this->user()->whereHas('roles', function ($query) {
-            $query->where('name', 'entrenador');
-        });
     }
 }

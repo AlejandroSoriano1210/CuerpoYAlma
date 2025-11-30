@@ -19,4 +19,9 @@ class Guia extends Model
     {
         return $this->hasMany(GuiaEjercicio::class);
     }
+
+    public function ejercicios()
+    {
+        return $this->belongsToMany(Ejercicio::class, 'guia_ejercicios');
+    }
 }
