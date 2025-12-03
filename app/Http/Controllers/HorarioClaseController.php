@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\HorarioClase;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class HorarioClaseController extends Controller
@@ -47,14 +48,12 @@ class HorarioClaseController extends Controller
                 ];
             });
 
-        $calendario = $horarios->groupBy('fecha');
 
         return Inertia::render('Clases/Index', [
             'horarios' => $horarios,
-            'calendario' => $calendario,
             'mes' => $mes,
             'ano' => $ano,
-            'mesNombre' => Carbon::createFromDate($ano, $mes, 1)->locale('es')->monthName,
+            'mesNombre' => Str::ucfirst(Carbon::createFromDate($ano, $mes, 1)->locale('es')->monthName),
         ]);
     }
 
@@ -114,8 +113,8 @@ class HorarioClaseController extends Controller
                 'nombre' => $horarioClase->nombre,
                 'entrenador' => $horarioClase->entrenador->name,
                 'fecha' => $horarioClase->fecha,
-                'hora_inicio' => $horarioClase->hora_inicio,
-                'hora_fin' => $horarioClase->hora_fin,
+                'hora_inicio' => substr($horarioClase->hora_inicio, 0, 5),
+                'hora_fin' => substr($horarioClase->hora_fin, 0, 5),
                 'descripcion' => $horarioClase->descripcion,
                 'inscritos' => $inscritos,
                 'capacidad' => $horarioClase->capacidad,

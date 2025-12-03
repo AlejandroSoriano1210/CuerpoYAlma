@@ -48,12 +48,12 @@ export default function Calendario({ mes, ano, horarios, onSelectDate, selectedD
                         <div
                             key={idx}
                             onClick={() => handleSelectDate(day)}
-                            className={`p-3 rounded-lg border-2 cursor-pointer transition ${
+                            className={`p-5 rounded-lg border-2 cursor-pointer transition ${
                                 !day
                                     ? 'bg-gray-100 border-gray-100'
                                     : isSelected
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                                    ? 'border-green-500 bg-green-50'
+                                    : 'border-gray-300 hover:border-green-400 hover:bg-green-50'
                             }`}
                         >
                             <div className="font-bold text-gray-900">{day}</div>
