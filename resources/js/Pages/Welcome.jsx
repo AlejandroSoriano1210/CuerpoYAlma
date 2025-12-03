@@ -2,54 +2,14 @@ import React from "react";
 import { Head, Link } from "@inertiajs/react";
 import Footer from "@/Components/Footer";
 import { Dumbbell, Users, BookOpen } from "lucide-react";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 export default function Welcome({ auth }) {
     return (
-        <>
+        <AuthenticatedLayout>
             <Head title="Bienvenido" />
 
-            <div className="flex flex-col min-h-screen bg-gray-900 text-white">
-                <nav className="bg-black/80 backdrop-blur-md shadow-lg sticky top-0 z-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between h-16 items-center">
-                            <h1 className="text-2xl font-bold text-green-400">
-                                Cuerpo & Alma
-                            </h1>
-
-                            <div className="flex items-center gap-4">
-                                {auth.user ? (
-                                    <>
-                                        <span className="text-gray-200">
-                                            Hola, {auth.user.name}
-                                        </span>
-                                        <Link
-                                            href={route("dashboard")}
-                                            className="bg-green-500 hover:bg-green-600 px-4 py-2 text-white rounded-lg shadow hover:shadow-xl transition"
-                                        >
-                                            Dashboard
-                                        </Link>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Link
-                                            href={route("login")}
-                                            className="px-3 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition font-medium"
-                                        >
-                                            Iniciar Sesión
-                                        </Link>
-                                        <Link
-                                            href={route("register")}
-                                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition font-medium"
-                                        >
-                                            Registrarse
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-
+            <div className="bg-gray-900">
                 {/* Hero Section */}
                 <div
                     className="relative h-[70vh] bg-cover bg-center flex items-center justify-center"
@@ -112,10 +72,9 @@ export default function Welcome({ auth }) {
                         />
                     </div>
                 </div>
-
                 <Footer />
             </div>
-        </>
+        </AuthenticatedLayout>
     );
 }
 

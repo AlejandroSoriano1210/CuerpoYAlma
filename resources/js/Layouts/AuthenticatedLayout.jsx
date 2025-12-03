@@ -14,14 +14,16 @@ export default function AuthenticatedLayout({ header, children }) {
         useState(false);
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
+        <div className="flex flex-col min-h-screen text-white">
+            <nav className="bg-gray-900 backdrop-blur-md shadow-lg sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-16 items-center">
                         <div className="flex">
                             <div className="flex shrink-0 items-center">
                                 <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
+                                    <h1 className="text-2xl font-bold text-green-400">
+                                        Cuerpo & Alma
+                                    </h1>
                                 </Link>
                             </div>
 
@@ -194,7 +196,6 @@ export default function AuthenticatedLayout({ header, children }) {
 
             <main className="flex-1">{children}</main>
 
-            <Footer />
         </div>
     );
 }
