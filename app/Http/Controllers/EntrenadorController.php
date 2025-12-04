@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HorarioTrabajo;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,6 +31,7 @@ class EntrenadorController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
+            'horarios' => 'nullable|array'
         ]);
 
         try {
@@ -40,6 +42,17 @@ class EntrenadorController extends Controller
             ]);
 
             $user->assignRole('entrenador');
+
+            if (!empty($validated['horarios'])) {
+                foreach ($validated['horarios'] as $horario) {
+                    HorarioTrabajo::create([
+                        'user_id' => $user->id,
+                        'dia_semana' => $horario['dia_semana'],
+                        'hora_inicio' => $horario['hora_inicio'],
+                        'hora_fin' => $horario['hora_fin'],
+                    ]);
+                }
+            }
 
             return redirect()
                 ->route('entrenadores.index')
@@ -57,7 +70,19 @@ class EntrenadorController extends Controller
             return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
         }
 
-        $entrenador->load('clasesCreadas', 'horarioTrabajo');
+        $entrenador->load('horariosClases', 'horarioTrabajo');
+
+        $horariosPorDia = $entrenador->horarioTrabajo
+            ->groupBy('dia_semana')
+            ->map(function ($bloques) {
+                return $bloques->map(function ($bloque) {
+                    return [
+                        'id' => $bloque->id,
+                        'hora_inicio' => substr($bloque->hora_inicio, 0, 5),
+                        'hora_fin' => substr($bloque->hora_fin, 0, 5),
+                    ];
+                })->values();
+            });
 
         return Inertia::render('Entrenadores/Show', [
             'entrenador' => [
@@ -66,7 +91,8 @@ class EntrenadorController extends Controller
                 'email' => $entrenador->email,
                 'created_at' => $entrenador->created_at,
                 'updated_at' => $entrenador->updated_at,
-                'clasesCreadas' => $entrenador->clasesCreadas->map(function ($clase) {
+                'horarioTrabajo' => $horariosPorDia,
+                'clasesCreadas' => $entrenador->horariosClases->map(function ($clase) {
                     return [
                         'id' => $clase->id,
                         'nombre' => $clase->nombre,
@@ -83,31 +109,53 @@ class EntrenadorController extends Controller
 
     public function edit(User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
-            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
-        }
+        $entrenador->load('horarioTrabajo');
 
         return Inertia::render('Entrenadores/Edit', [
-            'entrenador' => $entrenador,
+            'entrenador' => [
+                'id' => $entrenador->id,
+                'name' => $entrenador->name,
+                'email' => $entrenador->email,
+            ],
+            'horarioTrabajo' => $entrenador->horarioTrabajo->map(fn($h) => [
+                'dia_semana' => (int) $h->dia_semana,
+                'hora_inicio' => substr($h->hora_inicio, 0, 5),
+                'hora_fin' => substr($h->hora_fin, 0, 5),
+            ]),
         ]);
     }
 
     public function update(Request $request, User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
-            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
-        }
-
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $entrenador->id,
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', "unique:users,email,{$entrenador->id}"],
+            'horarios' => ['nullable', 'array'],
+            'horarios.*.dia_semana' => ['required', 'integer', 'between:0,6'],
+            'horarios.*.hora_inicio' => ['required', 'date_format:H:i'],
+            'horarios.*.hora_fin' => ['required', 'date_format:H:i', 'after:horarios.*.hora_inicio'],
         ]);
 
-        $entrenador->update($validated);
+        $entrenador->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
 
-        return redirect()
-            ->route('entrenadores.index')
-            ->with('success', 'Entrenador actualizado correctamente.');
+        // Borrar horarios previos y recrear
+        HorarioTrabajo::where('user_id', $entrenador->id)->delete();
+
+        if (!empty($validated['horarios'])) {
+            foreach ($validated['horarios'] as $h) {
+                HorarioTrabajo::create([
+                    'user_id' => $entrenador->id,
+                    'dia_semana' => $h['dia_semana'],
+                    'hora_inicio' => $h['hora_inicio'],
+                    'hora_fin' => $h['hora_fin'],
+                ]);
+            }
+        }
+
+        return redirect()->route('entrenadores.show', $entrenador)->with('success', 'Entrenador actualizado.');
     }
 
     public function destroy(User $entrenador)
