@@ -5,131 +5,159 @@ namespace App\Http\Controllers;
 use App\Models\HorarioTrabajo;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
-class HorarioTrabajoController extends Controller
+class EntrenadorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    // Listar entrenadores
+    public function index()
     {
-        $user = $request->user();
+        $entrenadores = User::role('entrenador')->get();
 
-        if (! $user->hasRole('entrenador')) {
-            return response()->json(['message' => 'No autorizado'], 403);
+        return Inertia::render('Entrenadores/Index', [
+            'entrenadores' => $entrenadores,
+        ]);
+    }
+
+    // Mostrar formulario crear
+    public function create()
+    {
+        return Inertia::render('Entrenadores/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:8|confirmed',
+            'horarios' => 'nullable|array'
+        ]);
+
+        try {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => bcrypt($validated['password']),
+            ]);
+
+            $user->assignRole('entrenador');
+
+            if (!empty($validated['horarios'])) {
+                foreach ($validated['horarios'] as $horario) {
+                    HorarioTrabajo::create([
+                        'user_id' => $user->id,
+                        'dia_semana' => $horario['dia_semana'],
+                        'hora_inicio' => $horario['hora_inicio'],
+                        'hora_fin' => $horario['hora_fin'],
+                    ]);
+                }
+            }
+
+            return redirect()
+                ->route('entrenadores.index')
+                ->with('success', 'Entrenador creado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => 'Error al crear el entrenador.']);
+        }
+    }
+
+    public function show(User $entrenador)
+    {
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
         }
 
-        $bloques = $user->horarioTrabajo()
-            ->orderBy('dia_semana')
-            ->orderBy('hora_inicio')
-            ->get()
+        $entrenador->load('horariosClases', 'horarioTrabajo');
+
+        $horariosPorDia = $entrenador->horarioTrabajo
             ->groupBy('dia_semana')
-            ->map(function ($items) {
-                return $items->map(function ($item) {
+            ->map(function ($bloques) {
+                return $bloques->map(function ($bloque) {
                     return [
-                        'id'          => $item->id,
-                        'hora_inicio' => $item->hora_inicio,
-                        'hora_fin'    => $item->hora_fin,
+                        'id' => $bloque->id,
+                        'hora_inicio' => substr($bloque->hora_inicio, 0, 5),
+                        'hora_fin' => substr($bloque->hora_fin, 0, 5),
                     ];
                 })->values();
             });
 
-        return response()->json([
-            'semanal' => $bloques,
+        return Inertia::render('Entrenadores/Show', [
+            'entrenador' => [
+                'id' => $entrenador->id,
+                'name' => $entrenador->name,
+                'email' => $entrenador->email,
+                'created_at' => $entrenador->created_at,
+                'updated_at' => $entrenador->updated_at,
+                'horarioTrabajo' => $horariosPorDia,
+                'clasesCreadas' => $entrenador->horariosClases->map(function ($clase) {
+                    return [
+                        'id' => $clase->id,
+                        'nombre' => $clase->nombre,
+                        'fecha' => $clase->fecha,
+                        'hora_inicio' => substr($clase->hora_inicio, 0, 5),
+                        'hora_fin' => substr($clase->hora_fin, 0, 5),
+                        'capacidad' => $clase->capacidad,
+                        'inscritos' => $clase->clientes()->count(),
+                    ];
+                }),
+            ],
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+
+    public function edit(User $entrenador)
     {
-        //
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        }
+
+        return Inertia::render('Entrenadores/Edit', [
+            'entrenador' => $entrenador,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request, User $entrenador)
+    public function update(Request $request, User $entrenador)
+    {
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $entrenador->id,
+        ]);
+
+        $entrenador->update($validated);
+
+        return redirect()
+            ->route('entrenadores.index')
+            ->with('success', 'Entrenador actualizado correctamente.');
+    }
+
+    public function destroy(User $entrenador)
+    {
+        if (!$entrenador->hasRole('entrenador')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        }
+
+        $entrenador->delete();
+
+        return redirect()
+            ->route('entrenadores.index')
+            ->with('success', 'Entrenador eliminado correctamente.');
+    }
+
+    public function clasesEntrenador(Request $request)
     {
         $user = $request->user();
 
-        // Solo superusuario puede guardar
-        if (! $user->hasRole('superusuario')) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
+        $clases = $user->clasesCreadas()
+            ->with('clientes')
+            ->get();
 
-        $data = $request->validate([
-            'semanal'   => ['required', 'array'],
-            'semanal.*' => ['array'],
-            'semanal.*.*.hora_inicio' => ['required', 'date_format:H:i'],
-            'semanal.*.*.hora_fin'    => ['required', 'date_format:H:i', 'after:semanal.*.*.hora_inicio'],
-        ]);
-
-        // Borrar horarios previos de ese entrenador
-        HorarioTrabajo::where('user_id', $entrenador->id)->delete();
-
-        foreach ($data['semanal'] as $dia => $bloques) {
-            foreach ($bloques as $bloque) {
-                HorarioTrabajo::create([
-                    'user_id'     => $entrenador->id,
-                    'dia_semana'  => $dia,
-                    'hora_inicio' => $bloque['hora_inicio'],
-                    'hora_fin'    => $bloque['hora_fin'],
-                ]);
-            }
-        }
-
-        return response()->json(['status' => 'ok'], 200);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $entrenador)
-    {
-        if (!auth()->user()->hasRole('superusuario') && auth()->id() !== $entrenador->id) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
-
-        $bloques = $entrenador->horarioTrabajo()
-            ->orderBy('dia_semana')
-            ->orderBy('hora_inicio')
-            ->get()
-            ->groupBy('dia_semana')
-            ->map(
-                fn($items) =>
-                $items->map(fn($item) => [
-                    'id'          => $item->id,
-                    'hora_inicio' => $item->hora_inicio,
-                    'hora_fin'    => $item->hora_fin,
-                ])->values()
-            );
-
-        return response()->json(['semanal' => $bloques]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(HorarioTrabajo $horarioTrabajo)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, HorarioTrabajo $horarioTrabajo)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(HorarioTrabajo $horarioTrabajo)
-    {
-        //
+        return response()->json($clases);
     }
 }
