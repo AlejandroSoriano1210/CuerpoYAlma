@@ -6,22 +6,61 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 
 export default function Welcome({ auth }) {
     return (
-        <AuthenticatedLayout>
+        <>
             <Head title="Bienvenido" />
 
             <div className="bg-gray-900">
-                {/* Hero Section */}
+                <nav className="bg-gray-900 shadow-lg sticky top-0 z-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between h-16 items-center">
+                            <h1 className="text-2xl font-bold text-green-400">
+                                Cuerpo & Alma
+                            </h1>
+
+                            <div className="flex items-center gap-4">
+                                {auth.user ? (
+                                    <>
+                                        <span className="text-gray-200">
+                                            Hola, {auth.user.name}
+                                        </span>
+                                        <Link
+                                            href={route("dashboard")}
+                                            className="bg-green-500 hover:bg-green-600 px-4 py-2 text-white rounded-lg shadow hover:shadow-xl transition"
+                                        >
+                                            Dashboard
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link
+                                            href={route("login")}
+                                            className="px-3 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition font-medium"
+                                        >
+                                            Iniciar Sesión
+                                        </Link>
+                                        <Link
+                                            href={route("register")}
+                                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition font-medium"
+                                        >
+                                            Registrarse
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </nav>
                 <div
                     className="relative h-[70vh] bg-cover bg-center flex items-center justify-center"
                     style={{
                         backgroundImage: "url('/images/hero-gym.jpg')",
-                        backgroundAttachment: "fixed", // Parallax effect
+                        backgroundAttachment: "fixed",
                     }}
                 >
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
                     <div className="relative text-center px-6">
-                        <h1 className="text-5xl md:text-6xl font-extrabold drop-shadow-lg animate-fadeIn">
+                        <h1 className="text-5xl md:text-6xl font-extrabold drop-shadow-lg animate-fadeIn text-white">
                             Cuerpo & Alma Fitness
                         </h1>
                         <p className="mt-4 text-lg md:text-xl text-gray-200">
@@ -42,7 +81,7 @@ export default function Welcome({ auth }) {
                 </div>
 
                 <div className="flex-1 max-w-7xl mx-auto px-6 py-16 w-full">
-                    <h2 className="text-4xl font-bold text-center mb-12">
+                    <h2 className="text-4xl font-bold text-center mb-12 text-[#14793F]">
                         Explora
                     </h2>
 
@@ -74,7 +113,7 @@ export default function Welcome({ auth }) {
                 </div>
                 <Footer />
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }
 
