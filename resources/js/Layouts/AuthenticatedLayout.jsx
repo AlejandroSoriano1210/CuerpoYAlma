@@ -151,10 +151,32 @@ export default function AuthenticatedLayout({ header, children }) {
                 >
                     <div className="space-y-1 pb-3 pt-2">
                         <ResponsiveNavLink
-                            href={route("dashboard")}
-                            active={route().current("dashboard")}
+                            href={route('welcome')}
+                            active={route().current('welcome')}
                         >
-                            Dashboard
+                            Inicio
+                        </ResponsiveNavLink>
+                        {hasRole("superusuario") && (
+                            <ResponsiveNavLink
+                                href={route("entrenadores.index")}
+                                active={route().current("entrenadores.index")}
+                            >
+                                Entrenadores
+                            </ResponsiveNavLink>
+                        )}
+                        {hasRole("superusuario") && (
+                            <ResponsiveNavLink
+                                href={route("clientes.index")}
+                                active={route().current("clientes.index")}
+                            >
+                                Clientes
+                            </ResponsiveNavLink>
+                        )}
+                        <ResponsiveNavLink
+                            href={route("clases.index")}
+                            active={route().current("clases.index")}
+                        >
+                            Clases
                         </ResponsiveNavLink>
                     </div>
 
