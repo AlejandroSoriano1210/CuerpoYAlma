@@ -2,7 +2,7 @@ import React from 'react';
 import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Create() {
+export default function Create({ entrenadores }) {
     const { flash } = usePage().props;
     const { data, setData, post, errors, processing } = useForm({
         nombre: '',
@@ -11,6 +11,7 @@ export default function Create() {
         hora_inicio: '',
         hora_fin: '',
         descripcion: '',
+        user_id: entrenadores?.[0]?.id ?? null,
     });
 
     const handleSubmit = (e) => {
@@ -140,6 +141,20 @@ export default function Create() {
                                     rows="3"
                                 />
                             </div>
+
+                            {/* Si es superusuario: elegir entrenador asignado */}
+                            {entrenadores && entrenadores.length > 0 && (
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Asignar Entrenador</label>
+                                    <select value={data.user_id} onChange={(e) => setData('user_id', e.target.value)} className={`w-full px-3 py-2 border rounded-lg ${errors.user_id ? 'border-red-500' : 'border-gray-300'}`}>
+                                        <option value="">-- Seleccionar --</option>
+                                        {entrenadores.map((et) => (
+                                            <option key={et.id} value={et.id}>{et.name}</option>
+                                        ))}
+                                    </select>
+                                    {errors.user_id && <p className="text-red-500 text-sm mt-1">{errors.user_id}</p>}
+                                </div>
+                            )}
 
                             {/* Botones */}
                             <div className="flex gap-4">

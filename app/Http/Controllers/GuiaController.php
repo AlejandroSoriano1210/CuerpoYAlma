@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class GuiaController extends Controller
 {
@@ -12,7 +13,11 @@ class GuiaController extends Controller
      */
     public function index()
     {
-        //
+        $guias = Guia::orderBy('created_at', 'desc')->paginate(10);
+
+        return Inertia::render('Guias/Index', [
+            'guias' => $guias,
+        ]);
     }
 
     /**
@@ -20,7 +25,12 @@ class GuiaController extends Controller
      */
     public function create()
     {
-        //
+        $ejercicios = \App\Models\Ejercicio::orderBy('nombre')->get();
+
+        return Inertia::render('Guias/Create', [
+            'niveles' => ['principiante', 'intermedio', 'avanzado'],
+            'ejercicios' => $ejercicios,
+        ]);
     }
 
     /**
@@ -28,7 +38,34 @@ class GuiaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'contenido' => 'nullable|string',
+            'nivel' => 'required|in:principiante,intermedio,avanzado',
+            'ejercicios' => 'sometimes|array',
+            'ejercicios.*.ejercicio_id' => 'required_with:ejercicios|exists:ejercicios,id',
+            'ejercicios.*.series' => 'nullable|integer|min:1',
+            'ejercicios.*.repeticiones' => 'nullable|integer|min:1',
+            'ejercicios.*.instrucciones' => 'nullable|string',
+        ]);
+
+        $guia = Guia::create($validated);
+
+        // Guardar ejercicios si vienen
+        if (!empty($validated['ejercicios'])) {
+            $orden = 1;
+            foreach ($validated['ejercicios'] as $item) {
+                $guia->guiaEjercicio()->create([
+                    'ejercicio_id' => $item['ejercicio_id'],
+                    'series' => $item['series'] ?? null,
+                    'repeticiones' => $item['repeticiones'] ?? null,
+                    'instrucciones' => $item['instrucciones'] ?? null,
+                    'orden' => $orden++,
+                ]);
+            }
+        }
+
+        return redirect()->route('guias.show', $guia)->with('success', 'Guía creada correctamente.');
     }
 
     /**
@@ -36,7 +73,11 @@ class GuiaController extends Controller
      */
     public function show(Guia $guia)
     {
-        //
+        $guia->load(['guiaEjercicio.ejercicio']);
+
+        return Inertia::render('Guias/Show', [
+            'guia' => $guia,
+        ]);
     }
 
     /**
@@ -44,7 +85,10 @@ class GuiaController extends Controller
      */
     public function edit(Guia $guia)
     {
-        //
+        return Inertia::render('Guias/Edit', [
+            'guia' => $guia,
+            'niveles' => ['principiante', 'intermedio', 'avanzado'],
+        ]);
     }
 
     /**
@@ -52,7 +96,15 @@ class GuiaController extends Controller
      */
     public function update(Request $request, Guia $guia)
     {
-        //
+        $validated = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'contenido' => 'nullable|string',
+            'nivel' => 'required|in:principiante,intermedio,avanzado',
+        ]);
+
+        $guia->update($validated);
+
+        return redirect()->route('guias.show', $guia)->with('success', 'Guía actualizada correctamente.');
     }
 
     /**
@@ -60,6 +112,8 @@ class GuiaController extends Controller
      */
     public function destroy(Guia $guia)
     {
-        //
+        $guia->delete();
+
+        return redirect()->route('guias.index')->with('success', 'Guía eliminada correctamente.');
     }
 }

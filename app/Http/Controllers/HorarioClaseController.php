@@ -33,6 +33,21 @@ class HorarioClaseController extends Controller
             ->map(function ($horario) {
                 $inscritos = $horario->clientes()->count();
 
+                // Si el usuario está autenticado, comprobar si tiene reserva y obtener su id
+                $reservado = false;
+                $reservaId = null;
+                if (auth()->check()) {
+                    $miReserva = \App\Models\HorarioClaseUser::where('horario_clase_id', $horario->id)
+                        ->where('user_id', auth()->id())
+                        ->where('estado', 'confirmado')
+                        ->first();
+
+                    if ($miReserva) {
+                        $reservado = true;
+                        $reservaId = $miReserva->id;
+                    }
+                }
+
                 return [
                     'id' => $horario->id,
                     'nombre' => $horario->nombre,
@@ -45,6 +60,8 @@ class HorarioClaseController extends Controller
                     'capacidad' => $horario->capacidad,
                     'completa' => $inscritos >= $horario->capacidad,
                     'disponible' => $inscritos < $horario->capacidad,
+                    'reservado' => $reservado,
+                    'reserva_id' => $reservaId,
                 ];
             });
 
@@ -62,7 +79,15 @@ class HorarioClaseController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Clases/Create');
+        // Si es superusuario, pasar lista de entrenadores para asignación
+        $entrenadores = null;
+        if (auth()->user()->hasRole('superusuario')) {
+            $entrenadores = \App\Models\User::role('entrenador')->get(['id', 'name']);
+        }
+
+        return Inertia::render('Clases/Create', [
+            'entrenadores' => $entrenadores,
+        ]);
     }
 
     /**
@@ -77,10 +102,22 @@ class HorarioClaseController extends Controller
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
             'descripcion' => 'nullable|string',
+            'user_id' => 'nullable|exists:users,id',
         ]);
 
+        // Si es superusuario puede asignar el entrenador; si no, es el propio auth user
+        if (auth()->user()->hasRole('superusuario') && !empty($validated['user_id'])) {
+            $entrenador = \App\Models\User::find($validated['user_id']);
+            if (!$entrenador || !$entrenador->hasRole('entrenador')) {
+                return redirect()->back()->with('error', 'Selecciona un entrenador válido.');
+            }
+            $userId = $validated['user_id'];
+        } else {
+            $userId = auth()->id();
+        }
+
         HorarioClase::create([
-            'user_id' => auth()->id(),
+            'user_id' => $userId,
             'nombre' => $validated['nombre'],
             'capacidad' => $validated['capacidad'],
             'fecha' => $validated['fecha'],
@@ -167,13 +204,13 @@ class HorarioClaseController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(HorarioClase $clase)
+    public function destroy(HorarioClase $horarioClase)
     {
-        if ($clase->user_id !== auth()->id()) {
-            return redirect()->back()->withErrors(['error' => 'No tienes permiso.']);
+        if ($horarioClase->user_id !== auth()->id() && !auth()->user()->hasRole('superusuario')) {
+            return redirect()->back()->with('error', 'No tienes permiso.');
         }
 
-        $clase->delete();
+        $horarioClase->delete();
 
         return redirect()->route('clases.index')
             ->with('success', 'Clase eliminada correctamente.');

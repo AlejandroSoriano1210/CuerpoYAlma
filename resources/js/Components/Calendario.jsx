@@ -14,9 +14,14 @@ export default function Calendario({ mes, ano, horarios, onSelectDate, selectedD
         dias.push(i);
     }
 
-    const getClasesDelDia = (day) => {
+    const getClasesInfo = (day) => {
         const fecha = `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        return horarios.filter(h => h.fecha.substring(0, 10) === fecha).length;
+        const clases = horarios.filter(h => h.fecha.substring(0, 10) === fecha);
+        const total = clases.length;
+        const disponibles = clases.filter(c => !c.completa).length;
+        const completas = clases.filter(c => c.completa).length;
+
+        return { total, disponibles, completas };
     };
 
     const handleSelectDate = (day) => {
@@ -40,7 +45,7 @@ export default function Calendario({ mes, ano, horarios, onSelectDate, selectedD
 
             <div className="grid grid-cols-7 gap-2">
                 {dias.map((day, idx) => {
-                    const clasesCount = day ? getClasesDelDia(day) : 0;
+                    const info = day ? getClasesInfo(day) : { total: 0, disponibles: 0, completas: 0 };
                     const fecha = day ? `${ano}-${String(mes).padStart(2, '0')}-${String(day).padStart(2, '0')}` : null;
                     const isSelected = fecha === selectedDate;
 
@@ -57,9 +62,20 @@ export default function Calendario({ mes, ano, horarios, onSelectDate, selectedD
                             }`}
                         >
                             <div className="font-bold text-gray-900">{day}</div>
-                            {clasesCount > 0 && (
-                                <div className="text-xs mt-1 bg-blue-200 text-blue-800 px-2 py-1 rounded text-center">
-                                    {clasesCount} clase{clasesCount > 1 ? 's' : ''}
+
+                            {/* Mostrar resumen de disponibilidad */}
+                            {info.total > 0 && (
+                                <div className="mt-2 flex flex-col gap-1">
+                                    {info.disponibles > 0 && (
+                                        <div className="text-xs inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-center">
+                                            {info.disponibles} libre{info.disponibles > 1 ? 's' : ''}
+                                        </div>
+                                    )}
+                                    {info.completas > 0 && (
+                                        <div className="text-xs inline-block bg-red-100 text-red-800 px-2 py-1 rounded text-center">
+                                            {info.completas} completa{info.completas > 1 ? 's' : ''}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

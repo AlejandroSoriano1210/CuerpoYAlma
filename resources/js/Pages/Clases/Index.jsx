@@ -9,6 +9,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
     const { auth, flash } = usePage().props;
     const [selectedDate, setSelectedDate] = useState(null);
     const [isReservando, setIsReservando] = useState(null); // Track which class is reserving
+    const [isCancelando, setIsCancelando] = useState(null); // Track which reservation is canceling
 
     const mesAnterior = mes === 1 ? 12 : mes - 1;
     const anoAnterior = mes === 1 ? ano - 1 : ano;
@@ -25,7 +26,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
     };
 
     const yaInscrito = (clase) => {
-        return clase.clientes?.some(c => c.id === auth.user.id);
+        return clase.reservado === true;
     };
 
     const handleReserva = (clase) => {
@@ -37,10 +38,38 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
                 {
                     onSuccess: () => {
                         setIsReservando(null);
+                        // Reload data to reflect reservation state
+                        router.reload();
                     },
                     onError: () => {
                         setIsReservando(null);
                         alert('Error al realizar la reserva');
+                    },
+                }
+            );
+        }
+    };
+
+    const handleCancelarReserva = (clase) => {
+        if (!clase.reserva_id) {
+            alert('Reserva no encontrada.');
+            return;
+        }
+
+        if (confirm('¿Deseas cancelar tu reserva en esta clase?')) {
+            setIsCancelando(clase.reserva_id);
+
+            router.patch(
+                route('reservas.cancelar', clase.reserva_id),
+                {},
+                {
+                    onSuccess: () => {
+                        setIsCancelando(null);
+                        router.reload();
+                    },
+                    onError: () => {
+                        setIsCancelando(null);
+                        alert('Error al cancelar la reserva');
                     },
                 }
             );
@@ -52,7 +81,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
             <Head title="Clases" />
 
             <div className="py-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="mx-52 px-2 sm:px-6 lg:px-8">
 
                     {/* Header con navegación de meses */}
                     <div className="mb-6 flex justify-between items-center">
@@ -77,7 +106,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
 
                     {/* Botón crear clase */}
                     <div className="mb-6 text-right">
-                        {hasRole('entrenador') && (
+                        {!hasRole('cliente') && (
                             <Link
                                 href={route('clases.create')}
                                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block"
@@ -93,9 +122,15 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
                         </div>
                     )}
 
+                    {flash?.error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                            {flash.error}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Calendario */}
-                        <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
+                        <div className="lg:col-span-2 bg-white rounded-lg shadow p-3">
                             <Calendario
                                 mes={mes}
                                 ano={ano}
@@ -170,10 +205,15 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
                                                     </button>
                                                 )}
 
+                                                {/* Botón cancelar reserva (si ya inscrito) */}
                                                 {yaInscrito(clase) && (
-                                                    <div className="bg-green-200 text-green-800 px-4 py-2 rounded text-center text-sm font-bold">
-                                                        ✓ Ya inscrito
-                                                    </div>
+                                                    <button
+                                                        onClick={() => handleCancelarReserva(clase)}
+                                                        disabled={isCancelando === clase.reserva_id}
+                                                        className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                    >
+                                                        {isCancelando === clase.reserva_id ? 'Cancelando...' : 'Cancelar Reserva'}
+                                                    </button>
                                                 )}
 
                                                 {clase.completa && !yaInscrito(clase) && (
@@ -206,6 +246,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
                                                                             "clases.destroy",
                                                                             clase.id
                                                                         ),
+                                                                        {},
                                                                         {
                                                                             onSuccess: () => {
                                                                                 // El mensaje flash se muestra automáticamente

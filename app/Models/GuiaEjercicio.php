@@ -13,6 +13,10 @@ class GuiaEjercicio extends Model
     protected $fillable = [
         'guia_id',
         'ejercicio_id',
+        'series',
+        'repeticiones',
+        'instrucciones',
+        'orden',
     ];
 
     public function guia()
