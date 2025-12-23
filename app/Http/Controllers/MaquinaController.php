@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Maquina;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class MaquinaController extends Controller
 {
@@ -12,7 +13,10 @@ class MaquinaController extends Controller
      */
     public function index()
     {
-        //
+        $maquinas = Maquina::orderBy('nombre')->paginate(15);
+        return Inertia::render('Maquinas/Index', [
+            'maquinas' => $maquinas,
+        ]);
     }
 
     /**
@@ -20,7 +24,7 @@ class MaquinaController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Maquinas/Create');
     }
 
     /**
@@ -28,7 +32,16 @@ class MaquinaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'ubicacion' => 'required|string|max:255',
+            'estado' => 'required|in:operativa,mantenimiento,fuera_de_servicio',
+        ]);
+
+        $maquina = Maquina::create($validated);
+
+        return redirect()->route('maquinas.show', $maquina)->with('success', 'Máquina creada correctamente.');
     }
 
     /**
@@ -36,7 +49,9 @@ class MaquinaController extends Controller
      */
     public function show(Maquina $maquina)
     {
-        //
+        return Inertia::render('Maquinas/Show', [
+            'maquina' => $maquina,
+        ]);
     }
 
     /**
@@ -44,7 +59,9 @@ class MaquinaController extends Controller
      */
     public function edit(Maquina $maquina)
     {
-        //
+        return Inertia::render('Maquinas/Edit', [
+            'maquina' => $maquina,
+        ]);
     }
 
     /**
@@ -52,7 +69,32 @@ class MaquinaController extends Controller
      */
     public function update(Request $request, Maquina $maquina)
     {
-        //
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'ubicacion' => 'required|string|max:255',
+            'estado' => 'required|in:operativa,mantenimiento,fuera_de_servicio',
+        ]);
+
+        $maquina->update($validated);
+
+        return redirect()->route('maquinas.show', $maquina)->with('success', 'Máquina actualizada correctamente.');
+    }
+
+    /**
+     * Cambiar el estado de la máquina (usado por botones en la UI)
+     */
+    public function cambiarEstado(Request $request, Maquina $maquina)
+    {
+        $validated = $request->validate([
+            'estado' => 'required|in:operativa,mantenimiento,fuera_de_servicio',
+        ]);
+
+        $maquina->update([
+            'estado' => $validated['estado'],
+        ]);
+
+        return redirect()->route('maquinas.index')->with('success', 'Estado actualizado correctamente.');
     }
 
     /**
@@ -60,6 +102,7 @@ class MaquinaController extends Controller
      */
     public function destroy(Maquina $maquina)
     {
-        //
+        $maquina->delete();
+        return redirect()->route('maquinas.index')->with('success', 'Máquina eliminada.');
     }
 }

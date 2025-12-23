@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservaClaseController;
 use App\Http\Controllers\GuiaController;
 use App\Http\Controllers\EjercicioController;
+use App\Http\Controllers\MaquinaController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -26,7 +27,8 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/editar', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
@@ -61,10 +63,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/ejercicios/{ejercicio}/editar', [EjercicioController::class, 'edit'])->name('ejercicios.edit');
         Route::patch('/ejercicios/{ejercicio}', [EjercicioController::class, 'update'])->name('ejercicios.update');
         Route::delete('/ejercicios/{ejercicio}', [EjercicioController::class, 'destroy'])->name('ejercicios.destroy');
+
+        // CRUD de maquinas (solo para entrenadores y superusuario)
+        Route::get('/maquinas', [MaquinaController::class, 'index'])->name('maquinas.index');
+        Route::get('/maquinas/crear', [MaquinaController::class, 'create'])->name('maquinas.create');
+        Route::post('/maquinas', [MaquinaController::class, 'store'])->name('maquinas.store');
+        Route::get('/maquinas/{maquina}/editar', [MaquinaController::class, 'edit'])->name('maquinas.edit');
+        Route::patch('/maquinas/{maquina}', [MaquinaController::class, 'update'])->name('maquinas.update');
+        // Cambiar estado de la máquina (mantenimiento / fuera_de_servicio / operativa)
+        Route::patch('/maquinas/{maquina}/estado', [MaquinaController::class, 'cambiarEstado'])->name('maquinas.estado');
+        Route::delete('/maquinas/{maquina}', [MaquinaController::class, 'destroy'])->name('maquinas.destroy');
     });
 
     // Mostrar un ejercicio (accesible a usuarios autenticados)
     Route::get('/ejercicios/{ejercicio}', [EjercicioController::class, 'show'])->name('ejercicios.show');
+
+    // Mostrar una maquina (accesible a usuarios autenticados)
+    Route::get('/maquinas/{maquina}', [MaquinaController::class, 'show'])->name('maquinas.show');
 
     // Mostrar una guía (rutas con parámetros al final para evitar conflicto)
     Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');

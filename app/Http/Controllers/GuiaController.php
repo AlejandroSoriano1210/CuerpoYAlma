@@ -75,6 +75,14 @@ class GuiaController extends Controller
     {
         $guia->load(['guiaEjercicio.ejercicio']);
 
+        // Registrar que el usuario ha utilizado / visto esta guía
+        if (auth()->check()) {
+            \App\Models\GuiaView::firstOrCreate([
+                'user_id' => auth()->id(),
+                'guia_id' => $guia->id,
+            ]);
+        }
+
         return Inertia::render('Guias/Show', [
             'guia' => $guia,
         ]);

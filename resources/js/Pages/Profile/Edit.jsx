@@ -4,26 +4,20 @@ import DeleteUserForm from "./Partials/DeleteUserForm";
 import UpdatePasswordForm from "./Partials/UpdatePasswordForm";
 import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm";
 
-export default function Edit({ mustVerifyEmail, status }) {
+export default function Edit(props) {
+    const { mustVerifyEmail, status } = props;
+
     return (
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
+                    Perfil
                 </h2>
             }
         >
             <Head title="Profile" />
 
             <div className="py-12">
-                <div className="mb-6 text-center">
-                    <Link
-                        href={route("clases.create")}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block"
-                    >
-                        + Crear Clase
-                    </Link>
-                </div>
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
                         <UpdateProfileInformationForm

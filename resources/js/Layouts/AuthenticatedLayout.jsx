@@ -65,6 +65,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Clientes
                                 </NavLink>
+                                <NavLink
+                                    href={route("maquinas.index")}
+                                    active={route().current("maquinas.index")}
+                                >
+                                    Máquinas
+                                </NavLink>
                             </div>
                         </div>
 
@@ -97,9 +103,9 @@ export default function AuthenticatedLayout({ header, children }) {
 
                                     <Dropdown.Content>
                                         <Dropdown.Link
-                                            href={route("profile.edit")}
+                                            href={route("profile.show")}
                                         >
-                                            Profile
+                                            Perfil
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route("logout")}
