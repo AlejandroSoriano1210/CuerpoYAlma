@@ -1,10 +1,9 @@
-import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
 import { useState } from "react";
-import { usaRoleUser } from '@/Hooks/usaRoleUser';
+import { usaRoleUser } from "@/Hooks/usaRoleUser";
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
@@ -13,30 +12,38 @@ export default function AuthenticatedLayout({ header, children }) {
         useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
+        <div className="flex flex-col min-h-screen bg-gray-100 text-white">
+            <nav className="bg-gray-900 backdrop-blur-md shadow-lg sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between h-16 items-center">
                         <div className="flex">
                             <div className="flex shrink-0 items-center">
                                 <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
+                                    <h1 className="text-2xl font-bold text-green-400">
+                                        Cuerpo & Alma
+                                    </h1>
                                 </Link>
                             </div>
 
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route("dashboard")}
-                                    active={route().current("dashboard")}
-                                >
-                                    Dashboard
-                                </NavLink>
-                                {hasRole('superusuario') && (
+                                {hasRole("superusuario") && (
                                     <NavLink
                                         href={route("entrenadores.index")}
-                                        active={route().current("entrenadores.index")}
+                                        active={route().current(
+                                            "entrenadores.index"
+                                        )}
                                     >
                                         Entrenadores
+                                    </NavLink>
+                                )}
+                                {hasRole("superusuario") && (
+                                    <NavLink
+                                        href={route("clientes.index")}
+                                        active={route().current(
+                                            "clientes.index"
+                                        )}
+                                    >
+                                        Clientes
                                     </NavLink>
                                 )}
                                 <NavLink
@@ -44,12 +51,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                     active={route().current("clases.index")}
                                 >
                                     Clases
-                                </NavLink>
-                                <NavLink
-                                    href={route("clientes.index")}
-                                    active={route().current("clases.index")}
-                                >
-                                    Clientes
                                 </NavLink>
                             </div>
                         </div>
@@ -150,10 +151,32 @@ export default function AuthenticatedLayout({ header, children }) {
                 >
                     <div className="space-y-1 pb-3 pt-2">
                         <ResponsiveNavLink
-                            href={route("dashboard")}
-                            active={route().current("dashboard")}
+                            href={route('welcome')}
+                            active={route().current('welcome')}
                         >
-                            Dashboard
+                            Inicio
+                        </ResponsiveNavLink>
+                        {hasRole("superusuario") && (
+                            <ResponsiveNavLink
+                                href={route("entrenadores.index")}
+                                active={route().current("entrenadores.index")}
+                            >
+                                Entrenadores
+                            </ResponsiveNavLink>
+                        )}
+                        {hasRole("superusuario") && (
+                            <ResponsiveNavLink
+                                href={route("clientes.index")}
+                                active={route().current("clientes.index")}
+                            >
+                                Clientes
+                            </ResponsiveNavLink>
+                        )}
+                        <ResponsiveNavLink
+                            href={route("clases.index")}
+                            active={route().current("clases.index")}
+                        >
+                            Clases
                         </ResponsiveNavLink>
                     </div>
 
@@ -191,7 +214,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 </header>
             )}
 
-            <main>{children}</main>
+            <main className="flex-1">{children}</main>
+
         </div>
     );
 }
