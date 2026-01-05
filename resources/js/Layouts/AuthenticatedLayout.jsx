@@ -7,7 +7,7 @@ import { usaRoleUser } from "@/Hooks/usaRoleUser";
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
-    const { hasRole } = usaRoleUser();
+    const { hasRole, hasAnyRole } = usaRoleUser();
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
@@ -52,6 +52,32 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Clases
                                 </NavLink>
+                                <NavLink
+                                    href={route("guias.index")}
+                                    active={route().current("guias.index")}
+                                >
+                                    Guías
+                                </NavLink>
+                                {hasAnyRole(['entrenador', 'superusuario']) && (
+                                    <NavLink
+                                        href={route("ejercicios.index")}
+                                        active={route().current("ejercicios.index")}
+                                    >
+                                        Ejercicios
+                                    </NavLink>
+                                )}
+                                <NavLink
+                                    href={route("clientes.index")}
+                                    active={route().current("clases.index")}
+                                >
+                                    Clientes
+                                </NavLink>
+                                <NavLink
+                                    href={route("maquinas.index")}
+                                    active={route().current("maquinas.index")}
+                                >
+                                    Máquinas
+                                </NavLink>
                             </div>
                         </div>
 
@@ -84,9 +110,9 @@ export default function AuthenticatedLayout({ header, children }) {
 
                                     <Dropdown.Content>
                                         <Dropdown.Link
-                                            href={route("profile.edit")}
+                                            href={route("profile.show")}
                                         >
-                                            Profile
+                                            Perfil
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route("logout")}

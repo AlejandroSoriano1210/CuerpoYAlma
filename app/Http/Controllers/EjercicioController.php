@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ejercicio;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class EjercicioController extends Controller
 {
@@ -12,7 +13,10 @@ class EjercicioController extends Controller
      */
     public function index()
     {
-        //
+        $ejercicios = Ejercicio::orderBy('nombre')->paginate(15);
+        return Inertia::render('Ejercicios/Index', [
+            'ejercicios' => $ejercicios,
+        ]);
     }
 
     /**
@@ -20,7 +24,7 @@ class EjercicioController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Ejercicios/Create');
     }
 
     /**
@@ -28,7 +32,15 @@ class EjercicioController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'musculo_objetivo' => 'nullable|string|max:255',
+        ]);
+
+        $ejercicio = Ejercicio::create($validated);
+
+        return redirect()->route('ejercicios.show', $ejercicio)->with('success', 'Ejercicio creado correctamente.');
     }
 
     /**
@@ -36,7 +48,9 @@ class EjercicioController extends Controller
      */
     public function show(Ejercicio $ejercicio)
     {
-        //
+        return Inertia::render('Ejercicios/Show', [
+            'ejercicio' => $ejercicio,
+        ]);
     }
 
     /**
@@ -44,7 +58,9 @@ class EjercicioController extends Controller
      */
     public function edit(Ejercicio $ejercicio)
     {
-        //
+        return Inertia::render('Ejercicios/Edit', [
+            'ejercicio' => $ejercicio,
+        ]);
     }
 
     /**
@@ -52,7 +68,15 @@ class EjercicioController extends Controller
      */
     public function update(Request $request, Ejercicio $ejercicio)
     {
-        //
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'musculo_objetivo' => 'nullable|string|max:255',
+        ]);
+
+        $ejercicio->update($validated);
+
+        return redirect()->route('ejercicios.show', $ejercicio)->with('success', 'Ejercicio actualizado correctamente.');
     }
 
     /**
@@ -60,6 +84,7 @@ class EjercicioController extends Controller
      */
     public function destroy(Ejercicio $ejercicio)
     {
-        //
+        $ejercicio->delete();
+        return redirect()->route('ejercicios.index')->with('success', 'Ejercicio eliminado.');
     }
 }

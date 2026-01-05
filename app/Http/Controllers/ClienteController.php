@@ -64,6 +64,7 @@ class ClienteController extends Controller
                 'id' => $cliente->id,
                 'name' => $cliente->name,
                 'email' => $cliente->email,
+                'telefono' => $cliente->telefono,
                 'created_at' => $cliente->created_at,
                 'updated_at' => $cliente->updated_at,
                 'clasesReservadas' => $cliente->clasesReservadas->map(function ($clase) {
@@ -87,7 +88,12 @@ class ClienteController extends Controller
         }
 
         return Inertia::render('Clientes/Edit', [
-            'cliente' => $cliente,
+            'cliente' => [
+                'id' => $cliente->id,
+                'name' => $cliente->name,
+                'email' => $cliente->email,
+                'telefono' => $cliente->telefono,
+            ],
         ]);
     }
 
@@ -100,6 +106,7 @@ class ClienteController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $cliente->id,
+            'telefono' => 'nullable|string|max:50',
         ]);
 
         $cliente->update($validated);

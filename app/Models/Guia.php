@@ -13,6 +13,7 @@ class Guia extends Model
     protected $fillable = [
         'titulo',
         'contenido',
+        'nivel',
     ];
 
     public function guiaEjercicio()
@@ -22,6 +23,8 @@ class Guia extends Model
 
     public function ejercicios()
     {
-        return $this->belongsToMany(Ejercicio::class, 'guia_ejercicios');
+        return $this->belongsToMany(Ejercicio::class, 'guia_ejercicios')
+            ->withPivot(['id', 'series', 'repeticiones', 'instrucciones', 'orden'])
+            ->withTimestamps();
     }
 }

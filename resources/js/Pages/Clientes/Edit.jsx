@@ -7,6 +7,7 @@ export default function ClientesEdit({ cliente }) {
     const { data, setData, patch, errors, processing } = useForm({
         name: cliente.name,
         email: cliente.email,
+        telefono: cliente.telefono || '',
     });
 
     const handleSubmit = (e) => {
@@ -71,6 +72,25 @@ export default function ClientesEdit({ cliente }) {
                                 />
                                 {errors.email && (
                                     <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                                )}
+                            </div>
+
+                            {/* Teléfono */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Teléfono
+                                </label>
+                                <input
+                                    type="text"
+                                    value={data.telefono}
+                                    onChange={(e) => setData('telefono', e.target.value)}
+                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                        errors.telefono ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="+34 600 000 000"
+                                />
+                                {errors.telefono && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>
                                 )}
                             </div>
 
