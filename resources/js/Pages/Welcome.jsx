@@ -9,7 +9,7 @@ import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 
 export default function Welcome({ auth }) {
     const user = usePage().props.auth?.user;
-    const { hasRole } = usaRoleUser();
+    const { hasRole, hasAnyRole } = usaRoleUser();
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         React.useState(false);
 
@@ -51,14 +51,32 @@ export default function Welcome({ auth }) {
                                             Clientes
                                         </NavLink>
                                     )}
-                                    {hasRole("cliente") && (
+                                    <NavLink
+                                        href={route("clases.index")}
+                                        active={route().current("clases.index")}
+                                    >
+                                        Clases
+                                    </NavLink>
+                                    <NavLink
+                                        href={route("guias.index")}
+                                        active={route().current("guias.index")}
+                                    >
+                                        Guías
+                                    </NavLink>
+                                    {hasAnyRole(['entrenador', 'superusuario']) && (
                                         <NavLink
-                                            href={route("clases.index")}
-                                            active={route().current("clases.index")}
+                                            href={route("ejercicios.index")}
+                                            active={route().current("ejercicios.index")}
                                         >
-                                            Clases
+                                            Ejercicios
                                         </NavLink>
                                     )}
+                                    <NavLink
+                                        href={route("maquinas.index")}
+                                        active={route().current("maquinas.index")}
+                                    >
+                                        Máquinas
+                                    </NavLink>
                                 </div>
                             </div>
 
@@ -283,7 +301,7 @@ export default function Welcome({ auth }) {
                             title="Ejercicios"
                             description="Guías preparadas para ejercitar desde casa"
                             icon={<BookOpen size={40} />}
-                            route="ejercicios"
+                            route="guias"
                         />
 
                         <Card

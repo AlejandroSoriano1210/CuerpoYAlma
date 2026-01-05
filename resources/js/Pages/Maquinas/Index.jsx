@@ -5,7 +5,7 @@ import { usaRoleUser } from '@/Hooks/usaRoleUser';
 
 export default function Index() {
     const { maquinas, flash } = usePage().props;
-    const { hasAnyRole } = usaRoleUser();
+    const { hasRole, hasAnyRole } = usaRoleUser();
     const [loadingEstado, setLoadingEstado] = useState({ id: null, estado: null });
 
     const handleChangeEstado = (maquina, nuevoEstado) => {
@@ -38,9 +38,11 @@ export default function Index() {
                     <div className="mb-6 flex justify-between items-center">
                         <h1 className="text-3xl font-bold text-gray-900">Máquinas</h1>
 
-                        <Link href={route('maquinas.create')} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            + Crear Máquina
-                        </Link>
+                        {hasAnyRole(['superusuario', 'entrenador']) &&
+                            <Link href={route('maquinas.create')} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                + Crear Máquina
+                            </Link>
+                        }
                     </div>
 
                     {flash?.success && (
@@ -68,10 +70,12 @@ export default function Index() {
 
                                         <div className="flex flex-col items-end gap-2">
                                             <div className="flex items-center gap-2">
-                                                <Link href={route('maquinas.edit', m.id)} className="text-yellow-600 hover:text-yellow-800">Editar</Link>
+                                                {hasAnyRole(['superusuario', 'entrenador']) &&
+                                                    <Link href={route('maquinas.edit', m.id)} className="text-yellow-600 hover:text-yellow-800">Editar</Link>
+                                                }
                                             </div>
 
-                                            {hasAnyRole(['superusuario','entrenador']) && (
+                                            {hasAnyRole(['superusuario', 'entrenador']) && (
                                                 <div className="flex items-center gap-2 mt-2">
                                                     {/* Botón mantenimiento / operativa */}
                                                     <button

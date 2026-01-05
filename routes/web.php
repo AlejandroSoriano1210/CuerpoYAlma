@@ -61,7 +61,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/ejercicios/{ejercicio}', [EjercicioController::class, 'destroy'])->name('ejercicios.destroy');
 
         // CRUD de maquinas (solo para entrenadores y superusuario)
-        Route::get('/maquinas', [MaquinaController::class, 'index'])->name('maquinas.index');
         Route::get('/maquinas/crear', [MaquinaController::class, 'create'])->name('maquinas.create');
         Route::post('/maquinas', [MaquinaController::class, 'store'])->name('maquinas.store');
         Route::get('/maquinas/{maquina}/editar', [MaquinaController::class, 'edit'])->name('maquinas.edit');
@@ -73,6 +72,9 @@ Route::middleware('auth')->group(function () {
 
     // Mostrar un ejercicio (accesible a usuarios autenticados)
     Route::get('/ejercicios/{ejercicio}', [EjercicioController::class, 'show'])->name('ejercicios.show');
+
+    // Listado de máquinas (accesible a usuarios autenticados)
+    Route::get('/maquinas', [MaquinaController::class, 'index'])->name('maquinas.index');
 
     // Mostrar una maquina (accesible a usuarios autenticados)
     Route::get('/maquinas/{maquina}', [MaquinaController::class, 'show'])->name('maquinas.show');

@@ -1,9 +1,11 @@
 import React from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { usaRoleUser } from '@/Hooks/usaRoleUser';
 
 export default function Show({ maquina }) {
     const { flash } = usePage().props;
+    const { hasAnyRole } = usaRoleUser();
 
     return (
         <AuthenticatedLayout>
@@ -27,7 +29,10 @@ export default function Show({ maquina }) {
                         {maquina.descripcion ? <p className="text-gray-700">{maquina.descripcion}</p> : <p className="text-gray-500">Sin descripción.</p>}
 
                         <div className="mt-4">
+                            {hasAnyRole(['superusuario', 'entrenador']) &&
+
                             <Link href={route('maquinas.edit', maquina.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Editar</Link>
+                            }
                         </div>
                     </div>
                 </div>
