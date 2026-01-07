@@ -6,6 +6,7 @@ import { Dumbbell, Users, BookOpen } from "lucide-react";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
 import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
+import NotificationsBell from "@/Components/NotificationsBell";
 
 export default function Welcome({ auth }) {
     const user = usePage().props.auth?.user;
@@ -82,47 +83,51 @@ export default function Welcome({ auth }) {
 
                             <div className="hidden sm:ms-6 sm:flex sm:items-center">
                                 {user ? (
-                                    <div className="relative ms-3">
-                                        <Dropdown>
-                                            <Dropdown.Trigger>
-                                                <span className="inline-flex rounded-md">
-                                                    <button
-                                                        type="button"
-                                                        className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
-                                                    >
-                                                        {user.name}
+                                    <>
+                                        <NotificationsBell />
 
-                                                        <svg
-                                                            className="-me-0.5 ms-2 h-4 w-4"
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            viewBox="0 0 20 20"
-                                                            fill="currentColor"
+                                        <div className="relative ms-3">
+                                            <Dropdown>
+                                                <Dropdown.Trigger>
+                                                    <span className="inline-flex rounded-md">
+                                                        <button
+                                                            type="button"
+                                                            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700"
                                                         >
-                                                            <path
-                                                                fillRule="evenodd"
-                                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                                clipRule="evenodd"
-                                                            />
-                                                        </svg>
-                                                    </button>
-                                                </span>
-                                            </Dropdown.Trigger>
+                                                            {user.name}
 
-                                            <Dropdown.Content>
-                                                <Dropdown.Link href={route("profile.edit")}>
-                                                    Perfil
-                                                </Dropdown.Link>
+                                                            <svg
+                                                                className="-me-0.5 ms-2 h-4 w-4"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                viewBox="0 0 20 20"
+                                                                fill="currentColor"
+                                                            >
+                                                                <path
+                                                                    fillRule="evenodd"
+                                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                                    clipRule="evenodd"
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    </span>
+                                                </Dropdown.Trigger>
 
-                                                <Dropdown.Link
-                                                    href={route("logout")}
-                                                    method="post"
-                                                    as="button"
-                                                >
-                                                    Cerrar sesión
-                                                </Dropdown.Link>
-                                            </Dropdown.Content>
-                                        </Dropdown>
-                                    </div>
+                                                <Dropdown.Content>
+                                                    <Dropdown.Link href={route("profile.edit")}>
+                                                        Perfil
+                                                    </Dropdown.Link>
+
+                                                    <Dropdown.Link
+                                                        href={route("logout")}
+                                                        method="post"
+                                                        as="button"
+                                                    >
+                                                        Cerrar sesión
+                                                    </Dropdown.Link>
+                                                </Dropdown.Content>
+                                            </Dropdown>
+                                        </div>
+                                    </>
                                 ) : (
                                     <div className="flex gap-4">
                                         <Link
@@ -234,6 +239,10 @@ export default function Welcome({ auth }) {
                                 </div>
 
                                 <div className="mt-3 space-y-1">
+                                    <ResponsiveNavLink href={route("notifications.index")}>
+                                        Notificaciones
+                                    </ResponsiveNavLink>
+
                                     <ResponsiveNavLink href={route("profile.edit")}>
                                         Perfil
                                     </ResponsiveNavLink>
@@ -297,7 +306,7 @@ export default function Welcome({ auth }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <Card
-                            auth={auth.user}
+                            auth={auth.user}NotificationsBell
                             title="Ejercicios"
                             description="Guías preparadas para ejercitar desde casa"
                             icon={<BookOpen size={40} />}

@@ -47,13 +47,13 @@ export default function NotificationsBell() {
                     </div>
                 </Dropdown.Trigger>
 
-                <Dropdown.Content align="right" width="64" contentClasses="py-1 bg-white">
-                    <div className="p-2">
+                <Dropdown.Content align="right" width="80" contentClasses="py-3 bg-white">
+                    <div className="p-4 max-h-96 overflow-y-auto">
                         {notifications.length === 0 && (
                             <div className="text-sm text-gray-500">No hay notificaciones</div>
                         )}
                         {notifications.map((n) => (
-                            <div key={n.id} className="flex items-start justify-between gap-2 px-2 py-2 hover:bg-gray-50 rounded">
+                            <div key={n.id} className="flex items-start justify-between gap-2 px-3 py-3 hover:bg-gray-50 rounded">
                                 <div>
                                     <div className="text-sm text-gray-800">{n.data.message}</div>
                                     <div className="text-xs text-gray-500">{new Date(n.created_at).toLocaleString()}</div>
@@ -63,12 +63,12 @@ export default function NotificationsBell() {
                                     {!n.read_at ? (
                                         <button
                                             onClick={() => markAsRead(n.id)}
-                                            className="text-xs text-blue-600 hover:underline"
+                                            className="text-sm text-blue-600 hover:underline"
                                         >
                                             Marcar como leído
                                         </button>
                                     ) : (
-                                        <span className="text-xs text-gray-400">Leído</span>
+                                        <span className="text-sm text-gray-400">Leído</span>
                                     )}
                                 </div>
                             </div>
