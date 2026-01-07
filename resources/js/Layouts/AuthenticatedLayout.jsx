@@ -1,6 +1,7 @@
 import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
+import NotificationsBell from "@/Components/NotificationsBell";
 import { Link, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
@@ -76,6 +77,8 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
+                            <NotificationsBell />
+
                             <div className="relative ms-3">
                                 <Dropdown>
                                     <Dropdown.Trigger>

@@ -21,6 +21,8 @@ class HorarioClaseFactory extends Factory
         return [
             'clase_id' => Clase::factory(),
             'user_id' => User::factory(),
+            'nombre' => fake()->words(2, true),
+            'capacidad' => 10,
             'fecha' => now()->addDays(fake()->numberBetween(1, 30)),
             'hora_inicio' => '09:00:00',
             'hora_fin' => '10:00:00',
