@@ -100,7 +100,8 @@ class EntrenadorController extends Controller
                         'hora_inicio' => substr($clase->hora_inicio, 0, 5),
                         'hora_fin' => substr($clase->hora_fin, 0, 5),
                         'capacidad' => $clase->capacidad,
-                        'inscritos' => $clase->clientes()->count(),
+                        // Contar solo reservas no canceladas
+                        'inscritos' => $clase->clientes()->wherePivot('estado', '!=', 'cancelado')->count(),
                     ];
                 }),
             ],
@@ -175,7 +176,7 @@ class EntrenadorController extends Controller
     {
         $user = $request->user();
 
-        $clases = $user->clasesCreadas()
+        $clases = $user->horariosClases()
             ->with('clientes')
             ->get();
 

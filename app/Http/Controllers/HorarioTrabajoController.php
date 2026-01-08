@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class EntrenadorController extends Controller
+class HorarioTrabajoController extends Controller
 {
     // Listar entrenadores
     public function index()
@@ -25,43 +25,30 @@ class EntrenadorController extends Controller
         return Inertia::render('Entrenadores/Create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, User $entrenador)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-            'horarios' => 'nullable|array'
+            'semanal' => 'required|array',
+            'semanal.*' => 'array',
+            'semanal.*.*.hora_inicio' => 'required|date_format:H:i',
+            'semanal.*.*.hora_fin' => 'required|date_format:H:i',
         ]);
 
-        try {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => bcrypt($validated['password']),
-            ]);
+        // Borrar horarios previos del entrenador y crear los nuevos
+        HorarioTrabajo::where('user_id', $entrenador->id)->delete();
 
-            $user->assignRole('entrenador');
-
-            if (!empty($validated['horarios'])) {
-                foreach ($validated['horarios'] as $horario) {
-                    HorarioTrabajo::create([
-                        'user_id' => $user->id,
-                        'dia_semana' => $horario['dia_semana'],
-                        'hora_inicio' => $horario['hora_inicio'],
-                        'hora_fin' => $horario['hora_fin'],
-                    ]);
-                }
+        foreach ($validated['semanal'] as $dia => $bloques) {
+            foreach ($bloques as $bloque) {
+                HorarioTrabajo::create([
+                    'user_id' => $entrenador->id,
+                    'dia_semana' => $dia,
+                    'hora_inicio' => $bloque['hora_inicio'],
+                    'hora_fin' => $bloque['hora_fin'],
+                ]);
             }
-
-            return redirect()
-                ->route('entrenadores.index')
-                ->with('success', 'Entrenador creado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withErrors(['error' => 'Error al crear el entrenador.']);
         }
+
+        return response()->json(['status' => 'ok']);
     }
 
     public function show(User $entrenador)
@@ -82,7 +69,12 @@ class EntrenadorController extends Controller
                         'hora_fin' => substr($bloque->hora_fin, 0, 5),
                     ];
                 })->values();
-            });
+            })->toArray();
+
+        // If client requested JSON, return a JSON structure suitable for the API tests
+        if (request()->wantsJson()) {
+            return response()->json(['semanal' => $horariosPorDia]);
+        }
 
         return Inertia::render('Entrenadores/Show', [
             'entrenador' => [
@@ -100,7 +92,8 @@ class EntrenadorController extends Controller
                         'hora_inicio' => substr($clase->hora_inicio, 0, 5),
                         'hora_fin' => substr($clase->hora_fin, 0, 5),
                         'capacidad' => $clase->capacidad,
-                        'inscritos' => $clase->clientes()->count(),
+                        // Contar solo reservas no canceladas
+                        'inscritos' => $clase->clientes()->wherePivot('estado', '!=', 'cancelado')->count(),
                     ];
                 }),
             ],
@@ -154,7 +147,7 @@ class EntrenadorController extends Controller
     {
         $user = $request->user();
 
-        $clases = $user->clasesCreadas()
+        $clases = $user->horariosClases()
             ->with('clientes')
             ->get();
 

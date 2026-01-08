@@ -29,6 +29,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Notifications
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/clases', [HorarioClaseController::class, 'index'])->name('clases.index');
     Route::middleware('role:superusuario|entrenador')->group(function () {
@@ -41,6 +47,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/clases/{horarioClase}', [HorarioClaseController::class, 'show'])->name('clases.show');
     Route::post('/reservas', [ReservaClaseController::class, 'store'])->name('reservas.store');
     Route::patch('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar'])->name('reservas.cancelar');
+    // Allow POST for legacy tests/clients that use form POST to cancel
+    Route::post('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar']);
 
     // Guias de ejercicios
     Route::get('/guias', [GuiaController::class, 'index'])->name('guias.index');

@@ -33,6 +33,11 @@ class HorarioClase extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function clase()
+    {
+        return $this->belongsTo(Clase::class, 'clase_id');
+    }
+
     public function clientes()
     {
         return $this->belongsToMany(User::class, 'horario_clase_user')

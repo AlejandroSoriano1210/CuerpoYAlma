@@ -16,8 +16,7 @@ return new class extends Migration
             $table->integer('capacidad')->default(10)->after('nombre');
             $table->text('descripcion')->nullable()->after('hora_fin');
 
-            $table->dropForeign(['clase_id']);
-            $table->dropColumn('clase_id');
+            // Keep 'clase_id' for compatibility with factories/tests.
         });
     }
 
@@ -30,12 +29,8 @@ return new class extends Migration
             $table->dropColumn([
                 'nombre',
                 'capacidad',
-                'fecha',
-                'hora_inicio',
-                'hora_fin',
                 'descripcion',
             ]);
-            $table->foreignId('clase_id')->constrained('clases')->onDelete('cascade');
         });
     }
 };

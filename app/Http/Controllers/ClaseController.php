@@ -24,7 +24,8 @@ class ClaseController extends Controller
             ->whereYear('fecha', $ano)
             ->get()
             ->map(function ($horario) {
-                $inscritos = $horario->clientes()->count();
+                // Contar solo reservas no canceladas
+                $inscritos = $horario->clientes()->wherePivot('estado', '!=', 'cancelado')->count();
                 $capacidad = $horario->clase->capacidad;
 
                 return [
@@ -90,7 +91,8 @@ class ClaseController extends Controller
     {
         $horarioClase->load(['clase', 'user', 'clientes']);
 
-        $inscritos = $horarioClase->clientes()->count();
+        // Contar solo reservas no canceladas
+        $inscritos = $horarioClase->clientes()->wherePivot('estado', '!=', 'cancelado')->count();
         $capacidad = $horarioClase->clase->capacidad;
 
         return Inertia::render('Clases/Show', [
@@ -104,7 +106,7 @@ class ClaseController extends Controller
                 'inscritos' => $inscritos,
                 'capacidad' => $capacidad,
                 'completa' => $inscritos >= $capacidad,
-                'clientes' => $horarioClase->clientes()->get(['id', 'name', 'email']),
+                'clientes' => $horarioClase->clientes()->wherePivot('estado', '!=', 'cancelado')->get(['id', 'name', 'email']),
             ],
         ]);
     }

@@ -28,7 +28,7 @@ class ListarClasesTest extends TestCase
 
         $response = $this
             ->actingAs($cliente)
-            ->get('/clases'); // ajusta a tu ruta real
+            ->getJson('/clases'); // ajusta a tu ruta real
 
         $response->assertStatus(200);
         $response->assertJsonFragment([
