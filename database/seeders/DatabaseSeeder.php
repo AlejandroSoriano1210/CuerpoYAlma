@@ -23,5 +23,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(RoleSeeder::class);
+
+        // Crear clientes de ejemplo
+        $this->call(ClienteSeeder::class);
     }
 }

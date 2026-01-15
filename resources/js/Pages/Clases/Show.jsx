@@ -5,8 +5,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 export default function ClasesShow({ horario }) {
     const { auth } = usePage().props;
     const [isReservando, setIsReservando] = useState(false);
+    const [isCancelando, setIsCancelando] = useState(false);
 
-    const yaInscrito = horario.clientes?.some(c => c.id === auth.user.id);
+    // preferimos usar el flag 'reservado' enviado por el controlador (considera reservas pendientes)
+    const yaInscrito = horario.reservado === true;
 
     const handleReserva = () => {
         if (confirm('¿Deseas reservar un lugar en esta clase?')) {
@@ -24,6 +26,25 @@ export default function ClasesShow({ horario }) {
                     },
                 }
             );
+        }
+    };
+
+    const handleCancelarReserva = () => {
+        if (!horario.reserva_id) {
+            alert('Reserva no encontrada.');
+            return;
+        }
+
+        if (confirm('¿Deseas cancelar tu reserva en esta clase?')) {
+            setIsCancelando(true);
+
+            router.patch(route('reservas.cancelar', horario.reserva_id), {}, {
+                onSuccess: () => setIsCancelando(false),
+                onError: () => {
+                    setIsCancelando(false);
+                    alert('Error al cancelar la reserva');
+                },
+            });
         }
     };
 
@@ -98,8 +119,18 @@ export default function ClasesShow({ horario }) {
                         )}
 
                         {yaInscrito && (
-                            <div className="w-full bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded text-lg font-bold text-center">
-                                ✓ Ya estás inscrito en esta clase
+                            <div className="space-y-2">
+                                <div className="w-full bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded text-lg font-bold text-center">
+                                    ✓ Ya estás inscrito en esta clase
+                                </div>
+
+                                <button
+                                    onClick={handleCancelarReserva}
+                                    disabled={isCancelando}
+                                    className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded text-lg"
+                                >
+                                    {isCancelando ? 'Cancelando...' : 'Cancelar Reserva'}
+                                </button>
                             </div>
                         )}
 
