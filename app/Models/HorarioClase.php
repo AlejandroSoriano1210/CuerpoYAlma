@@ -46,6 +46,11 @@ class HorarioClase extends Model
             ->withTimestamps();
     }
 
+    public function listaEspera()
+    {
+        return $this->hasMany(ListaEsperaClase::class);
+    }
+
     /**
      * Elimina clases cuya fecha asignada ya pasó.
      * Devuelve el número de filas eliminadas.

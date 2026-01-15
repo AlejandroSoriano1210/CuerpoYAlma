@@ -50,6 +50,16 @@ Route::middleware('auth')->group(function () {
     // Allow POST for legacy tests/clients that use form POST to cancel
     Route::post('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar']);
 
+    // Lista de espera
+    Route::patch('/lista-espera/{listaEspera}/cancelar', [ReservaClaseController::class, 'cancelarListaEspera'])->name('lista-espera.cancelar');
+    Route::post('/lista-espera/{listaEspera}/cancelar', [ReservaClaseController::class, 'cancelarListaEspera']);
+
+    // Promover de lista de espera (solo entrenadores)
+    Route::middleware('role:entrenador|superusuario')->group(function () {
+        Route::patch('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera'])->name('lista-espera.promover');
+        Route::post('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera']);
+    });
+
     // Guias de ejercicios
     Route::get('/guias', [GuiaController::class, 'index'])->name('guias.index');
 
