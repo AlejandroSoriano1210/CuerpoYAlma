@@ -17,7 +17,9 @@ class EjercicioFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'nombre' => $this->faker->words(2, true),
+            'descripcion' => $this->faker->paragraph(),
+            'musculo_objetivo' => $this->faker->randomElement(['Pecho', 'Espalda', 'Piernas', 'Brazos', 'Hombros', 'Abdomen']),
         ];
     }
 }
