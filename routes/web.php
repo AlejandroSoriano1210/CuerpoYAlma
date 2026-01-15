@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EntrenadorController;
+use App\Http\Controllers\EntrenadorPanelController;
 use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
 use App\Http\Controllers\ProfileController;
@@ -99,6 +100,13 @@ Route::middleware('auth')->group(function () {
 
     // Mostrar una guía (rutas con parámetros al final para evitar conflicto)
     Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
+});
+
+Route::middleware(['auth', 'role:entrenador|superusuario'])->group(function () {
+    Route::get('/panel/clases', [EntrenadorPanelController::class, 'index'])->name('panel.clases.index');
+    Route::get('/panel/clases/{horarioClase}', [EntrenadorPanelController::class, 'show'])->name('panel.clases.show');
+    Route::patch('/panel/clases/{horarioClase}/promover/{listaEspera}', [EntrenadorPanelController::class, 'promover'])->name('panel.promover');
+    Route::delete('/panel/clases/{horarioClase}/lista/{listaEspera}', [EntrenadorPanelController::class, 'removerDelista'])->name('panel.remover-lista');
 });
 
 Route::middleware(['auth', 'role:entrenador'])->group(function () {
