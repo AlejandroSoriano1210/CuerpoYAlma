@@ -29,6 +29,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
         return clase.reservado === true;
     };
 
+    const enListaEspera = (clase) => {
+        return clase.en_lista_espera === true;
+    };
+
     const handleReserva = (clase) => {
         if (confirm('¿Deseas reservar un lugar en esta clase?')) {
             setIsReservando(clase.id);
@@ -70,6 +74,32 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
                     onError: () => {
                         setIsCancelando(null);
                         alert('Error al cancelar la reserva');
+                    },
+                }
+            );
+        }
+    };
+
+    const handleCancelarListaEspera = (clase) => {
+        if (!clase.lista_espera_id) {
+            alert('No estás en la lista de espera.');
+            return;
+        }
+
+        if (confirm('¿Deseas cancelar tu lugar en la lista de espera?')) {
+            setIsCancelando(clase.lista_espera_id);
+
+            router.patch(
+                route('lista-espera.cancelar', clase.lista_espera_id),
+                {},
+                {
+                    onSuccess: () => {
+                        setIsCancelando(null);
+                        router.reload();
+                    },
+                    onError: () => {
+                        setIsCancelando(null);
+                        alert('Error al cancelar');
                     },
                 }
             );
@@ -192,8 +222,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
                                                     Ver Detalles
                                                 </Link>
 
-                                                {/* Botón de reserva - visible para clientes */}
-                                                {!clase.completa && !yaInscrito(clase) && (
+                                                {/* Botón de reserva - para clases con espacios disponibles */}
+                                                {!clase.completa && !yaInscrito(clase) && !enListaEspera(clase) && (
                                                     <button
                                                         onClick={() => handleReserva(clase)}
                                                         disabled={isReservando === clase.id}
@@ -216,9 +246,30 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre }) {
                                                     </button>
                                                 )}
 
-                                                {clase.completa && !yaInscrito(clase) && (
-                                                    <div className="bg-red-200 text-red-800 px-4 py-2 rounded text-center text-sm font-bold">
-                                                        Completa
+                                                {/* Botón de lista de espera - para clases completas sin reserva */}
+                                                {clase.completa && !yaInscrito(clase) && !enListaEspera(clase) && (
+                                                    <button
+                                                        onClick={() => handleReserva(clase)}
+                                                        disabled={isReservando === clase.id}
+                                                        className="block w-full bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                    >
+                                                        {isReservando === clase.id ? 'Procesando...' : '⏳ Lista de Espera'}
+                                                    </button>
+                                                )}
+
+                                                {/* Botón cancelar de lista de espera */}
+                                                {enListaEspera(clase) && !yaInscrito(clase) && (
+                                                    <div className="space-y-1">
+                                                        <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded text-center text-xs font-bold">
+                                                            ⏳ Pos. {clase.posicion_lista_espera}/{clase.lista_espera_count}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleCancelarListaEspera(clase)}
+                                                            disabled={isCancelando === clase.lista_espera_id}
+                                                            className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                        >
+                                                            {isCancelando === clase.lista_espera_id ? 'Cancelando...' : 'Cancelar Lista'}
+                                                        </button>
                                                     </div>
                                                 )}
 
