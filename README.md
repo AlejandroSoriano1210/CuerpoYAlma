@@ -57,3 +57,16 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
+
+## Project notes ⚠️
+
+- Si actualizas el repositorio y ves errores relacionados con migraciones (migraciones rename/add/update que fueron consolidadas), ejecuta:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+  Esto reiniciará la base de datos local y aplicará las migraciones consolidadas.
+
