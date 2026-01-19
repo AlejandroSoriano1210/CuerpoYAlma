@@ -47,6 +47,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Clientes
                                     </NavLink>
                                 )}
+                                {hasRole("cliente") && (
+                                    <NavLink
+                                        href={route("dashboard")}
+                                        active={route().current("dashboard")}
+                                    >
+                                        Mi Dashboard
+                                    </NavLink>
+                                )}
                                 <NavLink
                                     href={route("clases.index")}
                                     active={route().current("clases.index")}
@@ -201,6 +209,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 active={route().current("clientes.index")}
                             >
                                 Clientes
+                            </ResponsiveNavLink>
+                        )}
+                        {hasRole("cliente") && (
+                            <ResponsiveNavLink
+                                href={route("dashboard")}
+                                active={route().current("dashboard")}
+                            >
+                                Mi Dashboard
                             </ResponsiveNavLink>
                         )}
                         <ResponsiveNavLink

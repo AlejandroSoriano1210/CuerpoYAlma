@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ClienteDashboardController;
 use App\Http\Controllers\EntrenadorController;
 use App\Http\Controllers\EntrenadorPanelController;
 use App\Http\Controllers\HorarioClaseController;
@@ -28,6 +29,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/editar', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Dashboard Cliente (solo para clientes)
+Route::middleware(['auth', 'role:cliente'])->group(function () {
+    Route::get('/dashboard', [ClienteDashboardController::class, 'index'])->name('dashboard');
 });
 
 // Notifications
