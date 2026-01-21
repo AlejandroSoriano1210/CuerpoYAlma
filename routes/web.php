@@ -69,8 +69,12 @@ Route::middleware('auth')->group(function () {
 
     // Guias de ejercicios
     Route::get('/guias', [GuiaController::class, 'index'])->name('guias.index');
+    Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
+    Route::post('/guias/{guia}/assign', [GuiaController::class, 'assign'])->name('guias.assign');
+    Route::delete('/guias/{guia}/unassign', [GuiaController::class, 'unassign'])->name('guias.unassign');
 
     Route::middleware('role:superusuario|entrenador')->group(function () {
+        Route::post('/guias/{guia}/assign-to-client', [GuiaController::class, 'assignToClient'])->name('guias.assign-to-client');
         Route::get('/guias/crear', [GuiaController::class, 'create'])->name('guias.create');
         Route::post('/guias', [GuiaController::class, 'store'])->name('guias.store');
         Route::get('/guias/{guia}/editar', [GuiaController::class, 'edit'])->name('guias.edit');

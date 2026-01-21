@@ -11,12 +11,49 @@ class GuiaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $guias = Guia::orderBy('created_at', 'desc')->paginate(10);
+        $query = Guia::query();
+
+        // Filtro por nivel
+        if ($request->filled('nivel')) {
+            $query->where('nivel', $request->input('nivel'));
+        }
+
+        // Filtro por músculo objetivo
+        if ($request->filled('musculo_objetivo')) {
+            $musculo = $request->input('musculo_objetivo');
+            $query->whereHas('guiaEjercicio.ejercicio', function ($q) use ($musculo) {
+                $q->where('musculo_objetivo', $musculo);
+            });
+        }
+
+        $guias = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        // Obtener todos los músculos únicos disponibles
+        $musculos = \App\Models\Ejercicio::distinct()
+            ->pluck('musculo_objetivo')
+            ->filter()
+            ->sort()
+            ->values();
+
+        // Obtener IDs de las guías asignadas al usuario actual
+        $assignedGuiaIds = [];
+        if (auth()->check()) {
+            $assignedGuiaIds = \App\Models\GuiaView::where('user_id', auth()->id())
+                ->pluck('guia_id')
+                ->toArray();
+        }
 
         return Inertia::render('Guias/Index', [
             'guias' => $guias,
+            'niveles' => ['principiante', 'intermedio', 'avanzado'],
+            'musculos' => $musculos,
+            'assignedGuiaIds' => $assignedGuiaIds,
+            'filtrosActivos' => [
+                'nivel' => $request->input('nivel'),
+                'musculo_objetivo' => $request->input('musculo_objetivo'),
+            ],
         ]);
     }
 
@@ -75,16 +112,21 @@ class GuiaController extends Controller
     {
         $guia->load(['guiaEjercicio.ejercicio']);
 
-        // Registrar que el usuario ha utilizado / visto esta guía
+        // Obtener lista de clientes disponibles (usuarios con rol 'cliente')
+        $clientes = \App\Models\User::role('cliente')->get(['id', 'name', 'email']);
+
+        // Verificar si el usuario actual tiene asignada esta guía
+        $isAssigned = false;
         if (auth()->check()) {
-            \App\Models\GuiaView::firstOrCreate([
-                'user_id' => auth()->id(),
-                'guia_id' => $guia->id,
-            ]);
+            $isAssigned = \App\Models\GuiaView::where('user_id', auth()->id())
+                ->where('guia_id', $guia->id)
+                ->exists();
         }
 
         return Inertia::render('Guias/Show', [
             'guia' => $guia,
+            'clientes' => $clientes,
+            'isAssigned' => $isAssigned,
         ]);
     }
 
@@ -123,5 +165,69 @@ class GuiaController extends Controller
         $guia->delete();
 
         return redirect()->route('guias.index')->with('success', 'Guía eliminada correctamente.');
+    }
+
+    /**
+     * Assign a guide to a specific client (trainer only).
+     */
+    public function assignToClient(Request $request, Guia $guia)
+    {
+        // Validar que el usuario sea entrenador o superusuario
+        if (!auth()->user()->hasAnyRole(['entrenador', 'superusuario'])) {
+            return back()->with('error', 'No tienes permiso para asignar guías.');
+        }
+
+        $validated = $request->validate([
+            'client_id' => 'required|exists:users,id',
+        ]);
+
+        // Verificar que el usuario sea un cliente
+        $cliente = \App\Models\User::findOrFail($validated['client_id']);
+        if (!$cliente->hasRole('cliente')) {
+            return back()->with('error', 'El usuario seleccionado no es un cliente.');
+        }
+
+        // Crear o actualizar el registro en guia_views
+        \App\Models\GuiaView::firstOrCreate([
+            'user_id' => $cliente->id,
+            'guia_id' => $guia->id,
+        ]);
+
+        return back()->with('success', "Guía asignada a {$cliente->name} correctamente.");
+    }
+
+    /**
+     * Assign a guide to the authenticated user.
+     */
+    public function assign(Guia $guia)
+    {
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Debes iniciar sesión para asignar una guía.');
+        }
+
+        // Crear o actualizar el registro en guia_views
+        \App\Models\GuiaView::firstOrCreate([
+            'user_id' => auth()->id(),
+            'guia_id' => $guia->id,
+        ]);
+
+        return back()->with('success', 'Guía asignada correctamente. Ya aparecerá en tu dashboard.');
+    }
+
+    /**
+     * Unassign/complete a guide for the authenticated user.
+     */
+    public function unassign(Guia $guia)
+    {
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Debes iniciar sesión.');
+        }
+
+        // Eliminar el registro de guia_views
+        \App\Models\GuiaView::where('user_id', auth()->id())
+            ->where('guia_id', $guia->id)
+            ->delete();
+
+        return back()->with('success', 'Guía marcada como completada y eliminada de tu dashboard.');
     }
 }

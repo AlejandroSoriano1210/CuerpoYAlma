@@ -17,6 +17,25 @@ export default function Create({ niveles, ejercicios }) {
     const [repeticiones, setRepeticiones] = React.useState(10);
     const [instrucciones, setInstrucciones] = React.useState('');
 
+    // Al montar el componente, rellenar las instrucciones del primer ejercicio
+    React.useEffect(() => {
+        if (ejercicios && ejercicios.length > 0 && ejercicios[0]?.descripcion) {
+            setInstrucciones(ejercicios[0].descripcion);
+        }
+    }, []);
+
+    // Cuando cambia el ejercicio seleccionado, rellenar automáticamente las instrucciones con la descripción
+    const handleEjercicioChange = (e) => {
+        const id = e.target.value;
+        setSelectedEjercicio(id);
+        const ejercicio = ejercicios.find(ej => ej.id === Number(id));
+        if (ejercicio?.descripcion) {
+            setInstrucciones(ejercicio.descripcion);
+        } else {
+            setInstrucciones('');
+        }
+    };
+
     const addEjercicio = () => {
         if (!selectedEjercicio) return;
         const ejercicio = ejercicios.find(e => e.id === Number(selectedEjercicio));
@@ -109,7 +128,7 @@ export default function Create({ niveles, ejercicios }) {
                                 <h3 className="font-bold text-gray-900 mb-3">Ejercicios</h3>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                                    <select value={selectedEjercicio} onChange={(e) => setSelectedEjercicio(e.target.value)} className="w-full px-3 py-2 border rounded">
+                                    <select value={selectedEjercicio} onChange={handleEjercicioChange} className="w-full px-3 py-2 border rounded">
                                         {ejercicios.map((ej) => (
                                             <option key={ej.id} value={ej.id}>{ej.nombre}</option>
                                         ))}
