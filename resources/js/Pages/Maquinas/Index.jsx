@@ -4,9 +4,35 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 
 export default function Index() {
-    const { maquinas, flash } = usePage().props;
+    const { maquinas, flash, filtros } = usePage().props;
     const { hasRole, hasAnyRole } = usaRoleUser();
     const [loadingEstado, setLoadingEstado] = useState({ id: null, estado: null });
+    const [estado, setEstado] = useState(filtros?.estado || '');
+    const [zona, setZona] = useState(filtros?.zona || '');
+    const estadosDisponibles = filtros?.estados ?? ['operativa', 'mantenimiento', 'fuera_de_servicio'];
+
+    const aplicarFiltros = () => {
+        const params = {};
+        if (estado) params.estado = estado;
+        if (zona) params.zona = zona;
+        params.page = 1;
+
+        router.get(route('maquinas.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
+    const limpiarFiltros = () => {
+        setEstado('');
+        setZona('');
+        router.get(route('maquinas.index'), { page: 1 }, {
+            preserveState: false,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
 
     const handleChangeEstado = (maquina, nuevoEstado) => {
         if (!confirm(`¿Cambiar estado de "${maquina.nombre}" a "${nuevoEstado.replaceAll('_', ' ')}"?`)) return;
@@ -50,6 +76,50 @@ export default function Index() {
                             {flash.success}
                         </div>
                     )}
+
+                    <div className="bg-white rounded-lg shadow p-4 mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-3">Filtros</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Zona</label>
+                                <select
+                                    value={zona}
+                                    onChange={(e) => setZona(e.target.value)}
+                                    className="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option value="">Todas</option>
+                                    {filtros?.zonas?.map((z) => (
+                                        <option key={z} value={z}>{z}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                <select
+                                    value={estado}
+                                    onChange={(e) => setEstado(e.target.value)}
+                                    className="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option value="">Todos</option>
+                                    {estadosDisponibles.map((e) => (
+                                        <option key={e} value={e}>{e.replaceAll('_', ' ')}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-end gap-2">
+                                <button onClick={aplicarFiltros} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-3 rounded">Aplicar</button>
+                                <button
+                                    onClick={limpiarFiltros}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
+                                    disabled={!estado && !zona}
+                                >
+                                    Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <div className="space-y-4">
                         {maquinas?.data?.length > 0 ? (
