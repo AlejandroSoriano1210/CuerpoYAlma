@@ -129,6 +129,7 @@ class HorarioClaseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'clase_id' => 'required|exists:clases,id',
             'nombre' => 'required|string|max:255',
             'capacidad' => 'required|integer|min:1|max:50',
             'fecha' => 'required|date|after:today',
@@ -151,6 +152,7 @@ class HorarioClaseController extends Controller
 
         HorarioClase::create([
             'user_id' => $userId,
+            'clase_id' => $validated['clase_id'],
             'nombre' => $validated['nombre'],
             'capacidad' => $validated['capacidad'],
             'fecha' => $validated['fecha'],
