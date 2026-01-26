@@ -58,14 +58,6 @@ export default function Welcome({ auth }) {
                                     >
                                         Clases
                                     </NavLink>
-                                    {hasAnyRole(['entrenador', 'superusuario']) && (
-                                        <NavLink
-                                            href={route("panel.clases.index")}
-                                            active={route().current("panel.clases.index")}
-                                        >
-                                            Panel de control
-                                        </NavLink>
-                                    )}
                                     <NavLink
                                         href={route("guias.index")}
                                         active={route().current("guias.index")}
@@ -304,17 +296,6 @@ export default function Welcome({ auth }) {
                                 </Link>
                             </div>
                         )}
-
-                        {auth.user && hasRole("cliente") && (
-                            <div className="mt-8">
-                                <Link
-                                    href={route("dashboard")}
-                                    className="bg-blue-500 hover:bg-blue-600 transition px-6 py-3 rounded-xl text-lg md:text-xl font-bold shadow-lg hover:shadow-2xl inline-block"
-                                >
-                                    Mi Dashboard
-                                </Link>
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -325,7 +306,7 @@ export default function Welcome({ auth }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <Card
-                            auth={auth.user} NotificationsBell
+                            auth={auth.user}NotificationsBell
                             title="Ejercicios"
                             description="Guías preparadas para ejercitar desde casa"
                             icon={<BookOpen size={40} />}

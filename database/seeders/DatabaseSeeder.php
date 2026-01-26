@@ -15,35 +15,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // User::factory(10)->create();
+
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
-        // Crear roles
         $this->call(RoleSeeder::class);
 
-        // Crear horarios del gimnasio
-        $this->call(GimnasioHorarioSeeder::class);
-
-        // Crear clientes
+        // Crear clientes de ejemplo
         $this->call(ClienteSeeder::class);
-
-        // Crear entrenadores y sus horarios de trabajo
-        $this->call(HorarioTrabajoSeeder::class);
-
-        // Crear máquinas
-        $this->call(MaquinaSeeder::class);
-
-        // Crear ejercicios
-        $this->call(EjercicioSeeder::class);
-
-        // Crear clases
-        $this->call(ClaseSeeder::class);
-
-        // Crear guías con ejercicios
-        $this->call(GuiaSeeder::class);
-
-        $this->command->info('✅ Base de datos poblada exitosamente.');
     }
 }

@@ -12,7 +12,6 @@ export default function Create({ entrenadores }) {
         hora_fin: '',
         descripcion: '',
         user_id: entrenadores?.[0]?.id ?? null,
-        semanal: false,
     });
 
     const handleSubmit = (e) => {
@@ -32,23 +31,6 @@ export default function Create({ entrenadores }) {
                         {flash?.success && (
                             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
                                 {flash.success}
-                            </div>
-                        )}
-
-                        {flash?.error && (
-                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                                {flash.error}
-                            </div>
-                        )}
-
-                        {Object.keys(errors).length > 0 && (
-                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                                <p className="font-bold">Hay errores en el formulario:</p>
-                                <ul className="list-disc list-inside mt-2">
-                                    {Object.entries(errors).map(([key, value]) => (
-                                        <li key={key}>{value}</li>
-                                    ))}
-                                </ul>
                             </div>
                         )}
 
@@ -147,7 +129,7 @@ export default function Create({ entrenadores }) {
                             </div>
 
                             {/* Descripción (opcional) */}
-                            <div className="mb-4">
+                            <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Descripción (opcional)
                                 </label>
@@ -158,26 +140,6 @@ export default function Create({ entrenadores }) {
                                     placeholder="Detalles sobre la clase..."
                                     rows="3"
                                 />
-                            </div>
-
-                            {/* Clase semanal */}
-                            <div className="mb-6">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={data.semanal}
-                                        onChange={(e) => setData('semanal', e.target.checked)}
-                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">
-                                        Crear clase semanal (se replicará todas las semanas del mes)
-                                    </span>
-                                </label>
-                                {data.semanal && (
-                                    <p className="text-sm text-gray-600 mt-2">
-                                        Se crearán clases cada semana en el mismo día y hora hasta final de mes
-                                    </p>
-                                )}
                             </div>
 
                             {/* Si es superusuario: elegir entrenador asignado */}
