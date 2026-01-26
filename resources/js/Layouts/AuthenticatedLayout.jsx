@@ -49,10 +49,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                 )}
                                 {hasRole("cliente") && (
                                     <NavLink
-                                        href={route("dashboard")}
-                                        active={route().current("dashboard")}
+                                        href={route("estadisticas")}
+                                        active={route().current("estadisticas")}
                                     >
-                                        Mi Dashboard
+                                        Estadísticas
                                     </NavLink>
                                 )}
                                 <NavLink
@@ -96,47 +96,19 @@ export default function AuthenticatedLayout({ header, children }) {
                             <NotificationsBell />
 
                             <div className="relative ms-3">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {user.name}
-
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </Dropdown.Trigger>
-
-                                    <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route("profile.show")}
-                                        >
-                                            Perfil
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route("logout")}
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Cerrar Sesión
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
+                                <span className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500">
+                                    {user.name}
+                                </span>
                             </div>
+
+                            <Link
+                                href={route("logout")}
+                                method="post"
+                                as="button"
+                                className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out"
+                            >
+                                Cerrar Sesión
+                            </Link>
                         </div>
 
                         <div className="-me-2 flex items-center sm:hidden">
@@ -213,10 +185,10 @@ export default function AuthenticatedLayout({ header, children }) {
                         )}
                         {hasRole("cliente") && (
                             <ResponsiveNavLink
-                                href={route("dashboard")}
-                                active={route().current("dashboard")}
+                                href={route("estadisticas")}
+                                active={route().current("estadisticas")}
                             >
-                                Mi Dashboard
+                                Estadísticas
                             </ResponsiveNavLink>
                         )}
                         <ResponsiveNavLink

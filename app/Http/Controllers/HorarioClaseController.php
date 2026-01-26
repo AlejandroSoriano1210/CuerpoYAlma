@@ -129,6 +129,7 @@ class HorarioClaseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'clase_id' => 'required|exists:clases,id',
             'nombre' => 'required|string|max:255',
             'capacidad' => 'required|integer|min:1|max:50',
             'fecha' => 'required|date|after_or_equal:today',
@@ -150,23 +151,16 @@ class HorarioClaseController extends Controller
             $userId = auth()->id();
         }
 
-        // Validar que la clase esté dentro del horario de trabajo del entrenador
-        $fecha = Carbon::parse($validated['fecha']);
-        // El frontend usa: 0=Lunes, 1=Martes, ..., 5=Sábado
-        // Carbon::dayOfWeek(): 0=Domingo, 1=Lunes, ..., 6=Sábado
-        // Convertir: restar 1 para alinear (1=Lunes en Carbon → 0=Lunes en frontend)
-        $diaSemana = (string)(($fecha->dayOfWeek() - 1 + 7) % 7); // Shift para que 1 (Lunes) sea 0
-
-        $horarioTrabajo = \App\Models\HorarioTrabajo::where('user_id', $userId)
-            ->where('dia_semana', $diaSemana)
-            ->first();
-
-        if (!$horarioTrabajo) {
-            $nombreDia = $fecha->locale('es')->isoFormat('dddd');
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "El entrenador no trabaja los {$nombreDia}s.");
-        }
+        HorarioClase::create([
+            'user_id' => $userId,
+            'clase_id' => $validated['clase_id'],
+            'nombre' => $validated['nombre'],
+            'capacidad' => $validated['capacidad'],
+            'fecha' => $validated['fecha'],
+            'hora_inicio' => $validated['hora_inicio'],
+            'hora_fin' => $validated['hora_fin'],
+            'descripcion' => $validated['descripcion'] ?? null,
+        ]);
 
         // Validar que la hora de la clase esté dentro del horario de trabajo
         $horaInicio = $validated['hora_inicio'];

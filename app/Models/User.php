@@ -23,6 +23,10 @@ class User extends Authenticatable
         'email',
         'password',
         'telefono',
+        'peso_kg',
+        'altura_cm',
+        'grasa_corporal_pct',
+        'imc',
     ];
 
     /**
@@ -73,5 +77,10 @@ class User extends Authenticatable
     public function horarioTrabajo()
     {
         return $this->hasMany(HorarioTrabajo::class, 'user_id');
+    }
+
+    public function measurements()
+    {
+        return $this->hasMany(UserMeasurement::class);
     }
 }

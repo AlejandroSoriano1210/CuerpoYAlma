@@ -11,6 +11,7 @@ use App\Http\Controllers\ReservaClaseController;
 use App\Http\Controllers\GuiaController;
 use App\Http\Controllers\EjercicioController;
 use App\Http\Controllers\MaquinaController;
+use App\Http\Controllers\UserMeasurementController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -31,9 +32,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Dashboard Cliente (solo para clientes)
+// Estadísticas Cliente (solo para clientes)
 Route::middleware(['auth', 'role:cliente'])->group(function () {
-    Route::get('/dashboard', [ClienteDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/estadisticas', [ClienteDashboardController::class, 'index'])->name('estadisticas');
+    Route::post('/estadisticas/medidas', [ClienteDashboardController::class, 'updateMetrics'])->name('estadisticas.medidas');
+    Route::post('/mediciones', [UserMeasurementController::class, 'store'])->name('mediciones.store');
 });
 
 // Notifications
