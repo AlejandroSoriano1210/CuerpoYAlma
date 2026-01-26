@@ -1,11 +1,37 @@
-import React from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 
 export default function GuiasIndex() {
     const { hasAnyRole } = usaRoleUser();
-    const { guias, flash } = usePage().props;
+    const { guias, flash, niveles, musculos, filtrosActivos, assignedGuiaIds = [] } = usePage().props;
+    const [nivel, setNivel] = useState(filtrosActivos?.nivel || '');
+    const [musculoObjetivo, setMusculoObjetivo] = useState(filtrosActivos?.musculo_objetivo || '');
+
+    // Actualizar filtros cuando cambian los props
+    useEffect(() => {
+        setNivel(filtrosActivos?.nivel || '');
+        setMusculoObjetivo(filtrosActivos?.musculo_objetivo || '');
+    }, [filtrosActivos]);
+
+    // Aplicar filtros automáticamente cuando cambian
+    useEffect(() => {
+        const params = {};
+        if (nivel) params.nivel = nivel;
+        if (musculoObjetivo) params.musculo_objetivo = musculoObjetivo;
+
+        router.get(route('guias.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    }, [nivel, musculoObjetivo]);
+
+    const limpiarFiltros = () => {
+        setNivel('');
+        setMusculoObjetivo('');
+    };
 
     return (
         <AuthenticatedLayout>
@@ -24,6 +50,52 @@ export default function GuiasIndex() {
                                 + Crear Guía
                             </Link>
                         )}
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow p-6 mb-6">
+                        <h2 className="font-bold text-lg text-gray-900 mb-4">Filtros</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
+                                <select
+                                    value={nivel}
+                                    onChange={(e) => setNivel(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Todos los niveles</option>
+                                    {niveles?.map((n) => (
+                                        <option key={n} value={n}>
+                                            {n.charAt(0).toUpperCase() + n.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Músculo objetivo</label>
+                                <select
+                                    value={musculoObjetivo}
+                                    onChange={(e) => setMusculoObjetivo(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Todos los músculos</option>
+                                    {musculos?.map((m) => (
+                                        <option key={m} value={m}>
+                                            {m.charAt(0).toUpperCase() + m.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={limpiarFiltros}
+                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
+                            >
+                                Limpiar
+                            </button>
+                        </div>
                     </div>
 
                     {flash?.success && (
@@ -46,6 +118,22 @@ export default function GuiasIndex() {
                                             <Link href={route('guias.show', guia.id)} className="text-blue-600 hover:text-blue-900">
                                                 Ver
                                             </Link>
+                                            {!hasAnyRole(['entrenador', 'superusuario']) && (
+                                                assignedGuiaIds.includes(guia.id) ? (
+                                                    <span className="text-purple-600 font-semibold text-sm">
+                                                        ✓ Asignada
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => {
+                                                            router.post(route('guias.assign', guia.id));
+                                                        }}
+                                                        className="text-green-600 hover:text-green-900 font-semibold"
+                                                    >
+                                                        Asignar
+                                                    </button>
+                                                )
+                                            )}
                                             {hasAnyRole(['entrenador', 'superusuario']) && (
                                                 <Link href={route('guias.edit', guia.id)} className="text-yellow-600 hover:text-yellow-800">
                                                     Editar

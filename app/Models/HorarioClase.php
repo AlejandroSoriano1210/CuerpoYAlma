@@ -16,6 +16,7 @@ class HorarioClase extends Model
 
     protected $fillable = [
         'user_id',
+        'clase_id',
         'nombre',
         'capacidad',
         'fecha',
@@ -44,6 +45,11 @@ class HorarioClase extends Model
             ->select('users.id', 'users.name', 'users.email')
             ->withPivot('estado')
             ->withTimestamps();
+    }
+
+    public function listaEspera()
+    {
+        return $this->hasMany(ListaEsperaClase::class);
     }
 
     /**

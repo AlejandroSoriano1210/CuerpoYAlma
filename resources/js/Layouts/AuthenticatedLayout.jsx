@@ -47,12 +47,28 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Clientes
                                     </NavLink>
                                 )}
+                                {hasRole("cliente") && (
+                                    <NavLink
+                                        href={route("dashboard")}
+                                        active={route().current("dashboard")}
+                                    >
+                                        Mi Dashboard
+                                    </NavLink>
+                                )}
                                 <NavLink
                                     href={route("clases.index")}
                                     active={route().current("clases.index")}
                                 >
                                     Clases
                                 </NavLink>
+                                {hasAnyRole(['entrenador', 'superusuario']) && (
+                                    <NavLink
+                                        href={route("panel.clases.index")}
+                                        active={route().current("panel.clases.index")}
+                                    >
+                                        Panel de control
+                                    </NavLink>
+                                )}
                                 <NavLink
                                     href={route("guias.index")}
                                     active={route().current("guias.index")}
@@ -116,7 +132,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            Cerrar Sesión
                                         </Dropdown.Link>
                                     </Dropdown.Content>
                                 </Dropdown>
@@ -195,12 +211,28 @@ export default function AuthenticatedLayout({ header, children }) {
                                 Clientes
                             </ResponsiveNavLink>
                         )}
+                        {hasRole("cliente") && (
+                            <ResponsiveNavLink
+                                href={route("dashboard")}
+                                active={route().current("dashboard")}
+                            >
+                                Mi Dashboard
+                            </ResponsiveNavLink>
+                        )}
                         <ResponsiveNavLink
                             href={route("clases.index")}
                             active={route().current("clases.index")}
                         >
                             Clases
                         </ResponsiveNavLink>
+                        {hasAnyRole(['entrenador', 'superusuario']) && (
+                            <ResponsiveNavLink
+                                href={route("panel.clases.index")}
+                                active={route().current("panel.clases.index")}
+                            >
+                                Mi Panel
+                            </ResponsiveNavLink>
+                        )}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
@@ -215,14 +247,14 @@ export default function AuthenticatedLayout({ header, children }) {
 
                         <div className="mt-3 space-y-1">
                             <ResponsiveNavLink href={route("profile.edit")}>
-                                Profile
+                                Perfil
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 method="post"
                                 href={route("logout")}
                                 as="button"
                             >
-                                Log Out
+                                Cerrar Sesión
                             </ResponsiveNavLink>
                         </div>
                     </div>

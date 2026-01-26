@@ -60,6 +60,11 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function listaEspera()
+    {
+        return $this->hasMany(ListaEsperaClase::class);
+    }
+
     public function horariosClases()
     {
         return $this->hasMany(HorarioClase::class, 'user_id');

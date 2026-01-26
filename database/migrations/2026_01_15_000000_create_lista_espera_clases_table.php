@@ -11,17 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('horario_clases', function (Blueprint $table) {
+        Schema::create('lista_espera_clases', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('horario_clase_id')->constrained('horario_clases')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('clase_id')->constrained('clases')->onDelete('cascade');
-            $table->string('nombre')->nullable();
-            $table->integer('capacidad')->default(10);
-            $table->date('fecha');
-            $table->time('hora_inicio');
-            $table->time('hora_fin');
-            $table->text('descripcion')->nullable();
+            $table->integer('posicion')->default(1);
             $table->timestamps();
+
+            // Índice para evitar duplicados
+            $table->unique(['horario_clase_id', 'user_id']);
         });
     }
 
@@ -30,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('horario_clases');
+        Schema::dropIfExists('lista_espera_clases');
     }
 };

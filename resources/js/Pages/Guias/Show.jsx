@@ -1,16 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 
-export default function Show({ guia }) {
+export default function Show({ guia, clientes = [], isAssigned = false }) {
     const { hasAnyRole } = usaRoleUser();
     const { flash } = usePage().props;
+    const [showModal, setShowModal] = useState(false);
+    const [selectedClientId, setSelectedClientId] = useState('');
 
     const handleDelete = () => {
         if (confirm('¿Estás seguro de que deseas eliminar esta guía?')) {
             router.delete(route('guias.destroy', guia.id));
         }
+    };
+
+    const handleComplete = () => {
+        if (confirm('¿Marcar esta guía como completada? Se eliminará de tu dashboard.')) {
+            router.delete(route('guias.unassign', guia.id));
+        }
+    };
+
+    const handleAssignToClient = (e) => {
+        e.preventDefault();
+        if (!selectedClientId) {
+            alert('Por favor selecciona un cliente');
+            return;
+        }
+        router.post(route('guias.assign-to-client', guia.id), {
+            client_id: selectedClientId,
+        });
+        setShowModal(false);
+        setSelectedClientId('');
     };
 
     return (
@@ -55,9 +76,36 @@ export default function Show({ guia }) {
                             </div>
                         )}
 
-                        <div className="mt-6 flex gap-3">
+                        <div className="mt-6 flex gap-3 flex-wrap">
+                            {!hasAnyRole(['entrenador', 'superusuario']) && (
+                                <>
+                                    {!isAssigned ? (
+                                        <button
+                                            onClick={() => {
+                                                router.post(route('guias.assign', guia.id));
+                                            }}
+                                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                                        >
+                                            Asignar guía a mi dashboard
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleComplete}
+                                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+                                        >
+                                            ✓ Marcar como completada
+                                        </button>
+                                    )}
+                                </>
+                            )}
                             {hasAnyRole(['entrenador', 'superusuario']) && (
                                 <>
+                                    <button
+                                        onClick={() => setShowModal(true)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                                    >
+                                        Asignar a cliente
+                                    </button>
                                     <Link href={route('guias.edit', guia.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
                                         Editar
                                     </Link>
@@ -70,6 +118,52 @@ export default function Show({ guia }) {
                     </div>
                 </div>
             </div>
+
+            {/* Modal para asignar a cliente */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Asignar guía a cliente</h2>
+
+                        <form onSubmit={handleAssignToClient}>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Selecciona un cliente</label>
+                                <select
+                                    value={selectedClientId}
+                                    onChange={(e) => setSelectedClientId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">-- Selecciona un cliente --</option>
+                                    {clientes.map((cliente) => (
+                                        <option key={cliente.id} value={cliente.id}>
+                                            {cliente.name} ({cliente.email})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                                >
+                                    Asignar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        setSelectedClientId('');
+                                    }}
+                                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ClienteDashboardController;
 use App\Http\Controllers\EntrenadorController;
+use App\Http\Controllers\EntrenadorPanelController;
 use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
 use App\Http\Controllers\ProfileController;
@@ -29,6 +31,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Dashboard Cliente (solo para clientes)
+Route::middleware(['auth', 'role:cliente'])->group(function () {
+    Route::get('/dashboard', [ClienteDashboardController::class, 'index'])->name('dashboard');
+});
+
 // Notifications
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
@@ -50,6 +57,16 @@ Route::middleware('auth')->group(function () {
     // Allow POST for legacy tests/clients that use form POST to cancel
     Route::post('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar']);
 
+    // Lista de espera
+    Route::patch('/lista-espera/{listaEspera}/cancelar', [ReservaClaseController::class, 'cancelarListaEspera'])->name('lista-espera.cancelar');
+    Route::post('/lista-espera/{listaEspera}/cancelar', [ReservaClaseController::class, 'cancelarListaEspera']);
+
+    // Promover de lista de espera (solo entrenadores)
+    Route::middleware('role:entrenador|superusuario')->group(function () {
+        Route::patch('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera'])->name('lista-espera.promover');
+        Route::post('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera']);
+    });
+
     // Guias de ejercicios
     Route::get('/guias', [GuiaController::class, 'index'])->name('guias.index');
 
@@ -59,7 +76,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/guias/{guia}/editar', [GuiaController::class, 'edit'])->name('guias.edit');
         Route::patch('/guias/{guia}', [GuiaController::class, 'update'])->name('guias.update');
         Route::delete('/guias/{guia}', [GuiaController::class, 'destroy'])->name('guias.destroy');
+        Route::post('/guias/{guia}/assign-to-client', [GuiaController::class, 'assignToClient'])->name('guias.assign-to-client');
+    });
 
+    Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
+    Route::post('/guias/{guia}/assign', [GuiaController::class, 'assign'])->name('guias.assign');
+    Route::delete('/guias/{guia}/unassign', [GuiaController::class, 'unassign'])->name('guias.unassign');
+
+    Route::middleware('role:superusuario|entrenador')->group(function () {
         // CRUD de ejercicios (solo para entrenadores y superusuario)
         Route::get('/ejercicios', [EjercicioController::class, 'index'])->name('ejercicios.index');
         Route::get('/ejercicios/crear', [EjercicioController::class, 'create'])->name('ejercicios.create');
@@ -89,6 +113,13 @@ Route::middleware('auth')->group(function () {
 
     // Mostrar una guía (rutas con parámetros al final para evitar conflicto)
     Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
+});
+
+Route::middleware(['auth', 'role:entrenador|superusuario'])->group(function () {
+    Route::get('/panel/clases', [EntrenadorPanelController::class, 'index'])->name('panel.clases.index');
+    Route::get('/panel/clases/{horarioClase}', [EntrenadorPanelController::class, 'show'])->name('panel.clases.show');
+    Route::patch('/panel/clases/{horarioClase}/promover/{listaEspera}', [EntrenadorPanelController::class, 'promover'])->name('panel.promover');
+    Route::delete('/panel/clases/{horarioClase}/lista/{listaEspera}', [EntrenadorPanelController::class, 'removerDelista'])->name('panel.remover-lista');
 });
 
 Route::middleware(['auth', 'role:entrenador'])->group(function () {

@@ -24,6 +24,7 @@ class ListarClasesTest extends TestCase
         $horario = HorarioClase::factory()->create([
             'clase_id' => $clase->id,
             'user_id'  => $trainer->id,
+            'fecha'    => now()->format('Y-m-d'),
         ]);
 
         $response = $this
