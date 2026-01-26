@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
@@ -11,27 +11,28 @@ export default function Index() {
     const [zona, setZona] = useState(filtros?.zona || '');
     const estadosDisponibles = filtros?.estados ?? ['operativa', 'mantenimiento', 'fuera_de_servicio'];
 
-    const aplicarFiltros = () => {
+    // Sincronizar filtros con props del servidor
+    useEffect(() => {
+        setEstado(filtros?.estado || '');
+        setZona(filtros?.zona || '');
+    }, [filtros]);
+
+    // Aplicar filtros automáticamente cuando cambian
+    useEffect(() => {
         const params = {};
         if (estado) params.estado = estado;
         if (zona) params.zona = zona;
-        params.page = 1;
 
         router.get(route('maquinas.index'), params, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
         });
-    };
+    }, [estado, zona]);
 
     const limpiarFiltros = () => {
         setEstado('');
         setZona('');
-        router.get(route('maquinas.index'), { page: 1 }, {
-            preserveState: false,
-            preserveScroll: true,
-            replace: true,
-        });
     };
 
     const handleChangeEstado = (maquina, nuevoEstado) => {
@@ -108,11 +109,10 @@ export default function Index() {
                                 </select>
                             </div>
 
-                            <div className="flex items-end gap-2">
-                                <button onClick={aplicarFiltros} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-3 rounded">Aplicar</button>
+                            <div className="flex items-end">
                                 <button
                                     onClick={limpiarFiltros}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
+                                    className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
                                     disabled={!estado && !zona}
                                 >
                                     Limpiar

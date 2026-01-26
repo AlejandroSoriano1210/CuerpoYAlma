@@ -23,6 +23,9 @@ class DatabaseSeeder extends Seeder
         // Crear roles
         $this->call(RoleSeeder::class);
 
+        // Crear horarios del gimnasio
+        $this->call(GimnasioHorarioSeeder::class);
+
         // Crear clientes
         $this->call(ClienteSeeder::class);
 
