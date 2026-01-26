@@ -1,8 +1,9 @@
 import React from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SearchBar from '@/Components/SearchBar';
 
-export default function ClientesIndex({ clientes }) {
+export default function ClientesIndex({ clientes, search: initialSearch }) {
     const { flash } = usePage().props;
 
     const handleDelete = (id, name) => {
@@ -37,6 +38,11 @@ export default function ClientesIndex({ clientes }) {
                             {flash.error}
                         </div>
                     )}
+
+                    {/* Barra de búsqueda */}
+                    <div className="mb-6">
+                        <SearchBar initialSearch={initialSearch} routeName="clientes.index" />
+                    </div>
 
                     <div className="bg-white shadow rounded-lg overflow-hidden">
                         {clientes.length > 0 ? (
@@ -91,7 +97,9 @@ export default function ClientesIndex({ clientes }) {
                             </table>
                         ) : (
                             <div className="p-8 text-center text-gray-500">
-                                <p className="text-lg">No hay clientes registrados</p>
+                                <p className="text-lg">
+                                    {initialSearch ? 'No se encontraron clientes que coincidan con la búsqueda' : 'No hay clientes registrados'}
+                                </p>
                             </div>
                         )}
                     </div>

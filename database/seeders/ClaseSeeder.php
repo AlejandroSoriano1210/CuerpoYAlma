@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Clase;
+use App\Models\GimnasioHorario;
 use App\Models\HorarioClase;
+use App\Models\HorarioTrabajo;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -25,24 +27,18 @@ class ClaseSeeder extends Seeder
 
         $tiposClases = [
             ['nombre' => 'Yoga', 'capacidad' => 15],
-            ['nombre' => 'Pilates', 'capacidad' => 12],
             ['nombre' => 'CrossFit', 'capacidad' => 20],
-            ['nombre' => 'Boxeo', 'capacidad' => 10],
-            ['nombre' => 'Zumba', 'capacidad' => 25],
             ['nombre' => 'Spinning', 'capacidad' => 20],
-            ['nombre' => 'Entrenamiento Funcional', 'capacidad' => 15],
             ['nombre' => 'HIIT', 'capacidad' => 18],
         ];
-
-        $horas = ['06:00:00', '07:00:00', '08:00:00', '09:00:00', '10:00:00',
-                  '14:00:00', '15:00:00', '16:00:00', '17:00:00', '18:00:00', '19:00:00', '20:00:00'];
 
         $hoy = now();
         $mesActual = $hoy->month;
         $anoActual = $hoy->year;
         $diaActual = $hoy->day;
+        $mapaDiaSemana = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
 
-        // Crear clases para el mes actual y próximo mes
+        // Crear clases solo para el mes actual (máx 2 por semana)
         foreach ($tiposClases as $tipo) {
             $clase = Clase::create([
                 'user_id' => $entrenadores->random()->id,
@@ -50,51 +46,67 @@ class ClaseSeeder extends Seeder
                 'capacidad' => $tipo['capacidad'],
             ]);
 
-            // Crear 4-5 horarios para cada clase durante el mes actual (solo días futuros)
-            $numeroHorarios = rand(4, 5);
-            $diasYaUsados = [];
+            $horariosAInsertar = [];
 
-            for ($i = 0; $i < $numeroHorarios; $i++) {
-                do {
-                    $dia = rand($diaActual + 1, 28);
-                } while (in_array($dia, $diasYaUsados) || $dia <= $diaActual);
+            // Generar días disponibles desde mañana hasta fin de mes para evitar bucles infinitos
+            $maxHorarios = 8; // 2 por semana aprox.
+            $fechasDisponibles = [];
+            $fechaCursor = Carbon::createFromDate($anoActual, $mesActual, $diaActual)->addDay();
+            $finDeMes = Carbon::createFromDate($anoActual, $mesActual, 1)->endOfMonth();
 
-                $diasYaUsados[] = $dia;
-
-                $fecha = Carbon::createFromDate($anoActual, $mesActual, $dia);
-                $hora = $horas[array_rand($horas)];
-                $horaFin = date('H:i:s', strtotime($hora) + 3600);
-
-                HorarioClase::create([
-                    'user_id' => $clase->user_id,
-                    'clase_id' => $clase->id,
-                    'nombre' => $tipo['nombre'],
-                    'capacidad' => $tipo['capacidad'],
-                    'fecha' => $fecha,
-                    'hora_inicio' => $hora,
-                    'hora_fin' => $horaFin,
-                    'descripcion' => "Clase de {$tipo['nombre']} impartida por el entrenador",
-                ]);
+            while ($fechaCursor->lessThanOrEqualTo($finDeMes)) {
+                $fechasDisponibles[] = $fechaCursor->copy();
+                $fechaCursor->addDay();
             }
 
-            // Crear 3-4 horarios para el próximo mes
-            $proximoMes = ($mesActual === 12) ? 1 : $mesActual + 1;
-            $proximoAno = ($mesActual === 12) ? $anoActual + 1 : $anoActual;
-            $numeroHorariosProximo = rand(3, 4);
-            $diasProximos = [];
+            shuffle($fechasDisponibles);
+            $fechasSeleccionadas = array_slice($fechasDisponibles, 0, min($maxHorarios, count($fechasDisponibles)));
 
-            for ($i = 0; $i < $numeroHorariosProximo; $i++) {
-                do {
-                    $dia = rand(1, 28);
-                } while (in_array($dia, $diasProximos));
+            foreach ($fechasSeleccionadas as $fecha) {
+                $nombreDia = $mapaDiaSemana[$fecha->dayOfWeekIso] ?? null;
+                if (!$nombreDia) {
+                    continue;
+                }
 
-                $diasProximos[] = $dia;
+                $horarioGimnasio = GimnasioHorario::where('dia_semana', $nombreDia)->first();
+                if (!$horarioGimnasio) {
+                    continue;
+                }
 
-                $fecha = Carbon::createFromDate($proximoAno, $proximoMes, $dia);
-                $hora = $horas[array_rand($horas)];
+                $turnosEntrenador = HorarioTrabajo::where('user_id', $clase->user_id)
+                    ->where('dia_semana', $nombreDia)
+                    ->get();
+
+                if ($turnosEntrenador->isEmpty()) {
+                    continue;
+                }
+
+                $slotsDisponibles = [];
+                $apertura = Carbon::parse($horarioGimnasio->hora_apertura);
+                $cierre = Carbon::parse($horarioGimnasio->hora_cierre);
+
+                foreach ($turnosEntrenador as $turno) {
+                    $inicioTurno = Carbon::parse($turno->hora_inicio);
+                    $finTurno = Carbon::parse($turno->hora_fin);
+
+                    $inicio = $inicioTurno->greaterThan($apertura) ? $inicioTurno->copy() : $apertura->copy();
+                    $fin = $finTurno->lessThan($cierre) ? $finTurno->copy() : $cierre->copy();
+
+                    $slot = $inicio->copy();
+                    while ($slot->addHour()->lessThanOrEqualTo($fin)) {
+                        $slotInicio = $slot->copy()->subHour();
+                        $slotsDisponibles[] = $slotInicio->format('H:i:s');
+                    }
+                }
+
+                if (empty($slotsDisponibles)) {
+                    continue;
+                }
+
+                $hora = $slotsDisponibles[array_rand($slotsDisponibles)];
                 $horaFin = date('H:i:s', strtotime($hora) + 3600);
 
-                HorarioClase::create([
+                $horariosAInsertar[] = [
                     'user_id' => $clase->user_id,
                     'clase_id' => $clase->id,
                     'nombre' => $tipo['nombre'],
@@ -103,10 +115,16 @@ class ClaseSeeder extends Seeder
                     'hora_inicio' => $hora,
                     'hora_fin' => $horaFin,
                     'descripcion' => "Clase de {$tipo['nombre']} impartida por el entrenador",
-                ]);
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            if (!empty($horariosAInsertar)) {
+                HorarioClase::insert($horariosAInsertar);
             }
         }
 
-        $this->command->info('✅ 8 clases creadas con múltiples horarios para el mes actual y próximo mes.');
+        $this->command->info('✅ 4 clases creadas con hasta 2 horarios por semana del mes actual, respetando turnos y horario del gimnasio.');
     }
 }

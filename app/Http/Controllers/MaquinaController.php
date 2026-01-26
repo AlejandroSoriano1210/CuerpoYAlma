@@ -11,11 +11,29 @@ class MaquinaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $maquinas = Maquina::orderBy('nombre')->paginate(15);
+        $estadosValidos = ['operativa', 'mantenimiento', 'fuera_de_servicio'];
+        $estado = $request->string('estado')->toString();
+        $zona = $request->string('zona')->toString();
+
+        $maquinas = Maquina::query()
+            ->when($estado && in_array($estado, $estadosValidos, true), fn ($q) => $q->where('estado', $estado))
+            ->when($zona, fn ($q) => $q->where('ubicacion', $zona))
+            ->orderBy('nombre')
+            ->paginate(15)
+            ->withQueryString();
+
+        $zonas = Maquina::select('ubicacion')->distinct()->orderBy('ubicacion')->pluck('ubicacion');
+
         return Inertia::render('Maquinas/Index', [
             'maquinas' => $maquinas,
+            'filtros' => [
+                'estado' => $estado,
+                'zona' => $zona,
+                'zonas' => $zonas,
+                'estados' => $estadosValidos,
+            ],
         ]);
     }
 
