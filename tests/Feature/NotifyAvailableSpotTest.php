@@ -28,9 +28,6 @@ it('notifies clientes when spot freed from full class', function () {
     $user2 = User::factory()->create();
     $user2->assignRole('cliente');
 
-    // user2 se añade a la lista de espera porque la clase está completa
-    \App\Models\ListaEsperaClase::agregarALista($horario->id, $user2->id);
-
     $reserva = HorarioClaseUser::create([
         'horario_clase_id' => $horario->id,
         'user_id' => $user1->id,

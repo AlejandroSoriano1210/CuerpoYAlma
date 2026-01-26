@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('guia_ejercicios', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('guia_id')->constrained('guias')->onDelete('cascade');
-            $table->foreignId('ejercicio_id')->constrained('ejercicios')->onDelete('cascade');
-            $table->timestamps();
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('telefono')->nullable()->after('email');
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('guia_ejercicios');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('telefono');
+        });
     }
 };

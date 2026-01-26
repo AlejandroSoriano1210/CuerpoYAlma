@@ -26,7 +26,7 @@ class HorarioClaseController extends Controller
         }
 
         // Obtener horarios de clases del mes
-        $horarios = HorarioClase::with(['entrenador', 'clientes', 'listaEspera', 'clase'])
+        $horarios = HorarioClase::with(['entrenador', 'clientes', 'clase'])
             ->whereMonth('fecha', $mes)
             ->whereYear('fecha', $ano)
             ->get()
@@ -38,9 +38,6 @@ class HorarioClaseController extends Controller
                 // Considerar reservas no canceladas (p.ej. 'pendiente' o 'confirmado') como 'reservado'
                 $reservado = false;
                 $reservaId = null;
-                $enListaEspera = false;
-                $listaEsperaId = null;
-
                 if (auth()->check()) {
                     $miReserva = \App\Models\HorarioClaseUser::where('horario_clase_id', $horario->id)
                         ->where('user_id', auth()->id())
@@ -50,26 +47,6 @@ class HorarioClaseController extends Controller
                     if ($miReserva) {
                         $reservado = true;
                         $reservaId = $miReserva->id;
-                    }
-
-                    // Comprobar si está en lista de espera
-                    $miListaEspera = \App\Models\ListaEsperaClase::where('horario_clase_id', $horario->id)
-                        ->where('user_id', auth()->id())
-                        ->first();
-
-                    if ($miListaEspera) {
-                        $enListaEspera = true;
-                        $listaEsperaId = $miListaEspera->id;
-                    }
-                }
-
-                $posicionListaEspera = null;
-                if (auth()->check() && $enListaEspera) {
-                    $miListaEspera = \App\Models\ListaEsperaClase::where('horario_clase_id', $horario->id)
-                        ->where('user_id', auth()->id())
-                        ->first();
-                    if ($miListaEspera) {
-                        $posicionListaEspera = $miListaEspera->posicion;
                     }
                 }
 
@@ -88,10 +65,6 @@ class HorarioClaseController extends Controller
                     'disponible' => $inscritos < $horario->capacidad,
                     'reservado' => $reservado,
                     'reserva_id' => $reservaId,
-                    'en_lista_espera' => $enListaEspera,
-                    'lista_espera_id' => $listaEsperaId,
-                    'posicion_lista_espera' => $posicionListaEspera,
-                    'lista_espera_count' => $horario->listaEspera->count(),
                 ];
             });
 
@@ -131,12 +104,11 @@ class HorarioClaseController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'capacidad' => 'required|integer|min:1|max:50',
-            'fecha' => 'required|date|after_or_equal:today',
+            'fecha' => 'required|date|after:today',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
             'descripcion' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
-            'semanal' => 'nullable|boolean',
         ]);
 
         // Si es superusuario puede asignar el entrenador; si no, es el propio auth user
@@ -150,94 +122,18 @@ class HorarioClaseController extends Controller
             $userId = auth()->id();
         }
 
-        // Validar que la clase esté dentro del horario de trabajo del entrenador
-        $fecha = Carbon::parse($validated['fecha']);
-        // El frontend usa: 0=Lunes, 1=Martes, ..., 5=Sábado
-        // Carbon::dayOfWeek(): 0=Domingo, 1=Lunes, ..., 6=Sábado
-        // Convertir: restar 1 para alinear (1=Lunes en Carbon → 0=Lunes en frontend)
-        $diaSemana = (string)(($fecha->dayOfWeek() - 1 + 7) % 7); // Shift para que 1 (Lunes) sea 0
+        HorarioClase::create([
+            'user_id' => $userId,
+            'nombre' => $validated['nombre'],
+            'capacidad' => $validated['capacidad'],
+            'fecha' => $validated['fecha'],
+            'hora_inicio' => $validated['hora_inicio'],
+            'hora_fin' => $validated['hora_fin'],
+            'descripcion' => $validated['descripcion'] ?? null,
+        ]);
 
-        $horarioTrabajo = \App\Models\HorarioTrabajo::where('user_id', $userId)
-            ->where('dia_semana', $diaSemana)
-            ->first();
-
-        if (!$horarioTrabajo) {
-            $nombreDia = $fecha->locale('es')->isoFormat('dddd');
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "El entrenador no trabaja los {$nombreDia}s.");
-        }
-
-        // Validar que la hora de la clase esté dentro del horario de trabajo
-        $horaInicio = $validated['hora_inicio'];
-        $horaFin = $validated['hora_fin'];
-
-        if ($horaInicio < $horarioTrabajo->hora_inicio || $horaFin > $horarioTrabajo->hora_fin) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "La clase debe estar dentro del horario de trabajo del entrenador ({$horarioTrabajo->hora_inicio} - {$horarioTrabajo->hora_fin}).");
-        }
-
-        // Si es clase semanal, crear múltiples instancias
-        $esSemanal = $request->boolean('semanal', false);
-        $clasesCreadas = 0;
-
-        // Crear o usar la Clase base
-        $clase = \App\Models\Clase::firstOrCreate(
-            [
-                'user_id' => $userId,
-                'nombre' => $validated['nombre'],
-                'capacidad' => $validated['capacidad'],
-            ]
-        );
-
-        if ($esSemanal) {
-            // Obtener todas las fechas del mismo día de la semana hasta fin de mes
-            $fechaInicial = Carbon::parse($validated['fecha']);
-            $finMes = $fechaInicial->copy()->endOfMonth();
-            $fechaActual = $fechaInicial->copy();
-            $hoy = Carbon::today();
-
-            while ($fechaActual->lte($finMes)) {
-                // Solo crear si la fecha es futura
-                if ($fechaActual->gt($hoy)) {
-                    HorarioClase::create([
-                        'user_id' => $userId,
-                        'clase_id' => $clase->id,
-                        'nombre' => $validated['nombre'],
-                        'capacidad' => $validated['capacidad'],
-                        'fecha' => $fechaActual->format('Y-m-d'),
-                        'hora_inicio' => $validated['hora_inicio'],
-                        'hora_fin' => $validated['hora_fin'],
-                        'descripcion' => $validated['descripcion'] ?? null,
-                    ]);
-                    $clasesCreadas++;
-                }
-                // Avanzar una semana
-                $fechaActual->addWeek();
-            }
-
-            $mensaje = $clasesCreadas === 1
-                ? 'Clase creada correctamente.'
-                : "{$clasesCreadas} clases semanales creadas correctamente.";
-
-            return redirect()->route('clases.index')->with('success', $mensaje);
-        } else {
-            // Crear clase única
-            HorarioClase::create([
-                'user_id' => $userId,
-                'clase_id' => $clase->id,
-                'nombre' => $validated['nombre'],
-                'capacidad' => $validated['capacidad'],
-                'fecha' => $validated['fecha'],
-                'hora_inicio' => $validated['hora_inicio'],
-                'hora_fin' => $validated['hora_fin'],
-                'descripcion' => $validated['descripcion'] ?? null,
-            ]);
-
-            return redirect()->route('clases.index')
-                ->with('success', 'Clase creada correctamente.');
-        }
+        return redirect()->route('clases.index')
+            ->with('success', 'Clase creada correctamente.');
     }
 
     /**
@@ -245,7 +141,7 @@ class HorarioClaseController extends Controller
      */
     public function show(HorarioClase $horarioClase)
     {
-        $horarioClase->load(['entrenador', 'clientes', 'listaEspera']);
+        $horarioClase->load(['entrenador', 'clientes']);
 
         if (!$horarioClase->entrenador) {
             return redirect()->route('clases.index')
@@ -258,10 +154,6 @@ class HorarioClaseController extends Controller
         // comprobar si el usuario tiene reserva (no cancelada) para poder cancelar desde la vista
         $reservado = false;
         $reservaId = null;
-        $enListaEspera = false;
-        $listaEsperaId = null;
-        $posicionListaEspera = null;
-
         if (auth()->check()) {
             $miReserva = \App\Models\HorarioClaseUser::where('horario_clase_id', $horarioClase->id)
                 ->where('user_id', auth()->id())
@@ -272,19 +164,7 @@ class HorarioClaseController extends Controller
                 $reservado = true;
                 $reservaId = $miReserva->id;
             }
-
-            // Comprobar si está en lista de espera
-            $miListaEspera = \App\Models\ListaEsperaClase::where('horario_clase_id', $horarioClase->id)
-                ->where('user_id', auth()->id())
-                ->first();
-
-            if ($miListaEspera) {
-                $enListaEspera = true;
-                $listaEsperaId = $miListaEspera->id;
-                $posicionListaEspera = $miListaEspera->posicion;
-            }
         }
-
         return Inertia::render('Clases/Show', [
             'horario' => [
                 'id' => $horarioClase->id,
@@ -300,10 +180,6 @@ class HorarioClaseController extends Controller
                 'clientes' => $horarioClase->clientes()->wherePivot('estado', '!=', 'cancelado')->get(['id', 'name', 'email']),
                 'reservado' => $reservado,
                 'reserva_id' => $reservaId,
-                'en_lista_espera' => $enListaEspera,
-                'lista_espera_id' => $listaEsperaId,
-                'posicion_lista_espera' => $posicionListaEspera,
-                'lista_espera_count' => $horarioClase->listaEspera->count(),
             ],
         ]);
     }
@@ -340,51 +216,6 @@ class HorarioClaseController extends Controller
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
             'descripcion' => 'nullable|string',
         ]);
-
-        // Validar que la clase esté dentro del horario de trabajo del entrenador
-        $fecha = Carbon::parse($validated['fecha']);
-        // El frontend usa: 0=Lunes, 1=Martes, ..., 5=Sábado
-        // Carbon::dayOfWeek(): 0=Domingo, 1=Lunes, ..., 6=Sábado
-        // Convertir: restar 1 para alinear (1=Lunes en Carbon → 0=Lunes en frontend)
-        $diaSemana = (string)(($fecha->dayOfWeek() - 1 + 7) % 7); // Shift para que 1 (Lunes) sea 0
-
-        $horarioTrabajo = \App\Models\HorarioTrabajo::where('user_id', $horarioClase->user_id)
-            ->where('dia_semana', $diaSemana)
-            ->first();
-
-        if (!$horarioTrabajo) {
-            $nombreDia = $fecha->locale('es')->isoFormat('dddd');
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "El entrenador no trabaja los {$nombreDia}s.");
-        }
-
-        // Validar que la hora de la clase esté dentro del horario de trabajo
-        $horaInicio = $validated['hora_inicio'];
-        $horaFin = $validated['hora_fin'];
-
-        if ($horaInicio < $horarioTrabajo->hora_inicio || $horaFin > $horarioTrabajo->hora_fin) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "La clase debe estar dentro del horario de trabajo del entrenador ({$horarioTrabajo->hora_inicio} - {$horarioTrabajo->hora_fin}).");
-        }
-
-        // Actualizar o crear la Clase asociada
-        if ($horarioClase->clase_id) {
-            // Actualizar la clase existente
-            $horarioClase->clase()->update([
-                'nombre' => $validated['nombre'],
-                'capacidad' => $validated['capacidad'],
-            ]);
-        } else {
-            // Crear nueva Clase si no existía
-            $clase = \App\Models\Clase::create([
-                'user_id' => $horarioClase->user_id,
-                'nombre' => $validated['nombre'],
-                'capacidad' => $validated['capacidad'],
-            ]);
-            $validated['clase_id'] = $clase->id;
-        }
 
         $horarioClase->update($validated);
 

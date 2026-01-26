@@ -17,10 +17,7 @@ class MaquinaFactory extends Factory
     public function definition(): array
     {
         return [
-            'nombre' => $this->faker->words(2, true),
-            'descripcion' => $this->faker->sentence(),
-            'estado' => 'disponible',
-            'ubicacion' => $this->faker->word(),
+            //
         ];
     }
 }

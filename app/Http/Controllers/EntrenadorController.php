@@ -10,22 +10,12 @@ use Inertia\Inertia;
 class EntrenadorController extends Controller
 {
     // Listar entrenadores
-    public function index(Request $request)
+    public function index()
     {
-        $search = $request->query('search', '');
-
-        $query = User::role('entrenador');
-
-        if (!empty($search)) {
-            $query->whereRaw("LOWER(CONVERT(name USING utf8mb4) COLLATE utf8mb4_unicode_ci) LIKE LOWER(CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)", ["%{$search}%"])
-                  ->orWhereRaw("LOWER(CONVERT(email USING utf8mb4) COLLATE utf8mb4_unicode_ci) LIKE LOWER(CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)", ["%{$search}%"]);
-        }
-
-        $entrenadores = $query->get();
+        $entrenadores = User::role('entrenador')->get();
 
         return Inertia::render('Entrenadores/Index', [
             'entrenadores' => $entrenadores,
-            'search' => $search,
         ]);
     }
 
