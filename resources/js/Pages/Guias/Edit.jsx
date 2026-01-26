@@ -2,16 +2,26 @@ import React from 'react';
 import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Create({ niveles, ejercicios }) {
+export default function Edit({ guia, niveles, ejercicios }) {
     const { flash } = usePage().props;
-    const { data, setData, post, errors, processing } = useForm({
-        titulo: '',
-        nivel: 'principiante',
-        contenido: '',
-        ejercicios: [],
+
+    // Preparar la lista inicial de ejercicios de la guía
+    const ejerciciosIniciales = guia.guia_ejercicio?.map(ge => ({
+        ejercicio_id: ge.ejercicio_id,
+        nombre: ge.ejercicio?.nombre || '',
+        series: ge.series,
+        repeticiones: ge.repeticiones,
+        instrucciones: ge.instrucciones,
+    })) || [];
+
+    const { data, setData, patch, errors, processing } = useForm({
+        titulo: guia.titulo || '',
+        nivel: guia.nivel || 'principiante',
+        contenido: guia.contenido || '',
+        ejercicios: ejerciciosIniciales,
     });
 
-    const [ejerciciosList, setEjerciciosList] = React.useState([]);
+    const [ejerciciosList, setEjerciciosList] = React.useState(ejerciciosIniciales);
     const [selectedEjercicio, setSelectedEjercicio] = React.useState(ejercicios?.[0]?.id ?? null);
     const [series, setSeries] = React.useState(3);
     const [repeticiones, setRepeticiones] = React.useState(10);
@@ -55,23 +65,18 @@ export default function Create({ niveles, ejercicios }) {
         setInstrucciones('');
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        post(route('guias.store'));
-    };
-
     return (
         <AuthenticatedLayout>
-            <Head title="Crear Guía" />
+            <Head title="Editar Guía" />
 
             <div className="py-12">
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white shadow rounded-lg p-6">
-                        <Link href={route('guias.index')} className="text-blue-600 mb-6 inline-block">
-                            ← Volver a Guías
+                        <Link href={route('guias.show', guia.id)} className="text-blue-600 mb-6 inline-block">
+                            ← Volver a Guía
                         </Link>
 
-                        <h1 className="text-2xl font-bold mb-6 text-gray-900">Crear Nueva Guía</h1>
+                        <h1 className="text-2xl font-bold mb-6 text-gray-900">Editar Guía</h1>
 
                         {flash?.success && (
                             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -82,7 +87,7 @@ export default function Create({ niveles, ejercicios }) {
                         <form onSubmit={(e) => {
                             e.preventDefault();
                             setData('ejercicios', ejerciciosList);
-                            post(route('guias.store'));
+                            patch(route('guias.update', guia.id));
                         }}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
@@ -135,17 +140,43 @@ export default function Create({ niveles, ejercicios }) {
                                     </select>
 
                                     <div className="flex gap-2">
-                                        <input type="number" value={series} onChange={(e) => setSeries(e.target.value)} className="w-1/2 px-3 py-2 border rounded" min="1" />
-                                        <input type="number" value={repeticiones} onChange={(e) => setRepeticiones(e.target.value)} className="w-1/2 px-3 py-2 border rounded" min="1" />
+                                        <input
+                                            type="number"
+                                            value={series}
+                                            onChange={(e) => setSeries(e.target.value)}
+                                            placeholder="Series"
+                                            className="w-1/2 px-3 py-2 border rounded"
+                                            min="1"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={repeticiones}
+                                            onChange={(e) => setRepeticiones(e.target.value)}
+                                            placeholder="Reps"
+                                            className="w-1/2 px-3 py-2 border rounded"
+                                            min="1"
+                                        />
                                     </div>
                                 </div>
 
                                 <div className="mb-4">
-                                    <textarea value={instrucciones} onChange={(e) => setInstrucciones(e.target.value)} placeholder="Instrucciones" className="w-full px-3 py-2 border rounded" rows="3" />
+                                    <textarea
+                                        value={instrucciones}
+                                        onChange={(e) => setInstrucciones(e.target.value)}
+                                        placeholder="Instrucciones"
+                                        className="w-full px-3 py-2 border rounded"
+                                        rows="3"
+                                    />
                                 </div>
 
                                 <div className="mb-4">
-                                    <button type="button" onClick={addEjercicio} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Añadir ejercicio</button>
+                                    <button
+                                        type="button"
+                                        onClick={addEjercicio}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                                    >
+                                        Añadir ejercicio
+                                    </button>
                                 </div>
 
                                 {ejerciciosList.length > 0 && (
@@ -159,7 +190,13 @@ export default function Create({ niveles, ejercicios }) {
                                                 </div>
 
                                                 <div className="flex items-center gap-2">
-                                                    <button type="button" onClick={() => setEjerciciosList(prev => prev.filter((_, i) => i !== index))} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">Eliminar</button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEjerciciosList(prev => prev.filter((_, i) => i !== index))}
+                                                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                                                    >
+                                                        Eliminar
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))}
@@ -173,10 +210,13 @@ export default function Create({ niveles, ejercicios }) {
                                     disabled={processing}
                                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
                                 >
-                                    {processing ? 'Guardando...' : 'Crear Guía'}
+                                    {processing ? 'Guardando...' : 'Actualizar Guía'}
                                 </button>
 
-                                <Link href={route('guias.index')} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-center">
+                                <Link
+                                    href={route('guias.show', guia.id)}
+                                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-center"
+                                >
                                     Cancelar
                                 </Link>
                             </div>

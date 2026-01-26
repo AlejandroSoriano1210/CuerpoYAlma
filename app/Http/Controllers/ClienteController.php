@@ -8,14 +8,22 @@ use Inertia\Inertia;
 
 class ClienteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $clientes = User::role('cliente')
-            ->withCount('clasesReservadas')
-            ->get();
+        $search = $request->query('search', '');
+
+        $query = User::role('cliente')->withCount('clasesReservadas');
+
+        if (!empty($search)) {
+            $query->whereRaw("LOWER(CONVERT(name USING utf8mb4) COLLATE utf8mb4_unicode_ci) LIKE LOWER(CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)", ["%{$search}%"])
+                  ->orWhereRaw("LOWER(CONVERT(email USING utf8mb4) COLLATE utf8mb4_unicode_ci) LIKE LOWER(CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)", ["%{$search}%"]);
+        }
+
+        $clientes = $query->get();
 
         return Inertia::render('Clientes/Index', [
             'clientes' => $clientes,
+            'search' => $search,
         ]);
     }
 

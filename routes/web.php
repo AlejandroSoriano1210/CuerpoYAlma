@@ -79,7 +79,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/guias/{guia}/editar', [GuiaController::class, 'edit'])->name('guias.edit');
         Route::patch('/guias/{guia}', [GuiaController::class, 'update'])->name('guias.update');
         Route::delete('/guias/{guia}', [GuiaController::class, 'destroy'])->name('guias.destroy');
+        Route::post('/guias/{guia}/assign-to-client', [GuiaController::class, 'assignToClient'])->name('guias.assign-to-client');
+    });
 
+    Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
+    Route::post('/guias/{guia}/assign', [GuiaController::class, 'assign'])->name('guias.assign');
+    Route::delete('/guias/{guia}/unassign', [GuiaController::class, 'unassign'])->name('guias.unassign');
+
+    Route::middleware('role:superusuario|entrenador')->group(function () {
         // CRUD de ejercicios (solo para entrenadores y superusuario)
         Route::get('/ejercicios', [EjercicioController::class, 'index'])->name('ejercicios.index');
         Route::get('/ejercicios/crear', [EjercicioController::class, 'create'])->name('ejercicios.create');
