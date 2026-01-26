@@ -7,6 +7,7 @@ use App\Models\GuiaView;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Guia;
 
 class ClienteDashboardController extends Controller
 {
@@ -104,12 +105,17 @@ class ClienteDashboardController extends Controller
         $enListaEspera = \App\Models\ListaEsperaClase::where('user_id', $user->id)->count();
 
         $imcCalculado = $user->imc;
-        if (!$imcCalculado && $user->peso_kg && $user->altura_cm) {
-            $alturaM = $user->altura_cm / 100;
+        $latestMeasurement = $user->measurements()->orderBy('fecha_medicion', 'desc')->first();
+        $pesoBase = $latestMeasurement->peso_kg ?? $user->peso_kg;
+        $alturaBase = $latestMeasurement->altura_cm ?? $user->altura_cm;
+        if (!$imcCalculado && $pesoBase && $alturaBase) {
+            $alturaM = $alturaBase / 100;
             if ($alturaM > 0) {
-                $imcCalculado = round($user->peso_kg / ($alturaM * $alturaM), 1);
+                $imcCalculado = round($pesoBase / ($alturaM * $alturaM), 1);
             }
         }
+
+        $nivelCondicion = $this->nivelDesdeImc($imcCalculado);
 
         // Clases por mes (últimos 6 meses)
         $clasesPorMes = [];
@@ -154,6 +160,9 @@ class ClienteDashboardController extends Controller
             ];
         }
 
+        // Recomendaciones de guías según nivel
+        $recomendacionesGuia = $this->obtenerGuiaRecomendada($nivelCondicion);
+
         return Inertia::render('Clientes/Estadisticas', [
             'user' => [
                 'name' => $user->name,
@@ -168,6 +177,8 @@ class ClienteDashboardController extends Controller
             'proximasClases' => $proximasClases,
             'historialClases' => $historialClases,
             'guiaActual' => $guiaData,
+            'guiaRecomendadas' => $recomendacionesGuia,
+            'nivelCondicion' => $nivelCondicion,
             'estadisticas' => [
                 'total_clases_tomadas' => $totalClasesTomadas,
                 'total_clases_reservadas' => $totalClasesReservadas,
@@ -205,5 +216,67 @@ class ClienteDashboardController extends Controller
         return redirect()
             ->route('estadisticas')
             ->with('success', 'Medidas actualizadas correctamente.');
+    }
+
+    private function nivelDesdeImc(?float $imc): string
+    {
+        if (!$imc) {
+            return 'Sin datos';
+        }
+        if ($imc < 18.5) {
+            return 'Bajo peso';
+        }
+        if ($imc < 25) {
+            return 'Saludable';
+        }
+        if ($imc < 30) {
+            return 'Sobrepeso';
+        }
+        return 'Obesidad';
+    }
+
+    private function obtenerGuiaRecomendada(string $nivelCondicion)
+    {
+        $preferencias = [];
+        $nivelLower = strtolower($nivelCondicion);
+        if (str_contains($nivelLower, 'bajo')) {
+            $preferencias = ['Principiante', 'Inicial', 'Bajo impacto'];
+        } elseif (str_contains($nivelLower, 'salud')) {
+            $preferencias = ['Intermedio', 'General', 'Fuerza'];
+        } elseif (str_contains($nivelLower, 'sobre')) {
+            $preferencias = ['Intermedio', 'Pérdida de grasa', 'Cardio'];
+        } elseif (str_contains($nivelLower, 'obes')) {
+            $preferencias = ['Adaptado', 'Bajo impacto', 'Inicial'];
+        }
+
+        $recomendadas = collect();
+
+        if (!empty($preferencias)) {
+            $recomendadas = Guia::withCount('guiaEjercicio')
+                ->whereIn('nivel', $preferencias)
+                ->latest()
+                ->take(2)
+                ->get();
+        }
+
+        if ($recomendadas->count() < 2) {
+            $faltan = 2 - $recomendadas->count();
+            $recomendadas = $recomendadas->merge(
+                Guia::withCount('guiaEjercicio')
+                    ->whereNotIn('id', $recomendadas->pluck('id'))
+                    ->latest()
+                    ->take($faltan)
+                    ->get()
+            );
+        }
+
+        return $recomendadas->map(function ($guia) {
+            return [
+                'id' => $guia->id,
+                'titulo' => $guia->titulo,
+                'nivel' => $guia->nivel,
+                'ejercicios_count' => $guia->guia_ejercicio_count ?? $guia->guiaEjercicio()->count(),
+            ];
+        });
     }
 }

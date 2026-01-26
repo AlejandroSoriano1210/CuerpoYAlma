@@ -2,6 +2,7 @@ import React from "react";
 import Dropdown from "@/Components/Dropdown";
 import { Head, Link, usePage } from "@inertiajs/react";
 import Footer from "@/Components/Footer";
+import Card from "@/Components/Card";
 import { Dumbbell, Users, BookOpen } from "lucide-react";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
 import NavLink from "@/Components/NavLink";
@@ -297,72 +298,75 @@ export default function Welcome({ auth }) {
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <Card
-                            auth={auth.user} NotificationsBell
-                            title="Ejercicios"
-                            description="Guías preparadas para ejercitar desde casa"
-                            icon={<BookOpen size={40} />}
-                            route="guias"
-                        />
+                        <div className="transform transition hover:scale-105">
+                            {auth.user ? (
+                                <Link href={route("guias.index")} className="h-full">
+                                    <Card
+                                        icon="📚"
+                                        title="Ejercicios"
+                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
+                                    >
+                                        <p className="text-gray-600">Guías preparadas para ejercitar desde casa</p>
+                                    </Card>
+                                </Link>
+                            ) : (
+                                <Card
+                                    icon="📚"
+                                    title="Ejercicios"
+                                    containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full opacity-70"
+                                >
+                                    <p className="text-gray-600">Guías preparadas para ejercitar desde casa</p>
+                                </Card>
+                            )}
+                        </div>
 
-                        <Card
-                            auth={auth.user}
-                            title="Clases"
-                            description="Clases organizadas por nuestros entrenadores para todo tipo de personas"
-                            icon={<Dumbbell size={40} />}
-                            route="clases"
-                        />
+                        <div className="transform transition hover:scale-105">
+                            {auth.user ? (
+                                <Link href={route("clases.index")} className="h-full">
+                                    <Card
+                                        icon="🏋️"
+                                        title="Clases"
+                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
+                                    >
+                                        <p className="text-gray-600">Clases organizadas por nuestros entrenadores para todo tipo de personas</p>
+                                    </Card>
+                                </Link>
+                            ) : (
+                                <Card
+                                    icon="🏋️"
+                                    title="Clases"
+                                    containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full opacity-70"
+                                >
+                                    <p className="text-gray-600">Clases organizadas por nuestros entrenadores para todo tipo de personas</p>
+                                </Card>
+                            )}
+                        </div>
 
-                        <Card
-                            auth={auth.user}
-                            title="Entrenadores"
-                            description="Conoce nuestro increíble equipo especializado en distintas partes del cuerpo"
-                            icon={<Users size={40} />}
-                            route="entrenadores"
-                        />
+                        <div className="transform transition hover:scale-105">
+                            {auth.user ? (
+                                <Link href={route("entrenadores.index")} className="h-full">
+                                    <Card
+                                        icon="👥"
+                                        title="Entrenadores"
+                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
+                                    >
+                                        <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>
+                                    </Card>
+                                </Link>
+                            ) : (
+                                <Card
+                                    icon="👥"
+                                    title="Entrenadores"
+                                    containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full opacity-70"
+                                >
+                                    <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>
+                                </Card>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <Footer />
             </div>
-        </>
-    );
-}
-
-function Card({ auth, title, description, icon, route }) {
-    const baseClasses =
-        "bg-white text-gray-900 rounded-2xl p-6 shadow-lg transform transition";
-    const interactiveClasses = auth
-        ? "hover:scale-105 hover:shadow-2xl cursor-pointer"
-        : "opacity-70 cursor-not-allowed";
-
-    if (auth) {
-        return (
-            <Link
-                href={route}
-                className={`${baseClasses} ${interactiveClasses}`}
-            >
-                <CardContent
-                    title={title}
-                    description={description}
-                    icon={icon}
-                />
-            </Link>
-        );
-    }
-
-    return (
-        <div className={`${baseClasses} ${interactiveClasses}`}>
-            <CardContent title={title} description={description} icon={icon} />
-        </div>
-    );
-}
-
-function CardContent({ title, description, icon }) {
-    return (
-        <>
-            <div className="mb-4 text-green-600">{icon}</div>
-            <h3 className="text-xl font-bold mb-2">{title}</h3>
-            <p className="text-gray-600">{description}</p>
         </>
     );
 }
