@@ -20,32 +20,42 @@ class HorarioTrabajoSeeder extends Seeder
         });
 
         // Horarios de trabajo para cada entrenador
-        $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        // dia_semana: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado
+        $diasSemana = [0, 1, 2, 3, 4, 5];
 
         foreach ($entrenadores as $entrenador) {
-            // Cada entrenador trabaja 5-6 días
-            $diasAleatorios = array_slice($diasSemana, 0, rand(5, 6));
+            $totalHoras = 0;
+            $diasUsados = [];
 
-            foreach ($diasAleatorios as $dia) {
+            // Asignar horarios respetando máximo 40 horas semanales
+            foreach ($diasSemana as $dia) {
+                if ($totalHoras >= 40) {
+                    break;
+                }
+
+                // Turno mañana: 8 horas (06:00-14:00)
                 HorarioTrabajo::create([
                     'user_id' => $entrenador->id,
                     'dia_semana' => $dia,
                     'hora_inicio' => '06:00:00',
                     'hora_fin' => '14:00:00',
                 ]);
+                $totalHoras += 8;
+                $diasUsados[] = $dia;
 
-                // Algunos entrenadores tienen turno doble
-                if (rand(1, 100) <= 30) {
+                // Turno tarde: solo si hay espacio para 8 horas más (max 40 total)
+                if ($totalHoras < 32 && rand(1, 100) <= 50) {
                     HorarioTrabajo::create([
                         'user_id' => $entrenador->id,
                         'dia_semana' => $dia,
                         'hora_inicio' => '14:00:00',
                         'hora_fin' => '22:00:00',
                     ]);
+                    $totalHoras += 8;
                 }
             }
         }
 
-        $this->command->info('✅ 4 entrenadores creados con sus horarios de trabajo.');
+        $this->command->info('✅ 4 entrenadores creados con horarios válidos (máx 40 horas/semana).');
     }
 }

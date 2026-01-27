@@ -129,7 +129,7 @@ class HorarioClaseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'clase_id' => 'required|exists:clases,id',
+            'clase_id' => 'nullable|exists:clases,id',
             'nombre' => 'required|string|max:255',
             'capacidad' => 'required|integer|min:1|max:50',
             'fecha' => 'required|date|after_or_equal:today',
@@ -151,31 +151,6 @@ class HorarioClaseController extends Controller
             $userId = auth()->id();
         }
 
-        HorarioClase::create([
-            'user_id' => $userId,
-            'clase_id' => $validated['clase_id'],
-            'nombre' => $validated['nombre'],
-            'capacidad' => $validated['capacidad'],
-            'fecha' => $validated['fecha'],
-            'hora_inicio' => $validated['hora_inicio'],
-            'hora_fin' => $validated['hora_fin'],
-            'descripcion' => $validated['descripcion'] ?? null,
-        ]);
-
-        // Validar que la hora de la clase esté dentro del horario de trabajo
-        $horaInicio = $validated['hora_inicio'];
-        $horaFin = $validated['hora_fin'];
-
-        if ($horaInicio < $horarioTrabajo->hora_inicio || $horaFin > $horarioTrabajo->hora_fin) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "La clase debe estar dentro del horario de trabajo del entrenador ({$horarioTrabajo->hora_inicio} - {$horarioTrabajo->hora_fin}).");
-        }
-
-        // Si es clase semanal, crear múltiples instancias
-        $esSemanal = $request->boolean('semanal', false);
-        $clasesCreadas = 0;
-
         // Crear o usar la Clase base
         $clase = \App\Models\Clase::firstOrCreate(
             [
@@ -184,6 +159,10 @@ class HorarioClaseController extends Controller
                 'capacidad' => $validated['capacidad'],
             ]
         );
+
+        // Si es clase semanal, crear múltiples instancias
+        $esSemanal = $request->boolean('semanal', false);
+        $clasesCreadas = 0;
 
         if ($esSemanal) {
             // Obtener todas las fechas del mismo día de la semana hasta fin de mes

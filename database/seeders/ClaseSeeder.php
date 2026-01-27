@@ -38,7 +38,7 @@ class ClaseSeeder extends Seeder
         $diaActual = $hoy->day;
         $mapaDiaSemana = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
 
-        // Crear clases solo para el mes actual (máx 2 por semana)
+        // Crear clases para el mes actual y el siguiente (máx 2 por semana)
         foreach ($tiposClases as $tipo) {
             $clase = Clase::create([
                 'user_id' => $entrenadores->random()->id,
@@ -48,11 +48,11 @@ class ClaseSeeder extends Seeder
 
             $horariosAInsertar = [];
 
-            // Generar días disponibles desde mañana hasta fin de mes para evitar bucles infinitos
-            $maxHorarios = 8; // 2 por semana aprox.
+            // Generar días disponibles desde mañana hasta fin del mes siguiente para evitar bucles infinitos
+            $maxHorarios = 16; // 2 por semana aprox. para 2 meses
             $fechasDisponibles = [];
             $fechaCursor = Carbon::createFromDate($anoActual, $mesActual, $diaActual)->addDay();
-            $finDeMes = Carbon::createFromDate($anoActual, $mesActual, 1)->endOfMonth();
+            $finDeMes = Carbon::createFromDate($anoActual, $mesActual, 1)->addMonth()->endOfMonth();
 
             while ($fechaCursor->lessThanOrEqualTo($finDeMes)) {
                 $fechasDisponibles[] = $fechaCursor->copy();
@@ -125,6 +125,6 @@ class ClaseSeeder extends Seeder
             }
         }
 
-        $this->command->info('✅ 4 clases creadas con hasta 2 horarios por semana del mes actual, respetando turnos y horario del gimnasio.');
+        $this->command->info('✅ Clases y horarios creados correctamente.');
     }
 }

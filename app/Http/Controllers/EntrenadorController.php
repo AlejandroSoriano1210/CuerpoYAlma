@@ -41,8 +41,28 @@ class EntrenadorController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
-            'horarios' => 'nullable|array'
+            'horarios' => 'nullable|array',
+            'horarios.*.dia_semana' => 'required|integer|between:0,5',
+            'horarios.*.hora_inicio' => 'required|date_format:H:i',
+            'horarios.*.hora_fin' => 'required|date_format:H:i',
         ]);
+
+        // Validar que el total de horas no supere 40
+        if (!empty($validated['horarios'])) {
+            $totalHoras = 0;
+            foreach ($validated['horarios'] as $horario) {
+                $inicio = \Carbon\Carbon::createFromFormat('H:i', $horario['hora_inicio']);
+                $fin = \Carbon\Carbon::createFromFormat('H:i', $horario['hora_fin']);
+                $diferencia = $fin->diffInMinutes($inicio) / 60;
+                $totalHoras += $diferencia;
+            }
+            if ($totalHoras > 40) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors(['horarios' => "El total de horas no puede superar 40. Total actual: $totalHoras horas."]);
+            }
+        }
 
         try {
             $user = User::create([
@@ -146,6 +166,23 @@ class EntrenadorController extends Controller
             'horarios.*.hora_inicio' => ['required', 'date_format:H:i'],
             'horarios.*.hora_fin' => ['required', 'date_format:H:i', 'after:horarios.*.hora_inicio'],
         ]);
+
+        // Validar que el total de horas no supere 40
+        if (!empty($validated['horarios'])) {
+            $totalHoras = 0;
+            foreach ($validated['horarios'] as $horario) {
+                $inicio = \Carbon\Carbon::createFromFormat('H:i', $horario['hora_inicio']);
+                $fin = \Carbon\Carbon::createFromFormat('H:i', $horario['hora_fin']);
+                $diferencia = $fin->diffInMinutes($inicio) / 60;
+                $totalHoras += $diferencia;
+            }
+            if ($totalHoras > 40) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors(['horarios' => "El total de horas no puede superar 40. Total actual: $totalHoras horas."]);
+            }
+        }
 
         $entrenador->update([
             'name' => $validated['name'],

@@ -8,12 +8,15 @@ import { usaRoleUser } from "@/Hooks/usaRoleUser";
 import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import NotificationsBell from "@/Components/NotificationsBell";
+import AuthModal from "@/Components/AuthModal";
 
 export default function Welcome({ auth }) {
     const user = usePage().props.auth?.user;
     const { hasRole, hasAnyRole } = usaRoleUser();
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         React.useState(false);
+    const [showAuthModal, setShowAuthModal] = React.useState(false);
+    const [authMode, setAuthMode] = React.useState('login');
 
     return (
         <>
@@ -53,13 +56,25 @@ export default function Welcome({ auth }) {
                                             Clientes
                                         </NavLink>
                                     )}
-                                    <NavLink
-                                        href={route("clases.index")}
-                                        active={route().current("clases.index")}
-                                    >
-                                        Clases
-                                    </NavLink>
-                                    {hasAnyRole(['entrenador', 'superusuario']) && (
+                                    {user ? (
+                                        <NavLink
+                                            href={route("clases.index")}
+                                            active={route().current("clases.index")}
+                                        >
+                                            Clases
+                                        </NavLink>
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                setAuthMode('login');
+                                                setShowAuthModal(true);
+                                            }}
+                                            className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium leading-5 text-gray-300 transition duration-150 ease-in-out hover:border-green-400 hover:text-green-400 focus:border-green-400 focus:text-green-400 focus:outline-none"
+                                        >
+                                            Clases
+                                        </button>
+                                    )}
+                                    {hasRole('entrenador') && (
                                         <NavLink
                                             href={route("panel.clases.index")}
                                             active={route().current("panel.clases.index")}
@@ -67,12 +82,24 @@ export default function Welcome({ auth }) {
                                             Panel de control
                                         </NavLink>
                                     )}
-                                    <NavLink
-                                        href={route("guias.index")}
-                                        active={route().current("guias.index")}
-                                    >
-                                        Guías
-                                    </NavLink>
+                                    {user ? (
+                                        <NavLink
+                                            href={route("guias.index")}
+                                            active={route().current("guias.index")}
+                                        >
+                                            Guías
+                                        </NavLink>
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                setAuthMode('login');
+                                                setShowAuthModal(true);
+                                            }}
+                                            className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium leading-5 text-gray-300 transition duration-150 ease-in-out hover:border-green-400 hover:text-green-400 focus:border-green-400 focus:text-green-400 focus:outline-none"
+                                        >
+                                            Guías
+                                        </button>
+                                    )}
                                     {hasAnyRole(['entrenador', 'superusuario']) && (
                                         <NavLink
                                             href={route("ejercicios.index")}
@@ -81,12 +108,24 @@ export default function Welcome({ auth }) {
                                             Ejercicios
                                         </NavLink>
                                     )}
-                                    <NavLink
-                                        href={route("maquinas.index")}
-                                        active={route().current("maquinas.index")}
-                                    >
-                                        Máquinas
-                                    </NavLink>
+                                    {user ? (
+                                        <NavLink
+                                            href={route("maquinas.index")}
+                                            active={route().current("maquinas.index")}
+                                        >
+                                            Máquinas
+                                        </NavLink>
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                setAuthMode('login');
+                                                setShowAuthModal(true);
+                                            }}
+                                            className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium leading-5 text-gray-300 transition duration-150 ease-in-out hover:border-green-400 hover:text-green-400 focus:border-green-400 focus:text-green-400 focus:outline-none"
+                                        >
+                                            Máquinas
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -112,19 +151,25 @@ export default function Welcome({ auth }) {
                                     </>
                                 ) : (
                                     <div className="flex gap-4">
-                                        <Link
-                                            href={route("login")}
+                                        <button
+                                            onClick={() => {
+                                                setAuthMode('login');
+                                                setShowAuthModal(true);
+                                            }}
                                             className="px-3 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition font-medium"
                                         >
                                             Iniciar sesión
-                                        </Link>
+                                        </button>
 
-                                        <Link
-                                            href={route("register")}
+                                        <button
+                                            onClick={() => {
+                                                setAuthMode('register');
+                                                setShowAuthModal(true);
+                                            }}
                                             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold transition"
                                         >
                                             Registrarse
-                                        </Link>
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -201,12 +246,63 @@ export default function Welcome({ auth }) {
                                     Clientes
                                 </ResponsiveNavLink>
                             )}
-                            <ResponsiveNavLink
-                                href={route("clases.index")}
-                                active={route().current("clases.index")}
-                            >
-                                Clases
-                            </ResponsiveNavLink>
+                            {user ? (
+                                <ResponsiveNavLink
+                                    href={route("clases.index")}
+                                    active={route().current("clases.index")}
+                                >
+                                    Clases
+                                </ResponsiveNavLink>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setShowAuthModal(true);
+                                        setShowingNavigationDropdown(false);
+                                    }}
+                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
+                                >
+                                    Clases
+                                </button>
+                            )}
+                            {user ? (
+                                <ResponsiveNavLink
+                                    href={route("guias.index")}
+                                    active={route().current("guias.index")}
+                                >
+                                    Guías
+                                </ResponsiveNavLink>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setShowAuthModal(true);
+                                        setShowingNavigationDropdown(false);
+                                    }}
+                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
+                                >
+                                    Guías
+                                </button>
+                            )}
+                            {user ? (
+                                <ResponsiveNavLink
+                                    href={route("maquinas.index")}
+                                    active={route().current("maquinas.index")}
+                                >
+                                    Máquinas
+                                </ResponsiveNavLink>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setShowAuthModal(true);
+                                        setShowingNavigationDropdown(false);
+                                    }}
+                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
+                                >
+                                    Máquinas
+                                </button>
+                            )}
                         </div>
 
                         {user ? (
@@ -240,13 +336,27 @@ export default function Welcome({ auth }) {
                             </>
                         ) : (
                             <div className="mt-3 space-y-1 px-4">
-                                <ResponsiveNavLink href={route("login")}>
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setShowAuthModal(true);
+                                        setShowingNavigationDropdown(false);
+                                    }}
+                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
+                                >
                                     Iniciar sesión
-                                </ResponsiveNavLink>
+                                </button>
 
-                                <ResponsiveNavLink href={route("register")}>
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('register');
+                                        setShowAuthModal(true);
+                                        setShowingNavigationDropdown(false);
+                                    }}
+                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
+                                >
                                     Registrarse
-                                </ResponsiveNavLink>
+                                </button>
                             </div>
                         )}
                     </div>
@@ -270,12 +380,15 @@ export default function Welcome({ auth }) {
 
                         {!auth.user && (
                             <div className="mt-8">
-                                <Link
-                                    href={route("register")}
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('register');
+                                        setShowAuthModal(true);
+                                    }}
                                     className="bg-green-500 hover:bg-green-600 transition px-6 py-3 rounded-xl text-lg md:text-xl font-bold shadow-lg hover:shadow-2xl inline-block"
                                 >
                                     Únete Ahora
-                                </Link>
+                                </button>
                             </div>
                         )}
 
@@ -310,13 +423,21 @@ export default function Welcome({ auth }) {
                                     </Card>
                                 </Link>
                             ) : (
-                                <Card
-                                    icon="📚"
-                                    title="Ejercicios"
-                                    containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full opacity-70"
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setShowAuthModal(true);
+                                    }}
+                                    className="h-full w-full text-left"
                                 >
-                                    <p className="text-gray-600">Guías preparadas para ejercitar desde casa</p>
-                                </Card>
+                                    <Card
+                                        icon="📚"
+                                        title="Ejercicios"
+                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition cursor-pointer"
+                                    >
+                                        <p className="text-gray-600">Guías preparadas para ejercitar desde casa</p>
+                                    </Card>
+                                </button>
                             )}
                         </div>
 
@@ -332,13 +453,21 @@ export default function Welcome({ auth }) {
                                     </Card>
                                 </Link>
                             ) : (
-                                <Card
-                                    icon="🏋️"
-                                    title="Clases"
-                                    containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full opacity-70"
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setShowAuthModal(true);
+                                    }}
+                                    className="h-full w-full text-left"
                                 >
-                                    <p className="text-gray-600">Clases organizadas por nuestros entrenadores para todo tipo de personas</p>
-                                </Card>
+                                    <Card
+                                        icon="🏋️"
+                                        title="Clases"
+                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition cursor-pointer"
+                                    >
+                                        <p className="text-gray-600">Clases organizadas por nuestros entrenadores para todo tipo de personas</p>
+                                    </Card>
+                                </button>
                             )}
                         </div>
 
@@ -354,19 +483,34 @@ export default function Welcome({ auth }) {
                                     </Card>
                                 </Link>
                             ) : (
-                                <Card
-                                    icon="👥"
-                                    title="Entrenadores"
-                                    containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full opacity-70"
+                                <button
+                                    onClick={() => {
+                                        setAuthMode('login');
+                                        setShowAuthModal(true);
+                                    }}
+                                    className="h-full w-full text-left"
                                 >
-                                    <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>
-                                </Card>
+                                    <Card
+                                        icon="👥"
+                                        title="Entrenadores"
+                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition cursor-pointer"
+                                    >
+                                        <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>
+                                    </Card>
+                                </button>
                             )}
                         </div>
                     </div>
                 </div>
                 <Footer />
             </div>
+
+            <AuthModal
+                show={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                mode={authMode}
+                onSwitchMode={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+            />
         </>
     );
 }

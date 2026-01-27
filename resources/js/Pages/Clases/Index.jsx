@@ -19,7 +19,6 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros }) 
         { value: 4, label: "Jueves" },
         { value: 5, label: "Viernes" },
         { value: 6, label: "Sábado" },
-        { value: 7, label: "Domingo" },
     ];
 
     const mesAnterior = mes === 1 ? 12 : mes - 1;

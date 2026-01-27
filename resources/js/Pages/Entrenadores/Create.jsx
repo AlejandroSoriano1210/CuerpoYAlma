@@ -11,6 +11,23 @@ const DIAS_SEMANA = [
     { id: 5, nombre: 'Sábado' },
 ];
 
+const calcularTotalHoras = (horarios) => {
+    let total = 0;
+    Object.values(horarios).forEach((bloques) => {
+        bloques.forEach((bloque) => {
+            if (bloque.hora_inicio && bloque.hora_fin) {
+                const inicio = bloque.hora_inicio.split(':');
+                const fin = bloque.hora_fin.split(':');
+                const inicioMinutos = parseInt(inicio[0]) * 60 + parseInt(inicio[1]);
+                const finMinutos = parseInt(fin[0]) * 60 + parseInt(fin[1]);
+                const diferencia = Math.max(0, finMinutos - inicioMinutos);
+                total += diferencia / 60;
+            }
+        });
+    });
+    return total;
+};
+
 export default function Create() {
     const { flash } = usePage().props;
 
@@ -22,6 +39,7 @@ export default function Create() {
         4: [],
         5: [],
     });
+    const [totalHoras, setTotalHoras] = useState(0);
 
     const { data, setData, post, errors, processing } = useForm({
         name: '',
@@ -39,6 +57,7 @@ export default function Create() {
         ];
         setHorariosPorDia(nuevosHorarios);
         actualizarFormulario(nuevosHorarios);
+        setTotalHoras(calcularTotalHoras(nuevosHorarios));
     };
 
     const handleRemoveBloque = (dia, id) => {
@@ -46,6 +65,7 @@ export default function Create() {
         nuevosHorarios[dia] = nuevosHorarios[dia].filter((b) => b.id !== id);
         setHorariosPorDia(nuevosHorarios);
         actualizarFormulario(nuevosHorarios);
+        setTotalHoras(calcularTotalHoras(nuevosHorarios));
     };
 
     const handleActualizarBloque = (dia, id, field, value) => {
@@ -55,6 +75,7 @@ export default function Create() {
         );
         setHorariosPorDia(nuevosHorarios);
         actualizarFormulario(nuevosHorarios);
+        setTotalHoras(calcularTotalHoras(nuevosHorarios));
     };
 
     const actualizarFormulario = (horarios) => {
@@ -193,9 +214,28 @@ export default function Create() {
 
                             {/* Horario de Trabajo */}
                             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                                <h2 className="text-lg font-semibold mb-4 text-gray-900">
-                                    Horario de Trabajo
-                                </h2>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-900">
+                                        Horario de Trabajo
+                                    </h2>
+                                    <div className={`text-sm font-semibold px-3 py-1 rounded ${
+                                        totalHoras > 40
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-green-100 text-green-800'
+                                    }`}>
+                                        {totalHoras.toFixed(2)} / 40 horas
+                                    </div>
+                                </div>
+                                {totalHoras > 40 && (
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+                                        ⚠️ El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de 40 horas.
+                                    </div>
+                                )}
+                                {errors.horarios && (
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+                                        {errors.horarios}
+                                    </div>
+                                )}
 
                                 <div className="space-y-4">
                                     {DIAS_SEMANA.map((dia) => (
@@ -295,7 +335,7 @@ export default function Create() {
                             <div className="flex gap-4">
                                 <button
                                     type="submit"
-                                    disabled={processing}
+                                    disabled={processing || totalHoras > 40}
                                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
                                 >
                                     {processing

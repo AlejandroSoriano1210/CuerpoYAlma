@@ -61,7 +61,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Clases
                                 </NavLink>
-                                {hasAnyRole(['entrenador', 'superusuario']) && (
+                                {hasRole('entrenador') && (
                                     <NavLink
                                         href={route("panel.clases.index")}
                                         active={route().current("panel.clases.index")}
@@ -197,7 +197,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Clases
                         </ResponsiveNavLink>
-                        {hasAnyRole(['entrenador', 'superusuario']) && (
+                        {hasRole('entrenador') && (
                             <ResponsiveNavLink
                                 href={route("panel.clases.index")}
                                 active={route().current("panel.clases.index")}
