@@ -16,7 +16,8 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('clases:eliminar-expiradas')->dailyAt('00:05');
+        // Ejecutar cada hora para eliminar clases expiradas más frecuentemente
+        $schedule->command('clases:eliminar-expiradas')->hourly();
 
         // Enviar recordatorio de métricas el 1 de cada mes a las 08:00
         $schedule->command('measurements:send-reminder')->monthlyOn(1, '08:00');

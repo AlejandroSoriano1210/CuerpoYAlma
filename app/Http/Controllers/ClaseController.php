@@ -38,6 +38,8 @@ class ClaseController extends Controller
             ->when($diasMysql->isNotEmpty(), fn ($q) => $q->whereIn(DB::raw('DAYOFWEEK(fecha)'), $diasMysql))
             ->when($momentoValido === 'manana', fn ($q) => $q->whereTime('hora_inicio', '<', '14:00:00'))
             ->when($momentoValido === 'tarde', fn ($q) => $q->whereTime('hora_inicio', '>=', '14:00:00'))
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio')
             ->get()
             ->map(function ($horario) {
                 // Contar solo reservas no canceladas

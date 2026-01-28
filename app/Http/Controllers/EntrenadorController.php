@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\HorarioTrabajo;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class EntrenadorController extends Controller
@@ -17,8 +18,11 @@ class EntrenadorController extends Controller
         $query = User::role('entrenador');
 
         if (!empty($search)) {
-            $query->whereRaw("LOWER(CONVERT(name USING utf8mb4) COLLATE utf8mb4_unicode_ci) LIKE LOWER(CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)", ["%{$search}%"])
-                  ->orWhereRaw("LOWER(CONVERT(email USING utf8mb4) COLLATE utf8mb4_unicode_ci) LIKE LOWER(CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)", ["%{$search}%"]);
+            $operator = DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
+            $query->where(function ($q) use ($search, $operator) {
+                $q->where('name', $operator, "%{$search}%")
+                  ->orWhere('email', $operator, "%{$search}%");
+            });
         }
 
         $entrenadores = $query->get();

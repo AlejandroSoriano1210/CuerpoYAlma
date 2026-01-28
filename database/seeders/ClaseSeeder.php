@@ -36,7 +36,12 @@ class ClaseSeeder extends Seeder
         $mesActual = $hoy->month;
         $anoActual = $hoy->year;
         $diaActual = $hoy->day;
+
+        // Mapeos de días
+        // ISO: 1=Lunes, 2=Martes, ... 7=Domingo
+        // HorarioTrabajo: 0=Lunes, 1=Martes, ... 5=Sábado
         $mapaDiaSemana = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
+        $mapaIsoANumero = [1 => 0, 2 => 1, 3 => 2, 4 => 3, 5 => 4, 6 => 5, 7 => 6];
 
         // Crear clases para el mes actual y el siguiente (máx 2 por semana)
         foreach ($tiposClases as $tipo) {
@@ -63,8 +68,11 @@ class ClaseSeeder extends Seeder
             $fechasSeleccionadas = array_slice($fechasDisponibles, 0, min($maxHorarios, count($fechasDisponibles)));
 
             foreach ($fechasSeleccionadas as $fecha) {
-                $nombreDia = $mapaDiaSemana[$fecha->dayOfWeekIso] ?? null;
-                if (!$nombreDia) {
+                $diaIso = $fecha->dayOfWeekIso;
+                $nombreDia = $mapaDiaSemana[$diaIso] ?? null;
+                $diaNumero = $mapaIsoANumero[$diaIso] ?? null;
+
+                if (!$nombreDia || $diaNumero === null) {
                     continue;
                 }
 
@@ -74,7 +82,7 @@ class ClaseSeeder extends Seeder
                 }
 
                 $turnosEntrenador = HorarioTrabajo::where('user_id', $clase->user_id)
-                    ->where('dia_semana', $nombreDia)
+                    ->where('dia_semana', $diaNumero)
                     ->get();
 
                 if ($turnosEntrenador->isEmpty()) {

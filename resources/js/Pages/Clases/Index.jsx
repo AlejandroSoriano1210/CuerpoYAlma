@@ -79,7 +79,9 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros }) 
     }, [horarios, diasSemana, momento]);
 
     const clasesDelDia = selectedDate
-        ? horariosFiltrados.filter((h) => h.fecha.substring(0, 10) === selectedDate)
+        ? horariosFiltrados
+            .filter((h) => h.fecha.substring(0, 10) === selectedDate)
+            .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio))
         : [];
 
     const canEdit = (clase) => {

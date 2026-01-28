@@ -115,7 +115,34 @@ class HorarioClaseController extends Controller
         // Si es superusuario, pasar lista de entrenadores para asignación
         $entrenadores = null;
         if (auth()->user()->hasRole('superusuario')) {
-            $entrenadores = \App\Models\User::role('entrenador')->get(['id', 'name']);
+            $entrenadores = \App\Models\User::role('entrenador')
+                ->with('horarioTrabajo')
+                ->get()
+                ->map(function ($entrenador) {
+                    return [
+                        'id' => $entrenador->id,
+                        'name' => $entrenador->name,
+                        'horarios' => $entrenador->horarioTrabajo
+                            ->groupBy('dia_semana')
+                            ->map(function ($horariosDelDia, $dia) {
+                                // Los dias se guardan como: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo
+                                $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+                                $nombreDia = is_numeric($dia) ? $diasSemana[(int)$dia] : $dia;
+
+                                // Agrupar los horarios del día con " / "
+                                $horarios = $horariosDelDia->map(function ($h) {
+                                    return substr($h->hora_inicio, 0, 5) . ' - ' . substr($h->hora_fin, 0, 5);
+                                })->join(' / ');
+
+                                return [
+                                    'dia' => $nombreDia,
+                                    'horarios' => $horarios,
+                                ];
+                            })
+                            ->values(),
+                    ];
+                });
         }
 
         return Inertia::render('Clases/Create', [
@@ -149,6 +176,51 @@ class HorarioClaseController extends Controller
             $userId = $validated['user_id'];
         } else {
             $userId = auth()->id();
+        }
+
+        // Validar que la clase esté dentro del horario de trabajo del entrenador
+        $fecha = Carbon::parse($validated['fecha']);
+        $diaSemana = $fecha->dayOfWeek; // 0=Domingo, 1=Lunes, etc.
+
+        // Convertir al formato usado en BD: 0=Lunes, 1=Martes, etc.
+        $diaSemanaDB = $diaSemana === 0 ? 6 : $diaSemana - 1;
+
+        $horariosEntrenador = \App\Models\HorarioTrabajo::where('user_id', $userId)
+            ->where('dia_semana', $diaSemanaDB)
+            ->get();
+
+        if ($horariosEntrenador->isEmpty()) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['horario' => 'El entrenador no tiene horario de trabajo asignado para ese día de la semana.']);
+        }
+
+        // Verificar que la hora de inicio y fin estén dentro de alguno de los bloques horarios
+        $horaInicio = $validated['hora_inicio'];
+        $horaFin = $validated['hora_fin'];
+        $dentroDeHorario = false;
+
+        foreach ($horariosEntrenador as $horario) {
+            $horarioInicio = substr($horario->hora_inicio, 0, 5);
+            $horarioFin = substr($horario->hora_fin, 0, 5);
+
+            if ($horaInicio >= $horarioInicio && $horaFin <= $horarioFin) {
+                $dentroDeHorario = true;
+                break;
+            }
+        }
+
+        if (!$dentroDeHorario) {
+            $horariosTexto = $horariosEntrenador->map(function($h) {
+                return substr($h->hora_inicio, 0, 5) . ' - ' . substr($h->hora_fin, 0, 5);
+            })->join(' / ');
+
+            $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            $nombreDia = $diasSemana[$diaSemanaDB];
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['horario' => "La clase debe estar dentro del horario de trabajo del entrenador para {$nombreDia}: {$horariosTexto}"]);
         }
 
         // Crear o usar la Clase base

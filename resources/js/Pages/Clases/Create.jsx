@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -15,9 +15,17 @@ export default function Create({ entrenadores }) {
         semanal: false,
     });
 
+    // Obtener el entrenador seleccionado
+    const entrenadorSeleccionado = useMemo(() => {
+        if (!data.user_id || !entrenadores) return null;
+        return entrenadores.find(et => et.id == data.user_id);
+    }, [data.user_id, entrenadores]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('clases.store'));
+        post(route('clases.store'), {
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -38,17 +46,6 @@ export default function Create({ entrenadores }) {
                         {flash?.error && (
                             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                                 {flash.error}
-                            </div>
-                        )}
-
-                        {Object.keys(errors).length > 0 && (
-                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                                <p className="font-bold">Hay errores en el formulario:</p>
-                                <ul className="list-disc list-inside mt-2">
-                                    {Object.entries(errors).map(([key, value]) => (
-                                        <li key={key}>{value}</li>
-                                    ))}
-                                </ul>
                             </div>
                         )}
 
@@ -184,13 +181,54 @@ export default function Create({ entrenadores }) {
                             {entrenadores && entrenadores.length > 0 && (
                                 <div className="mb-6">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Asignar Entrenador</label>
-                                    <select value={data.user_id} onChange={(e) => setData('user_id', e.target.value)} className={`w-full px-3 py-2 border rounded-lg ${errors.user_id ? 'border-red-500' : 'border-gray-300'}`}>
+                                    <select
+                                        value={data.user_id}
+                                        onChange={(e) => setData('user_id', e.target.value)}
+                                        className={`w-full px-3 py-2 border rounded-lg ${errors.user_id ? 'border-red-500' : 'border-gray-300'}`}
+                                    >
                                         <option value="">-- Seleccionar --</option>
                                         {entrenadores.map((et) => (
                                             <option key={et.id} value={et.id}>{et.name}</option>
                                         ))}
                                     </select>
                                     {errors.user_id && <p className="text-red-500 text-sm mt-1">{errors.user_id}</p>}
+
+                                    {/* Mostrar horario del entrenador seleccionado */}
+                                    {entrenadorSeleccionado && entrenadorSeleccionado.horarios.length > 0 && (
+                                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                                                📅 Horario de {entrenadorSeleccionado.name}
+                                            </h3>
+                                            <div className="space-y-2">
+                                                {entrenadorSeleccionado.horarios.map((horario, idx) => (
+                                                    <div key={idx} className="flex justify-between text-sm text-gray-700 bg-white px-3 py-2 rounded">
+                                                        <span className="font-medium">{horario.dia}:</span>
+                                                        <span className="text-gray-600">{horario.horarios}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {entrenadorSeleccionado && entrenadorSeleccionado.horarios.length === 0 && (
+                                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                            <p className="text-sm text-yellow-800">
+                                                ⚠️ Este entrenador no tiene horario de trabajo asignado
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Errores de validación */}
+                            {Object.keys(errors).length > 0 && (
+                                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                                    <p className="font-bold">Hay errores en el formulario:</p>
+                                    <ul className="list-disc list-inside mt-2">
+                                        {Object.entries(errors).map(([key, value]) => (
+                                            <li key={key}>{value}</li>
+                                        ))}
+                                    </ul>
                                 </div>
                             )}
 

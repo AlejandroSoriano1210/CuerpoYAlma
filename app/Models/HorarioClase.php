@@ -53,30 +53,32 @@ class HorarioClase extends Model
     }
 
     /**
-     * Elimina clases cuya fecha asignada ya pasó.
+     * Elimina clases cuya fecha y hora de fin ya pasaron.
      * Devuelve el número de filas eliminadas.
      */
     public static function eliminarClasesExpiradas(): int
     {
         $instance = new self;
         $table = $instance->getTable();
-        $candidates = ['fecha', 'dia', 'fecha_hora', 'fecha_inicio', 'start_at', 'scheduled_at'];
-        $colFound = null;
 
-        foreach ($candidates as $col) {
-            if (Schema::hasColumn($table, $col)) {
-                $colFound = $col;
-                break;
-            }
-        }
-
-        if (!$colFound) {
-            Log::warning("HorarioClase::eliminarClasesExpiradas - no se encontró columna de fecha en la tabla {$table}");
+        // Verificar que existan las columnas necesarias
+        if (!Schema::hasColumn($table, 'fecha') || !Schema::hasColumn($table, 'hora_fin')) {
+            Log::warning("HorarioClase::eliminarClasesExpiradas - no se encontraron las columnas 'fecha' u 'hora_fin' en la tabla {$table}");
             return 0;
         }
 
-        $today = Carbon::today()->toDateString();
-        $query = self::whereDate($colFound, '<', $today);
+        // Obtener la fecha y hora actual
+        $now = Carbon::now();
+
+        // Eliminar clases donde: fecha < hoy OR (fecha = hoy AND hora_fin <= hora actual)
+        $query = self::where(function ($q) use ($now) {
+            $q->whereDate('fecha', '<', $now->toDateString())
+              ->orWhere(function ($q2) use ($now) {
+                  $q2->whereDate('fecha', '=', $now->toDateString())
+                     ->where('hora_fin', '<=', $now->toTimeString());
+              });
+        });
+
         $count = $query->count();
 
         if ($count > 0) {
