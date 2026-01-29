@@ -19,39 +19,65 @@ class ClaseController extends Controller
     {
         $mes = (int) $request->input('mes', now()->month);
         $ano = (int) $request->input('ano', now()->year);
-
         $diasSemana = collect($request->input('dias_semana', []))
-            ->map(fn ($d) => (int) $d)
-            ->filter(fn ($d) => $d >= 1 && $d <= 7)
+            ->map(fn($d) => (int) $d)
+            ->filter(fn($d) => $d >= 1 && $d <= 7)
             ->values();
 
         $momento = $request->string('momento')->toString();
         $momentoValido = in_array($momento, ['manana', 'tarde'], true) ? $momento : null;
 
-        // Mapeo ISO (1=lunes ... 7=domingo) a MySQL DAYOFWEEK (1=domingo ... 7=sabado)
+        // Mapeo ISO a MySQL DAYOFWEEK
         $mapIsoToMysql = [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6, 6 => 7, 7 => 1];
-        $diasMysql = $diasSemana->map(fn ($d) => $mapIsoToMysql[$d])->unique()->values();
+        $diasMysql = $diasSemana->map(fn($d) => $mapIsoToMysql[$d])->unique()->values();
 
-        $horarios = HorarioClase::with(['clase', 'user', 'clientes'])
+        $horarios = HorarioClase::with(['clase', 'entrenador', 'clientes', 'listaEspera'])
             ->whereMonth('fecha', $mes)
             ->whereYear('fecha', $ano)
-            ->when($diasMysql->isNotEmpty(), fn ($q) => $q->whereIn(DB::raw('DAYOFWEEK(fecha)'), $diasMysql))
-            ->when($momentoValido === 'manana', fn ($q) => $q->whereTime('hora_inicio', '<', '14:00:00'))
-            ->when($momentoValido === 'tarde', fn ($q) => $q->whereTime('hora_inicio', '>=', '14:00:00'))
+            ->when($diasMysql->isNotEmpty(), fn($q) => $q->whereIn(DB::raw('DAYOFWEEK(fecha)'), $diasMysql))
+            ->when($momentoValido === 'manana', fn($q) => $q->whereTime('hora_inicio', '<', '14:00:00'))
+            ->when($momentoValido === 'tarde', fn($q) => $q->whereTime('hora_inicio', '>=', '14:00:00'))
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->get()
             ->map(function ($horario) {
-                // Contar solo reservas no canceladas
                 $inscritos = $horario->clientes()->wherePivot('estado', '!=', 'cancelado')->count();
                 $capacidad = $horario->clase->capacidad;
+
+                // Verificar si el usuario actual tiene reserva
+                $reservado = false;
+                $reservaId = null;
+                $enListaEspera = false;
+                $listaEsperaId = null;
+                $posicionListaEspera = null;
+
+                if (auth()->check()) {
+                    $miReserva = \App\Models\HorarioClaseUser::where('horario_clase_id', $horario->id)
+                        ->where('user_id', auth()->id())
+                        ->where('estado', '!=', 'cancelado')
+                        ->first();
+
+                    if ($miReserva) {
+                        $reservado = true;
+                        $reservaId = $miReserva->id;
+                    }
+
+                    $miListaEspera = \App\Models\ListaEsperaClase::where('horario_clase_id', $horario->id)
+                        ->where('user_id', auth()->id())
+                        ->first();
+
+                    if ($miListaEspera) {
+                        $enListaEspera = true;
+                        $listaEsperaId = $miListaEspera->id;
+                        $posicionListaEspera = $miListaEspera->posicion;
+                    }
+                }
 
                 return [
                     'id' => $horario->id,
                     'clase_id' => $horario->clase_id,
                     'nombre' => $horario->clase->nombre,
-                    'nombre_clase' => $horario->clase->nombre,
-                    'entrenador' => $horario->user->name,
+                    'entrenador' => $horario->entrenador->name,
                     'entrenador_id' => $horario->user_id,
                     'fecha' => $horario->fecha,
                     'hora_inicio' => $horario->hora_inicio,
@@ -59,16 +85,17 @@ class ClaseController extends Controller
                     'inscritos' => $inscritos,
                     'capacidad' => $capacidad,
                     'completa' => $inscritos >= $capacidad,
-                    'disponible' => $inscritos < $capacidad,
+                    'reservado' => $reservado,
+                    'reserva_id' => $reservaId,
+                    'en_lista_espera' => $enListaEspera,
+                    'lista_espera_id' => $listaEsperaId,
+                    'posicion_lista_espera' => $posicionListaEspera,
+                    'lista_espera_count' => $horario->listaEspera->count(),
                 ];
             });
 
-        // Agrupar por fecha para el calendario
-        $calendario = $horarios->groupBy('fecha');
-
         return Inertia::render('Clases/Index', [
             'horarios' => $horarios,
-            'calendario' => $calendario,
             'mes' => $mes,
             'ano' => $ano,
             'mesNombre' => Carbon::createFromDate($ano, $mes, 1)->locale('es')->monthName,
@@ -76,6 +103,29 @@ class ClaseController extends Controller
                 'dias_semana' => $diasSemana,
                 'momento' => $momentoValido,
             ],
+            'entrenadores' => User::role('entrenador')
+                ->with('horarioTrabajo')
+                ->get()
+                ->map(function ($entrenador) {
+                    return [
+                        'id' => $entrenador->id,
+                        'name' => $entrenador->name,
+                        'horarios' => $entrenador->horarioTrabajo
+                            ->groupBy('dia_semana')
+                            ->map(function ($horariosDelDia, $dia) {
+                                $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                                $nombreDia = is_numeric($dia) ? $diasSemana[(int)$dia] : $dia;
+                                $horarios = $horariosDelDia->map(function ($h) {
+                                    return substr($h->hora_inicio, 0, 5) . ' - ' . substr($h->hora_fin, 0, 5);
+                                })->join(' / ');
+                                return [
+                                    'dia' => $nombreDia,
+                                    'horarios' => $horarios,
+                                ];
+                            })
+                            ->values(),
+                    ];
+                }),
         ]);
     }
 
@@ -92,20 +142,7 @@ class ClaseController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'capacidad' => 'required|integer|min:1|max:50',
-            'descripcion' => 'nullable|string',
-        ]);
-
-        $clase = Clase::create([
-            'user_id' => auth()->id(),
-            'nombre' => $validated['nombre'],
-            'capacidad' => $validated['capacidad'],
-        ]);
-
-        return redirect()->route('clases.index')
-            ->with('success', 'Clase creada correctamente.');
+       //
     }
 
     /**
@@ -158,5 +195,4 @@ class ClaseController extends Controller
     {
         //
     }
-
 }

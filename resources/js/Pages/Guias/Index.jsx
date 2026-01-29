@@ -110,7 +110,9 @@ export default function GuiasIndex() {
                                 <div key={guia.id} className="bg-white rounded-lg shadow p-6">
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
-                                            <h3 className="font-bold text-lg text-gray-900">{guia.titulo}</h3>
+                                            <Link href={route('guias.show', guia.id)}>
+                                                <h3 className="font-bold text-lg text-gray-900 hover:text-blue-600 cursor-pointer transition-colors">{guia.titulo}</h3>
+                                            </Link>
                                             <p className="text-sm text-gray-600">Nivel: {guia.nivel}</p>
                                         </div>
 

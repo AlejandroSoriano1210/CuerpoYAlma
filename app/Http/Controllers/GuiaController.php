@@ -257,4 +257,19 @@ class GuiaController extends Controller
 
         return back()->with('success', 'Guía marcada como completada y eliminada de tu dashboard.');
     }
+
+    /**
+     * Download the guide as a PDF.
+     */
+    public function downloadPdf(Guia $guia)
+    {
+        $guia->load(['guiaEjercicio.ejercicio']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.guia', ['guia' => $guia]);
+
+        // Nombre del archivo limpio
+        $filename = \Illuminate\Support\Str::slug($guia->titulo) . '.pdf';
+
+        return $pdf->download($filename);
+    }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ClienteDashboardController;
+use App\Http\Controllers\ClaseController;
 use App\Http\Controllers\EntrenadorController;
 use App\Http\Controllers\EntrenadorPanelController;
 use App\Http\Controllers\HorarioClaseController;
@@ -46,7 +47,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/clases', [HorarioClaseController::class, 'index'])->name('clases.index');
+    Route::get('/clases', [ClaseController::class, 'index'])->name('clases.index');
     Route::middleware('role:superusuario|entrenador')->group(function () {
         Route::get('/clases/crear', [HorarioClaseController::class, 'create'])->name('clases.create');
         Route::post('/clases', [HorarioClaseController::class, 'store'])->name('clases.store');
@@ -83,6 +84,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
+    Route::get('/guias/{guia}/pdf', [GuiaController::class, 'downloadPdf'])->name('guias.downloadPdf');
     Route::post('/guias/{guia}/assign', [GuiaController::class, 'assign'])->name('guias.assign');
     Route::delete('/guias/{guia}/unassign', [GuiaController::class, 'unassign'])->name('guias.unassign');
 
@@ -104,17 +106,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/maquinas/{maquina}/estado', [MaquinaController::class, 'cambiarEstado'])->name('maquinas.estado');
         Route::delete('/maquinas/{maquina}', [MaquinaController::class, 'destroy'])->name('maquinas.destroy');
     });
-
-    // Mostrar un ejercicio (accesible a usuarios autenticados)
     Route::get('/ejercicios/{ejercicio}', [EjercicioController::class, 'show'])->name('ejercicios.show');
-
-    // Listado de máquinas (accesible a usuarios autenticados)
     Route::get('/maquinas', [MaquinaController::class, 'index'])->name('maquinas.index');
-
-    // Mostrar una maquina (accesible a usuarios autenticados)
     Route::get('/maquinas/{maquina}', [MaquinaController::class, 'show'])->name('maquinas.show');
-
-    // Mostrar una guía (rutas con parámetros al final para evitar conflicto)
     Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
 });
 
