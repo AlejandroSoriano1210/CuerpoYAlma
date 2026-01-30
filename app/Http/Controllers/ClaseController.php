@@ -27,14 +27,16 @@ class ClaseController extends Controller
         $momento = $request->string('momento')->toString();
         $momentoValido = in_array($momento, ['manana', 'tarde'], true) ? $momento : null;
 
-        // Mapeo ISO a MySQL DAYOFWEEK
-        $mapIsoToMysql = [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6, 6 => 7, 7 => 1];
-        $diasMysql = $diasSemana->map(fn($d) => $mapIsoToMysql[$d])->unique()->values();
+        // Mapeo ISO a PostgreSQL EXTRACT(DOW FROM fecha)
+        // ISO: 1=Lunes, 2=Martes, ..., 7=Domingo
+        // PostgreSQL DOW: 1=Lunes, 2=Martes, ..., 0=Domingo
+        $mapIsoToPostgres = [1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6, 7 => 0];
+        $diasPostgres = $diasSemana->map(fn($d) => $mapIsoToPostgres[$d])->unique()->values();
 
         $horarios = HorarioClase::with(['clase', 'entrenador', 'clientes', 'listaEspera'])
             ->whereMonth('fecha', $mes)
             ->whereYear('fecha', $ano)
-            ->when($diasMysql->isNotEmpty(), fn($q) => $q->whereIn(DB::raw('DAYOFWEEK(fecha)'), $diasMysql))
+            ->when($diasPostgres->isNotEmpty(), fn($q) => $q->whereIn(DB::raw("EXTRACT(DOW FROM fecha)"), $diasPostgres->toArray()))
             ->when($momentoValido === 'manana', fn($q) => $q->whereTime('hora_inicio', '<', '14:00:00'))
             ->when($momentoValido === 'tarde', fn($q) => $q->whereTime('hora_inicio', '>=', '14:00:00'))
             ->orderBy('fecha')

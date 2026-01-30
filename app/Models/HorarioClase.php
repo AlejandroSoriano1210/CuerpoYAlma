@@ -67,17 +67,12 @@ class HorarioClase extends Model
             return 0;
         }
 
-        // Obtener la fecha y hora actual
-        $now = Carbon::now();
-
-        // Eliminar clases donde: fecha < hoy OR (fecha = hoy AND hora_fin <= hora actual)
-        $query = self::where(function ($q) use ($now) {
-            $q->whereDate('fecha', '<', $now->toDateString())
-              ->orWhere(function ($q2) use ($now) {
-                  $q2->whereDate('fecha', '=', $now->toDateString())
-                     ->where('hora_fin', '<=', $now->toTimeString());
-              });
-        });
+                // Eliminar clases donde: fecha < hoy OR (fecha = hoy AND hora_fin <= hora actual)
+                // Usamos la hora del servidor de BD para evitar discrepancias y conversiones implícitas.
+                $query = self::where(function ($q) {
+                        $q->whereRaw('fecha < current_date')
+                            ->orWhereRaw('fecha = current_date AND hora_fin <= current_time');
+                });
 
         $count = $query->count();
 
