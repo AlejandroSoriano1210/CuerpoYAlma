@@ -44,6 +44,10 @@ Route::middleware(['auth', 'role:cliente'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/delete-read', [\App\Http\Controllers\NotificationController::class, 'deleteRead'])->name('notifications.deleteRead');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
+    Route::post('/notifications/{id}/aceptar-lista-espera', [\App\Http\Controllers\NotificationController::class, 'aceptarListaEspera'])->name('notifications.aceptarListaEspera');
+    Route::post('/notifications/{id}/rechazar-lista-espera', [\App\Http\Controllers\NotificationController::class, 'rechazarListaEspera'])->name('notifications.rechazarListaEspera');
 });
 
 Route::middleware('auth')->group(function () {

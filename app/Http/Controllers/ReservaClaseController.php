@@ -128,22 +128,18 @@ class ReservaClaseController extends Controller
             ->get();
 
         foreach ($usuarios as $listaEspera) {
-            // Crear la reserva
-            HorarioClaseUser::create([
-                'horario_clase_id' => $horario->id,
-                'user_id' => $listaEspera->user_id,
-                'estado' => 'pendiente',
-            ]);
-
-            // Eliminar de la lista de espera
-            $listaEspera->delete();
-
-            // Notificar al usuario
+            // NO reservar automáticamente, solo notificar
+            // Notificar al usuario con opción de aceptar/rechazar
             \Illuminate\Support\Facades\Notification::send(
                 \App\Models\User::find($listaEspera->user_id),
                 new \App\Notifications\SimpleNotification(
-                    "¡Felicidades! Hay un lugar disponible en la clase '{$horario->nombre}' del {$horario->fecha->format('d/m/Y')}. Tu reserva ha sido confirmada.",
-                    route('clases.show', $horario->id)
+                    "¡Hay un lugar disponible en la clase '{$horario->nombre}' del {$horario->fecha->format('d/m/Y')}! ¿Deseas reservar tu plaza?",
+                    route('clases.show', $horario->id),
+                    [
+                        'tipo' => 'lista_espera_disponible',
+                        'horario_clase_id' => $horario->id,
+                        'lista_espera_id' => $listaEspera->id,
+                    ]
                 )
             );
         }
