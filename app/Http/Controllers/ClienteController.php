@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Pago;
+use App\Models\UserMeasurement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -272,5 +273,93 @@ class ClienteController extends Controller
         $filename = 'factura-' . \Illuminate\Support\Str::slug($cliente->name) . '-' . $pago->mes . '-' . $pago->ano . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Agregar una nueva medición a un cliente
+     */
+    public function agregarMedicion(Request $request, User $cliente = null)
+    {
+        $cliente = $cliente ?? $request->user();
+
+        if (!$cliente) {
+            return redirect()->back()->withErrors(['error' => 'Cliente no encontrado.']);
+        }
+
+        if (!$cliente->hasRole('cliente')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un cliente.']);
+        }
+
+        $validated = $request->validate([
+            'peso_kg' => 'nullable|numeric|min:1|max:500',
+            'altura_cm' => 'nullable|numeric|min:50|max:260',
+            'grasa_corporal_pct' => 'nullable|numeric|min:0|max:80',
+            'fecha_medicion' => 'required|date',
+        ]);
+
+        // Crear la medición
+        $measurement = $cliente->measurements()->create([
+            'peso_kg' => $validated['peso_kg'] ?? null,
+            'altura_cm' => $validated['altura_cm'] ?? null,
+            'grasa_corporal_pct' => $validated['grasa_corporal_pct'] ?? null,
+            'fecha_medicion' => $validated['fecha_medicion'],
+        ]);
+
+        // Actualizar datos principales del usuario
+        $pesoBase = $measurement->peso_kg ?? $cliente->peso_kg;
+        $alturaBase = $measurement->altura_cm ?? $cliente->altura_cm;
+        $imc = null;
+
+        if ($pesoBase && $alturaBase) {
+            $alturaM = $alturaBase / 100;
+            if ($alturaM > 0) {
+                $imc = round($pesoBase / ($alturaM * $alturaM), 1);
+            }
+        }
+
+        $cliente->update([
+            'peso_kg' => $measurement->peso_kg ?? $cliente->peso_kg,
+            'altura_cm' => $measurement->altura_cm ?? $cliente->altura_cm,
+            'grasa_corporal_pct' => $measurement->grasa_corporal_pct ?? $cliente->grasa_corporal_pct,
+            'imc' => $imc ?? $cliente->imc,
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Medición registrada correctamente.');
+    }
+
+    /**
+     * Mostrar estadísticas y mediciones de un cliente
+     */
+    public function estadisticas(User $cliente)
+    {
+        if (!$cliente->hasRole('cliente')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un cliente.']);
+        }
+
+        $cliente->load('measurements');
+        $mediciones = $cliente->medicionesUltimos30Dias();
+
+        return Inertia::render('Clientes/Estadisticas', [
+            'cliente' => [
+                'id' => $cliente->id,
+                'name' => $cliente->name,
+                'email' => $cliente->email,
+                'peso_kg' => $cliente->peso_kg,
+                'altura_cm' => $cliente->altura_cm,
+                'grasa_corporal_pct' => $cliente->grasa_corporal_pct,
+                'imc' => $cliente->imc,
+            ],
+            'mediciones' => $mediciones->map(function ($medicion) {
+                return [
+                    'id' => $medicion->id,
+                    'peso_kg' => $medicion->peso_kg,
+                    'altura_cm' => $medicion->altura_cm,
+                    'grasa_corporal_pct' => $medicion->grasa_corporal_pct,
+                    'fecha_medicion' => $medicion->fecha_medicion->format('Y-m-d'),
+                ];
+            }),
+        ]);
     }
 }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\Clase;
 use App\Models\HorarioClase;
+use App\Models\ClaseAsistida;
 use App\Models\Guia;
 use App\Models\GuiaView;
 use Carbon\Carbon;
@@ -69,6 +70,15 @@ class ClienteDashboardTest extends TestCase
         // Inscribir cliente en ambas clases
         $this->horarioClaseProxima->clientes()->attach($this->cliente->id, ['estado' => 'confirmado']);
         $this->horarioClasePasada->clientes()->attach($this->cliente->id, ['estado' => 'confirmado']);
+
+        // Registrar asistencia para la clase pasada
+        ClaseAsistida::create([
+            'user_id' => $this->cliente->id,
+            'horario_clase_id' => $this->horarioClasePasada->id,
+            'fecha' => $this->horarioClasePasada->fecha,
+            'hora_inicio' => $this->horarioClasePasada->hora_inicio,
+            'hora_fin' => $this->horarioClasePasada->hora_fin,
+        ]);
     }
 
     public function test_usuario_no_autenticado_no_puede_ver_dashboard()
@@ -164,14 +174,7 @@ class ClienteDashboardTest extends TestCase
 
     public function test_estadisticas_clases_tomadas_es_correcta()
     {
-        $totalClasesTomadas = HorarioClase::where(function ($query) {
-                $query->whereHas('clientes', function ($q) {
-                    $q->where('user_id', $this->cliente->id)
-                      ->where('estado', '!=', 'cancelado');
-                });
-            })
-            ->where('fecha', '<', now())
-            ->count();
+        $totalClasesTomadas = ClaseAsistida::where('user_id', $this->cliente->id)->count();
 
         $this->assertEquals(1, $totalClasesTomadas);
     }
@@ -264,16 +267,10 @@ class ClienteDashboardTest extends TestCase
         $clasesPorMes = [];
         for ($i = 5; $i >= 0; $i--) {
             $mes = now()->subMonths($i);
-            $count = HorarioClase::where(function ($query) {
-                $query->whereHas('clientes', function ($q) {
-                    $q->where('user_id', $this->cliente->id)
-                      ->where('estado', '!=', 'cancelado');
-                });
-            })
-            ->whereMonth('fecha', $mes->month)
-            ->whereYear('fecha', $mes->year)
-            ->where('fecha', '<', now())
-            ->count();
+            $count = ClaseAsistida::where('user_id', $this->cliente->id)
+                ->whereMonth('fecha', $mes->month)
+                ->whereYear('fecha', $mes->year)
+                ->count();
 
             $clasesPorMes[] = [
                 'mes' => $mes->format('M'),

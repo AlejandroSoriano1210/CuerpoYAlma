@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\ClaseAsistida;
 
 class ProfileController extends Controller
 {
@@ -21,20 +22,18 @@ class ProfileController extends Controller
         $user = $request->user();
         $year = now()->year;
 
-        // Clases a las que asistió este año: reservas confirmadas (no canceladas) con fecha pasada en este año
-        $records = \App\Models\HorarioClaseUser::where('user_id', $user->id)
-            ->where('estado', '!=', 'cancelado')
-            ->whereHas('horarioClase', function ($q) use ($year) {
-                $q->whereYear('fecha', $year)->whereDate('fecha', '<', now());
-            })->with('horarioClase')->get();
+        // Clases a las que asistió este año
+        $records = ClaseAsistida::where('user_id', $user->id)
+            ->whereYear('fecha', $year)
+            ->get();
 
         $clasesAsistidas = $records->count();
 
         // Conteo por mes (1-12)
         $clasesPorMes = array_fill(1, 12, 0);
         foreach ($records as $r) {
-            if ($r->horarioClase && $r->horarioClase->fecha) {
-                $month = (int) $r->horarioClase->fecha->format('n');
+            if ($r->fecha) {
+                $month = (int) $r->fecha->format('n');
                 $clasesPorMes[$month]++;
             }
         }

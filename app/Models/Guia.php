@@ -27,4 +27,9 @@ class Guia extends Model
             ->withPivot(['id', 'series', 'repeticiones', 'instrucciones', 'orden'])
             ->withTimestamps();
     }
+
+    public function progreso()
+    {
+        return $this->hasMany(GuiaProgreso::class);
+    }
 }

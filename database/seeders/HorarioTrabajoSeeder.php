@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\HorarioTrabajo;
+use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,7 +16,10 @@ class HorarioTrabajoSeeder extends Seeder
     public function run(): void
     {
         // Crear 4 entrenadores
-        $entrenadores = User::factory(4)->create()->each(function ($user) {
+        $entrenadores = User::factory(4)->create([
+            'created_at' => Carbon::create(2025, 1, 1),
+            'updated_at' => Carbon::create(2025, 1, 1),
+        ])->each(function ($user) {
             $user->assignRole('entrenador');
         });
 

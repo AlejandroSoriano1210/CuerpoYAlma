@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
@@ -6,32 +6,88 @@ import { usaRoleUser } from '@/Hooks/usaRoleUser';
 export default function Show({ guia, clientes = [], isAssigned = false }) {
     const { hasAnyRole } = usaRoleUser();
     const { flash } = usePage().props;
-    const [showModal, setShowModal] = useState(false);
-    const [selectedClientId, setSelectedClientId] = useState('');
+    const [mostrarModal, setMostrarModal] = useState(false);
+    const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState('');
+    const [progreso, setProgreso] = useState({});
+    const [mostrarCelebracion, setMostrarCelebracion] = useState(false);
+    const [cargandoProgreso, setCargandoProgreso] = useState(true);
+    const [animacionCelebracion, setAnimacionCelebracion] = useState(false);
 
-    const handleDelete = () => {
+    // Cargar progreso al montar el componente
+    useEffect(() => {
+        if (isAssigned) {
+            window.axios.get(route('guias.get-progress', guia.id))
+                .then(res => {
+                    setProgreso(res.data.progreso || {});
+                    setCargandoProgreso(false);
+                })
+                .catch(err => {
+                    console.error('Error cargando progreso:', err);
+                    setCargandoProgreso(false);
+                });
+        }
+    }, [isAssigned]);
+
+    // Función para guardar el progreso de un ejercicio
+    const manejarCambioCheckbox = (guiaEjercicioId, completado) => {
+        setCargandoProgreso(true);
+
+        window.axios.post(route('guias.save-progress', guia.id), {
+            guia_ejercicio_id: guiaEjercicioId,
+            completado: completado,
+        })
+            .then(res => {
+                const data = res.data;
+                if (data.success) {
+                    // Actualizar el estado local del progreso
+                    setProgreso(prev => ({
+                        ...prev,
+                        [guiaEjercicioId]: completado,
+                    }));
+
+                    // Si la guía se completó, mostrar celebración
+                    if (data.guiaCompletada) {
+                        setMostrarCelebracion(true);
+                        setAnimacionCelebracion(true);
+
+                        // Limpiar el progreso y desasignar la guía después de 1.5 segundos
+                        setTimeout(() => {
+                            setProgreso({});
+                            router.delete(route('guias.unassign', guia.id));
+                        }, 1500);
+                    }
+                }
+                setCargandoProgreso(false);
+            })
+            .catch(err => {
+                console.error('Error guardando progreso:', err);
+                setCargandoProgreso(false);
+            });
+    };
+
+    const manejarEliminar = () => {
         if (confirm('¿Estás seguro de que deseas eliminar esta guía?')) {
             router.delete(route('guias.destroy', guia.id));
         }
     };
 
-    const handleComplete = () => {
+    const manejarCompletar = () => {
         if (confirm('¿Marcar esta guía como completada? Se eliminará de tu dashboard.')) {
             router.delete(route('guias.unassign', guia.id));
         }
     };
 
-    const handleAssignToClient = (e) => {
+    const manejarAsignarCliente = (e) => {
         e.preventDefault();
-        if (!selectedClientId) {
+        if (!clienteSeleccionadoId) {
             alert('Por favor selecciona un cliente');
             return;
         }
         router.post(route('guias.assign-to-client', guia.id), {
-            client_id: selectedClientId,
+            client_id: clienteSeleccionadoId,
         });
-        setShowModal(false);
-        setSelectedClientId('');
+        setMostrarModal(false);
+        setClienteSeleccionadoId('');
     };
 
     return (
@@ -66,10 +122,25 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                 <h2 className="text-2xl font-bold mb-4">Ejercicios</h2>
                                 <div className="space-y-4">
                                     {(guia.guia_ejercicio ?? guia.guiaEjercicio ?? []).map((g) => (
-                                        <div key={g.id} className="bg-gray-50 p-4 rounded border">
-                                            <h3 className="font-bold text-lg">{g.ejercicio.nombre}</h3>
-                                            <p className="text-sm text-gray-600">{g.series} series × {g.repeticiones} repeticiones</p>
-                                            {g.instrucciones && <p className="mt-2 text-gray-700">{g.instrucciones}</p>}
+                                        <div key={g.id} className={`bg-gray-50 p-4 rounded border transition-all ${progreso[g.id] ? 'bg-green-50 border-green-300' : ''}`}>
+                                            <div className="flex items-start gap-3">
+                                                {isAssigned && !hasAnyRole(['entrenador', 'superusuario']) && (
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={progreso[g.id] ?? false}
+                                                        onChange={(e) => manejarCambioCheckbox(g.id, e.target.checked)}
+                                                        disabled={cargandoProgreso}
+                                                        className="mt-1 w-5 h-5 cursor-pointer"
+                                                    />
+                                                )}
+                                                <div className="flex-1">
+                                                    <h3 className={`font-bold text-lg ${progreso[g.id] ? 'line-through text-gray-500' : ''}`}>
+                                                        {g.ejercicio.nombre}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-600">{g.series} series × {g.repeticiones} repeticiones</p>
+                                                    {g.instrucciones && <p className="mt-2 text-gray-700">{g.instrucciones}</p>}
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -101,7 +172,7 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={handleComplete}
+                                            onClick={manejarCompletar}
                                             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
                                         >
                                             ✓ Marcar como completada
@@ -112,7 +183,7 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                             {hasAnyRole(['entrenador', 'superusuario']) && (
                                 <>
                                     <button
-                                        onClick={() => setShowModal(true)}
+                                        onClick={() => setMostrarModal(true)}
                                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                                     >
                                         Asignar a cliente
@@ -120,7 +191,7 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                     <Link href={route('guias.edit', guia.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
                                         Editar
                                     </Link>
-                                    <button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                                    <button onClick={manejarEliminar} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                                         Eliminar
                                     </button>
                                 </>
@@ -131,17 +202,17 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
             </div>
 
             {/* Modal para asignar a cliente */}
-            {showModal && (
+            {mostrarModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">Asignar guía a cliente</h2>
 
-                        <form onSubmit={handleAssignToClient}>
+                        <form onSubmit={manejarAsignarCliente}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Selecciona un cliente</label>
                                 <select
-                                    value={selectedClientId}
-                                    onChange={(e) => setSelectedClientId(e.target.value)}
+                                    value={clienteSeleccionadoId}
+                                    onChange={(e) => setClienteSeleccionadoId(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="">-- Selecciona un cliente --</option>
@@ -163,8 +234,8 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setShowModal(false);
-                                        setSelectedClientId('');
+                                        setMostrarModal(false);
+                                        setClienteSeleccionadoId('');
                                     }}
                                     className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
                                 >
@@ -172,6 +243,27 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Celebración */}
+            {mostrarCelebracion && (
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+                    <div className={`bg-white rounded-lg shadow-2xl max-w-md w-full p-8 text-center transition-all ${animacionCelebracion ? 'transform scale-110 opacity-100' : 'transform scale-100 opacity-100'}`}>
+                        <h2 className="text-3xl font-bold text-green-600 mb-2">¡Enhorabuena!</h2>
+                        <p className="text-lg text-gray-700 mb-6">
+                            Has completado la guía <strong>{guia.titulo}</strong>
+                        </p>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Se eliminará de tu dashboard automáticamente...
+                        </p>
+                        <button
+                            onClick={() => setMostrarCelebracion(false)}
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                        >
+                            Cerrar
+                        </button>
                     </div>
                 </div>
             )}

@@ -12,7 +12,6 @@ use App\Http\Controllers\ReservaClaseController;
 use App\Http\Controllers\GuiaController;
 use App\Http\Controllers\EjercicioController;
 use App\Http\Controllers\MaquinaController;
-use App\Http\Controllers\UserMeasurementController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -37,7 +36,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:cliente'])->group(function () {
     Route::get('/estadisticas', [ClienteDashboardController::class, 'index'])->name('estadisticas');
     Route::post('/estadisticas/medidas', [ClienteDashboardController::class, 'updateMetrics'])->name('estadisticas.medidas');
-    Route::post('/mediciones', [UserMeasurementController::class, 'store'])->name('mediciones.store');
+    Route::post('/mediciones', [ClienteController::class, 'agregarMedicion'])->name('mediciones.store');
 });
 
 // Notifications
@@ -91,6 +90,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/guias/{guia}/pdf', [GuiaController::class, 'downloadPdf'])->name('guias.downloadPdf');
     Route::post('/guias/{guia}/assign', [GuiaController::class, 'assign'])->name('guias.assign');
     Route::delete('/guias/{guia}/unassign', [GuiaController::class, 'unassign'])->name('guias.unassign');
+    Route::post('/guias/{guia}/save-progress', [GuiaController::class, 'saveProgress'])->name('guias.save-progress');
+    Route::get('/guias/{guia}/get-progress', [GuiaController::class, 'getProgress'])->name('guias.get-progress');
 
     Route::middleware('role:superusuario|entrenador')->group(function () {
         // CRUD de ejercicios (solo para entrenadores y superusuario)
@@ -148,6 +149,8 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
     Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
     Route::post('/clientes/marcar-pagos', [ClienteController::class, 'marcarPagos'])->name('clientes.marcarPagos');
     Route::get('/clientes/{cliente}/factura/{pago}/descargar', [ClienteController::class, 'descargarFactura'])->name('clientes.descargarFactura');
+    Route::get('/clientes/{cliente}/estadisticas', [ClienteController::class, 'estadisticas'])->name('clientes.estadisticas');
+    Route::post('/clientes/{cliente}/mediciones', [ClienteController::class, 'agregarMedicion'])->name('clientes.mediciones.store');
 });
 
 require __DIR__ . '/auth.php';

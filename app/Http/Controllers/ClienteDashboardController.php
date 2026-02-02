@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\HorarioClase;
 use App\Models\GuiaView;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Guia;
+use App\Models\GuiaProgreso;
+use App\Models\ClaseAsistida;
 
 class ClienteDashboardController extends Controller
 {
@@ -67,31 +68,48 @@ class ClienteDashboardController extends Controller
 
         // Guía actual del cliente
         $guiaActual = GuiaView::where('user_id', $user->id)
-            ->with(['guia', 'guia.guiaEjercicio'])
+            ->with(['guia', 'guia.guiaEjercicio.ejercicio'])
             ->first();
 
         $guiaData = null;
         if ($guiaActual) {
             $guia = $guiaActual->guia;
+            $totalEjercicios = $guia->guiaEjercicio()->count();
+
+            $completadosIds = GuiaProgreso::where('user_id', $user->id)
+                ->where('guia_id', $guia->id)
+                ->where('completado', true)
+                ->pluck('guia_ejercicio_id')
+                ->toArray();
+
+            $siguiente = $guia->guiaEjercicio
+                ->sortBy('orden')
+                ->first(function ($item) use ($completadosIds) {
+                    return !in_array($item->id, $completadosIds, true);
+                });
+
+            $faltan = max(0, $totalEjercicios - count($completadosIds));
+
+            // Contar cuántas veces ha completado esta guía
+            $vecesCompletada = \App\Models\GuiaCompletada::where('user_id', $user->id)
+                ->where('guia_id', $guia->id)
+                ->count();
+
             $guiaData = [
                 'id' => $guia->id,
                 'titulo' => $guia->titulo,
                 'nivel' => $guia->nivel,
                 'contenido' => $guia->contenido,
-                'ejercicios_count' => $guia->guiaEjercicio()->count(),
+                'ejercicios_count' => $totalEjercicios,
+                'ejercicios_faltan' => $faltan,
+                'siguiente_ejercicio' => $siguiente?->ejercicio?->nombre,
+                'veces_completada' => $vecesCompletada,
                 'asignada_el' => $guiaActual->created_at->format('Y-m-d'),
             ];
         }
 
         // Estadísticas del usuario
-        $totalClasesTomadas = HorarioClase::where(function ($query) use ($user) {
-                $query->whereHas('clientes', function ($q) use ($user) {
-                    $q->where('user_id', $user->id)
-                      ->where('estado', '!=', 'cancelado');
-                });
-            })
-            ->where('fecha', '<', now())
-            ->count();
+                $totalClasesTomadas = ClaseAsistida::where('user_id', $user->id)->count();
 
         $totalClasesReservadas = HorarioClase::where(function ($query) use ($user) {
                 $query->whereHas('clientes', function ($q) use ($user) {
@@ -104,11 +122,14 @@ class ClienteDashboardController extends Controller
 
         $enListaEspera = \App\Models\ListaEsperaClase::where('user_id', $user->id)->count();
 
+        // Total de guías completadas por el usuario (incluyendo repeticiones)
+        $totalGuiasCompletadas = \App\Models\GuiaCompletada::where('user_id', $user->id)->count();
+
         $imcCalculado = $user->imc;
         $latestMeasurement = $user->measurements()->orderBy('fecha_medicion', 'desc')->first();
         $pesoBase = $latestMeasurement->peso_kg ?? $user->peso_kg;
         $alturaBase = $latestMeasurement->altura_cm ?? $user->altura_cm;
-        if (!$imcCalculado && $pesoBase && $alturaBase) {
+        if ($pesoBase && $alturaBase) {
             $alturaM = $alturaBase / 100;
             if ($alturaM > 0) {
                 $imcCalculado = round($pesoBase / ($alturaM * $alturaM), 1);
@@ -117,20 +138,14 @@ class ClienteDashboardController extends Controller
 
         $nivelCondicion = $this->nivelDesdeImc($imcCalculado);
 
-        // Clases por mes (últimos 6 meses)
+        // Clases por mes (últimos 12 meses)
         $clasesPorMes = [];
-        for ($i = 5; $i >= 0; $i--) {
+        for ($i = 11; $i >= 0; $i--) {
             $mes = now()->subMonths($i);
-            $count = HorarioClase::where(function ($query) use ($user) {
-                $query->whereHas('clientes', function ($q) use ($user) {
-                    $q->where('user_id', $user->id)
-                      ->where('estado', '!=', 'cancelado');
-                });
-            })
-            ->whereMonth('fecha', $mes->month)
-            ->whereYear('fecha', $mes->year)
-            ->where('fecha', '<', now())
-            ->count();
+            $count = ClaseAsistida::where('user_id', $user->id)
+                ->whereMonth('fecha', $mes->month)
+                ->whereYear('fecha', $mes->year)
+                ->count();
 
             $mesLabel = $mes->locale('es')->isoFormat('MMM');
 
@@ -183,6 +198,7 @@ class ClienteDashboardController extends Controller
                 'total_clases_tomadas' => $totalClasesTomadas,
                 'total_clases_reservadas' => $totalClasesReservadas,
                 'en_lista_espera' => $enListaEspera,
+                'total_guias_completadas' => $totalGuiasCompletadas,
             ],
             'clasesPorMes' => $clasesPorMes,
         ]);

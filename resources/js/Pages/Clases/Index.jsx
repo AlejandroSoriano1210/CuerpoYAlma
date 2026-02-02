@@ -14,6 +14,12 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
     const [momento, setMomento] = useState(filtros?.momento || "");
     const [modoCrear, setModoCrear] = useState(false); // Estado para modo crear clase
 
+    // Obtener mes y año actual
+    const ahora = new Date();
+    const mesActual = ahora.getMonth() + 1;
+    const anoActual = ahora.getFullYear();
+    const esMesActual = mes === mesActual && ano === anoActual;
+
     // Form para crear clase
     const { data, setData, post, errors, processing, reset } = useForm({
         nombre: '',
@@ -228,12 +234,17 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
 
                     {/* Header con navegación de meses */}
                     <div className="mb-6 flex justify-between items-center">
-                        <Link
-                            href={route('clases.index', buildParams({ mes: mesAnterior, ano: anoAnterior }))}
-                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                        <button
+                            onClick={() => router.get(route('clases.index', buildParams({ mes: mesAnterior, ano: anoAnterior })), {
+                                preserveState: true,
+                                preserveScroll: true,
+                                replace: true,
+                            })}
+                            disabled={esMesActual}
+                            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded"
                         >
                             ← Anterior
-                        </Link>
+                        </button>
 
                         <h1 className="text-3xl font-bold text-gray-900">
                             Calendario de Clases - {mesNombre} {ano}
@@ -245,61 +256,6 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                         >
                             Siguiente →
                         </Link>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-4 mb-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-3">Filtros</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Días de la semana</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {diasSemanaOptions.map((d) => (
-                                        <label key={d.value} className="inline-flex items-center gap-2 text-sm text-gray-700">
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                checked={diasSemana.includes(d.value)}
-                                                onChange={(e) => {
-                                                    const next = e.target.checked
-                                                        ? [...diasSemana, d.value]
-                                                        : diasSemana.filter((v) => v !== d.value);
-                                                    setDiasSemana(next);
-                                                    pushFiltros({ diasSemana: next });
-                                                }}
-                                            />
-                                            <span>{d.label}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Momento</label>
-                                <select
-                                    value={momento}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setMomento(value);
-                                        pushFiltros({ momento: value });
-                                    }}
-                                    className="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="manana">Mañana</option>
-                                    <option value="tarde">Tarde</option>
-                                </select>
-                            </div>
-
-                            <div className="flex items-end gap-2">
-                                <button
-                                    onClick={limpiarFiltros}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
-                                    disabled={(!diasSemana || diasSemana.length === 0) && !momento}
-                                >
-                                    Limpiar
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Botón crear clase */}
@@ -329,8 +285,62 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Calendario */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        {/* Filtros a la izquierda */}
+                        <div className="lg:col-span-1 bg-white rounded-lg shadow p-4">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-3">Filtros</h2>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Días de la semana</label>
+                                    <div className="space-y-2">
+                                        {diasSemanaOptions.map((d) => (
+                                            <label key={d.value} className="inline-flex items-center gap-2 text-sm text-gray-700 w-full">
+                                                <input
+                                                    type="checkbox"
+                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    checked={diasSemana.includes(d.value)}
+                                                    onChange={(e) => {
+                                                        const next = e.target.checked
+                                                            ? [...diasSemana, d.value]
+                                                            : diasSemana.filter((v) => v !== d.value);
+                                                        setDiasSemana(next);
+                                                        pushFiltros({ diasSemana: next });
+                                                    }}
+                                                />
+                                                <span>{d.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Momento</label>
+                                    <select
+                                        value={momento}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setMomento(value);
+                                            pushFiltros({ momento: value });
+                                        }}
+                                        className="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">Todos</option>
+                                        <option value="manana">Mañana</option>
+                                        <option value="tarde">Tarde</option>
+                                    </select>
+                                </div>
+
+                                <button
+                                    onClick={limpiarFiltros}
+                                    className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
+                                    disabled={(!diasSemana || diasSemana.length === 0) && !momento}
+                                >
+                                    Limpiar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Calendario en el centro */}
                         <div className="lg:col-span-2 bg-white rounded-lg shadow p-3">
                             <Calendario
                                 mes={mes}
@@ -341,8 +351,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                             />
                         </div>
 
-                        {/* Panel lateral con clases del día o formulario */}
-                        <div className="bg-white rounded-lg shadow p-6">
+                        {/* Panel lateral con clases del día o formulario a la derecha */}
+                        <div className="lg:col-span-1 bg-white rounded-lg shadow p-6">
                             {modoCrear ? (
                                 // Formulario de creación de clase
                                 <>

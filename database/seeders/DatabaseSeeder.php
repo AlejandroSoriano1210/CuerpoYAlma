@@ -29,6 +29,9 @@ class DatabaseSeeder extends Seeder
         // Crear clientes
         $this->call(ClienteSeeder::class);
 
+        // Crear mediciones para clientes
+        $this->call(UserMeasurementSeeder::class);
+
         // Crear entrenadores y sus horarios de trabajo
         $this->call(HorarioTrabajoSeeder::class);
 

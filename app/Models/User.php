@@ -90,4 +90,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Pago::class);
     }
+
+    public function guiaProgreso()
+    {
+        return $this->hasMany(GuiaProgreso::class);
+    }
+
+    /**
+     * Obtener la última medición del cliente
+     */
+    public function ultimaMedicion()
+    {
+        return $this->measurements()->latest('fecha_medicion')->first();
+    }
+
+    /**
+     * Obtener las mediciones de los últimos 30 días para gráficos
+     */
+    public function medicionesUltimos30Dias()
+    {
+        return $this->measurements()
+            ->where('fecha_medicion', '>=', now()->subDays(30))
+            ->orderBy('fecha_medicion', 'asc')
+            ->get();
+    }
 }

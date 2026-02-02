@@ -8,6 +8,7 @@ export default function GuiasIndex() {
     const { guias, flash, niveles, musculos, filtrosActivos, assignedGuiaIds = [] } = usePage().props;
     const [nivel, setNivel] = useState(filtrosActivos?.nivel || '');
     const [musculoObjetivo, setMusculoObjetivo] = useState(filtrosActivos?.musculo_objetivo || '');
+    const [isFilteringActive, setIsFilteringActive] = useState(false);
 
     // Actualizar filtros cuando cambian los props
     useEffect(() => {
@@ -15,22 +16,30 @@ export default function GuiasIndex() {
         setMusculoObjetivo(filtrosActivos?.musculo_objetivo || '');
     }, [filtrosActivos]);
 
-    // Aplicar filtros automáticamente cuando cambian
+    // Aplicar filtros automáticamente cuando cambian (pero no en cambios de página)
     useEffect(() => {
-        const params = {};
-        if (nivel) params.nivel = nivel;
-        if (musculoObjetivo) params.musculo_objetivo = musculoObjetivo;
+        if (isFilteringActive) {
+            const params = {};
+            if (nivel) params.nivel = nivel;
+            if (musculoObjetivo) params.musculo_objetivo = musculoObjetivo;
 
-        router.get(route('guias.index'), params, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    }, [nivel, musculoObjetivo]);
+            router.get(route('guias.index'), params, {
+                preserveState: false,
+                preserveScroll: true,
+                replace: true,
+            });
+            setIsFilteringActive(false);
+        }
+    }, [isFilteringActive]);
+
+    const handleFilterChange = () => {
+        setIsFilteringActive(true);
+    };
 
     const limpiarFiltros = () => {
         setNivel('');
         setMusculoObjetivo('');
+        setIsFilteringActive(true);
     };
 
     return (
@@ -59,7 +68,10 @@ export default function GuiasIndex() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Nivel</label>
                                 <select
                                     value={nivel}
-                                    onChange={(e) => setNivel(e.target.value)}
+                                    onChange={(e) => {
+                                        setNivel(e.target.value);
+                                        setIsFilteringActive(true);
+                                    }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="">Todos los niveles</option>
@@ -75,7 +87,10 @@ export default function GuiasIndex() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Músculo objetivo</label>
                                 <select
                                     value={musculoObjetivo}
-                                    onChange={(e) => setMusculoObjetivo(e.target.value)}
+                                    onChange={(e) => {
+                                        setMusculoObjetivo(e.target.value);
+                                        setIsFilteringActive(true);
+                                    }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="">Todos los músculos</option>
@@ -157,11 +172,19 @@ export default function GuiasIndex() {
                     {/* Paginación simple */}
                     <div className="mt-6 flex justify-center items-center gap-3">
                         {guias?.prev_page_url && (
-                            <Link href={route('guias.index', { page: guias.current_page - 1 })} className="bg-gray-200 px-3 py-2 rounded">← Anterior</Link>
+                            <Link href={route('guias.index', {
+                                page: guias.current_page - 1,
+                                nivel: nivel || undefined,
+                                musculo_objetivo: musculoObjetivo || undefined
+                            })} className="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300">← Anterior</Link>
                         )}
                         <div className="text-sm text-gray-600">Página {guias?.current_page} de {guias?.last_page}</div>
                         {guias?.next_page_url && (
-                            <Link href={route('guias.index', { page: guias.current_page + 1 })} className="bg-gray-200 px-3 py-2 rounded">Siguiente →</Link>
+                            <Link href={route('guias.index', {
+                                page: guias.current_page + 1,
+                                nivel: nivel || undefined,
+                                musculo_objetivo: musculoObjetivo || undefined
+                            })} className="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300">Siguiente →</Link>
                         )}
                     </div>
                 </div>
