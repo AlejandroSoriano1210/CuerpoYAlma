@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
+import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Edit({ guia, niveles, ejercicios }) {
@@ -65,6 +65,17 @@ export default function Edit({ guia, niveles, ejercicios }) {
         setInstrucciones('');
     }
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const formData = {
+            titulo: data.titulo,
+            nivel: data.nivel,
+            contenido: data.contenido,
+            ejercicios: ejerciciosList,
+        };
+        router.patch(route('guias.update', guia.id), formData);
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="Editar Guía" />
@@ -84,11 +95,7 @@ export default function Edit({ guia, niveles, ejercicios }) {
                             </div>
                         )}
 
-                        <form onSubmit={(e) => {
-                            e.preventDefault();
-                            setData('ejercicios', ejerciciosList);
-                            patch(route('guias.update', guia.id));
-                        }}>
+                        <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
                                 <input

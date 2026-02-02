@@ -28,7 +28,7 @@ class GuiaController extends Controller
             });
         }
 
-        $guias = $query->orderBy('created_at', 'desc')->paginate(10);
+        $guias = $query->orderBy('created_at', 'desc')->paginate(5);
 
         // Obtener todos los músculos únicos disponibles
         $musculos = \App\Models\Ejercicio::distinct()
@@ -85,8 +85,6 @@ class GuiaController extends Controller
             'ejercicios.*.repeticiones' => 'nullable|integer|min:1',
             'ejercicios.*.instrucciones' => 'nullable|string',
         ]);
-
-        $guia = Guia::create($validated);
 
         // Guardar ejercicios si vienen
         if (!empty($validated['ejercicios'])) {
@@ -250,6 +248,11 @@ class GuiaController extends Controller
             return redirect()->route('login')->with('error', 'Debes iniciar sesión.');
         }
 
+        // Eliminar el progreso de la guía
+        \App\Models\GuiaProgreso::where('user_id', auth()->id())
+            ->where('guia_id', $guia->id)
+            ->delete();
+
         // Eliminar el registro de guia_views
         \App\Models\GuiaView::where('user_id', auth()->id())
             ->where('guia_id', $guia->id)
@@ -271,5 +274,91 @@ class GuiaController extends Controller
         $filename = \Illuminate\Support\Str::slug($guia->titulo) . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Save the progress of a guide exercise for the authenticated user.
+     */
+    public function saveProgress(Request $request, Guia $guia)
+    {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'guia_ejercicio_id' => 'required|exists:guia_ejercicios,id',
+            'completado' => 'required|boolean',
+        ]);
+
+        // Verificar que el ejercicio pertenece a la guía
+        $guiaEjercicio = \App\Models\GuiaEjercicio::findOrFail($validated['guia_ejercicio_id']);
+        if ($guiaEjercicio->guia_id !== $guia->id) {
+            return response()->json(['error' => 'El ejercicio no pertenece a esta guía'], 422);
+        }
+
+        // Crear o actualizar el registro de progreso
+        $progreso = \App\Models\GuiaProgreso::updateOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'guia_id' => $guia->id,
+                'guia_ejercicio_id' => $validated['guia_ejercicio_id'],
+            ],
+            [
+                'completado' => $validated['completado'],
+            ]
+        );
+
+        // Obtener el total de ejercicios y el total completados
+        $totalEjercicios = \App\Models\GuiaEjercicio::where('guia_id', $guia->id)->count();
+        $completados = \App\Models\GuiaProgreso::where('user_id', auth()->id())
+            ->where('guia_id', $guia->id)
+            ->where('completado', true)
+            ->count();
+
+        // Si se completan todos los ejercicios, desasignar la guía
+        $guiaCompletada = false;
+        if ($completados === $totalEjercicios && $totalEjercicios > 0) {
+            $guiaCompletada = true;
+
+            // Guardar registro de completación
+            \App\Models\GuiaCompletada::create([
+                'user_id' => auth()->id(),
+                'guia_id' => $guia->id,
+                'completada_el' => now(),
+            ]);
+
+            // Eliminar la asignación de la guía
+            \App\Models\GuiaView::where('user_id', auth()->id())
+                ->where('guia_id', $guia->id)
+                ->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'completados' => $completados,
+            'total' => $totalEjercicios,
+            'guiaCompletada' => $guiaCompletada,
+        ]);
+    }
+
+    /**
+     * Get the progress of a guide for the authenticated user.
+     */
+    public function getProgress(Guia $guia)
+    {
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $progreso = \App\Models\GuiaProgreso::where('user_id', auth()->id())
+            ->where('guia_id', $guia->id)
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->guia_ejercicio_id => $item->completado];
+            });
+
+        return response()->json([
+            'progreso' => $progreso,
+        ]);
     }
 }

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Card from '@/Components/Card';
@@ -30,6 +30,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
     const hasMetrics = Boolean(metricas?.peso_kg || metricas?.altura_cm || metricas?.grasa_corporal_pct);
     const [clasesPage, setClasesPage] = useState(1);
     const [showMeasurementForm, setShowMeasurementForm] = useState(false);
+    const [rangoMeses, setRangoMeses] = useState(12);
     const [measurementFormData, setMeasurementFormData] = useState({
         peso_kg: getValorInicial('peso_kg'),
         altura_cm: getValorInicial('altura_cm'),
@@ -100,6 +101,11 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
             setClasesPage(totalProximasPages || 1);
         }
     }, [clasesPage, totalProximasPages]);
+
+    const clasesPorMesFiltradas = useMemo(() => {
+        if (!clasesPorMes || clasesPorMes.length === 0) return [];
+        return clasesPorMes.slice(-rangoMeses);
+    }, [clasesPorMes, rangoMeses]);
     return (
         <AuthenticatedLayout>
             <Head title="Mis Estadísticas" />
@@ -265,9 +271,9 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                     </div>
 
                     {/* Cards de Estadísticas */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                         <Card icon="📊" containerClassName="bg-white rounded-lg shadow p-6">
-                            <p className="text-gray-600 text-sm font-medium">Clases Tomadas</p>
+                            <p className="text-gray-600 text-sm font-medium">Clases asistidas</p>
                             <p className="text-3xl font-bold text-blue-600 mt-2">
                                 {estadisticas.total_clases_tomadas}
                             </p>
@@ -288,8 +294,15 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         </Card>
 
                         <Card icon="📋" containerClassName="bg-white rounded-lg shadow p-6">
+                            <p className="text-gray-600 text-sm font-medium">Guías Completadas</p>
+                            <p className="text-3xl font-bold text-purple-600 mt-2">
+                                {estadisticas.total_guias_completadas}
+                            </p>
+                        </Card>
+
+                        <Card containerClassName="bg-white rounded-lg shadow p-6">
                             <p className="text-gray-600 text-sm font-medium">Nivel actual</p>
-                            <p className="text-2xl font-bold text-purple-600 mt-2">
+                            <p className="text-2xl font-bold text-indigo-600 mt-2">
                                 {nivelCondicion}
                             </p>
                         </Card>
@@ -362,8 +375,8 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                                         onClick={() => setClasesPage((p) => Math.max(1, p - 1))}
                                                         disabled={clasesPage === 1}
                                                         className={`px-3 py-1 rounded border ${clasesPage === 1
-                                                                ? 'text-gray-400 border-gray-200 cursor-not-allowed'
-                                                                : 'text-gray-700 border-gray-300 hover:bg-gray-100'
+                                                            ? 'text-gray-400 border-gray-200 cursor-not-allowed'
+                                                            : 'text-gray-700 border-gray-300 hover:bg-gray-100'
                                                             }`}
                                                     >
                                                         Anterior
@@ -373,8 +386,8 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                                         onClick={() => setClasesPage((p) => Math.min(totalProximasPages, p + 1))}
                                                         disabled={clasesPage === totalProximasPages}
                                                         className={`px-3 py-1 rounded border ${clasesPage === totalProximasPages
-                                                                ? 'text-gray-400 border-gray-200 cursor-not-allowed'
-                                                                : 'text-gray-700 border-gray-300 hover:bg-gray-100'
+                                                            ? 'text-gray-400 border-gray-200 cursor-not-allowed'
+                                                            : 'text-gray-700 border-gray-300 hover:bg-gray-100'
                                                             }`}
                                                     >
                                                         Siguiente
@@ -414,6 +427,21 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                             <p className="text-gray-600 text-sm">
                                                 Ejercicios: <span className="font-medium text-gray-900">
                                                     {guiaActual.ejercicios_count}
+                                                </span>
+                                            </p>
+                                            <p className="text-gray-600 text-sm">
+                                                Faltan: <span className="font-medium text-gray-900">
+                                                    {guiaActual.ejercicios_faltan}
+                                                </span>
+                                            </p>
+                                            <p className="text-gray-600 text-sm">
+                                                Siguiente: <span className="font-medium text-gray-900">
+                                                    {guiaActual.siguiente_ejercicio ?? '—'}
+                                                </span>
+                                            </p>
+                                            <p className="text-gray-600 text-sm">
+                                                Completada: <span className="font-medium text-purple-700">
+                                                    {guiaActual.veces_completada} {guiaActual.veces_completada === 1 ? 'vez' : 'veces'}
                                                 </span>
                                             </p>
                                             <p className="text-gray-600 text-xs mt-3">
@@ -466,15 +494,29 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                     {/* Gráfico de Clases por Mes */}
                     <Card
-                        title="📈 Progreso - Últimos 6 Meses"
+                        title="📈 Progreso"
                         headerAction={
-                            <button
-                                type="button"
-                                onClick={() => setShowMeasurementForm(!showMeasurementForm)}
-                                className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white font-semibold shadow hover:bg-green-700 transition"
-                            >
-                                {showMeasurementForm ? '✕ Cancelar' : 'Registrar Medición'}
-                            </button>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-600">Ver:</label>
+                                    <select
+                                        value={rangoMeses}
+                                        onChange={(e) => setRangoMeses(Number(e.target.value))}
+                                        className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:ring-green-500"
+                                    >
+                                        <option value={12}>Últimos 12 meses</option>
+                                        <option value={6}>Últimos 6 meses</option>
+                                        <option value={3}>Últimos 3 meses</option>
+                                    </select>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMeasurementForm(!showMeasurementForm)}
+                                    className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white font-semibold shadow hover:bg-green-700 transition"
+                                >
+                                    {showMeasurementForm ? '✕ Cancelar' : 'Registrar Medición'}
+                                </button>
+                            </div>
                         }
                         className="mb-8"
                     >
@@ -488,12 +530,11 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                 </p>
                                 <form onSubmit={(e) => {
                                     e.preventDefault();
-                                    post(route('mediciones.store'), {
-                                        data: {
-                                            peso_kg: measurementFormData.peso_kg || null,
-                                            altura_cm: measurementFormData.altura_cm || null,
-                                            grasa_corporal_pct: measurementFormData.grasa_corporal_pct || null,
-                                        },
+                                    router.post(route('mediciones.store'), {
+                                        peso_kg: measurementFormData.peso_kg || null,
+                                        altura_cm: measurementFormData.altura_cm || null,
+                                        grasa_corporal_pct: measurementFormData.grasa_corporal_pct || null,
+                                    }, {
                                         preserveScroll: true,
                                         onSuccess: () => {
                                             setShowMeasurementForm(false);
@@ -564,7 +605,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         )}
 
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={clasesPorMes}>
+                            <LineChart data={clasesPorMesFiltradas}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="mes" />
                                 <YAxis yAxisId="left" />
@@ -576,7 +617,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     type="monotone"
                                     dataKey="cantidad"
                                     stroke="#3b82f6"
-                                    name="Clases Realizadas"
+                                    name="Clases asistidas"
                                     strokeWidth={2}
                                     dot={{ fill: '#3b82f6' }}
                                 />

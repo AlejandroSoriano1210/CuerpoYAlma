@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
+use App\Models\ClaseAsistida;
+use App\Models\HorarioClaseUser;
 
 class HorarioClase extends Model
 {
@@ -69,15 +71,36 @@ class HorarioClase extends Model
 
                 // Eliminar clases donde: fecha < hoy OR (fecha = hoy AND hora_fin <= hora actual)
                 // Usamos la hora del servidor de BD para evitar discrepancias y conversiones implícitas.
-                $query = self::where(function ($q) {
-                        $q->whereRaw('fecha < current_date')
-                            ->orWhereRaw('fecha = current_date AND hora_fin <= current_time');
-                });
+        $query = self::where(function ($q) {
+            $q->whereRaw('fecha < current_date')
+                ->orWhereRaw('fecha = current_date AND hora_fin <= current_time');
+        });
 
-        $count = $query->count();
+        $expiradas = $query->get(['id', 'fecha', 'hora_inicio', 'hora_fin']);
+        $count = $expiradas->count();
 
         if ($count > 0) {
-            $query->delete();
+            foreach ($expiradas as $clase) {
+                $reservas = HorarioClaseUser::where('horario_clase_id', $clase->id)
+                    ->where('estado', '!=', 'cancelado')
+                    ->get(['user_id']);
+
+                foreach ($reservas as $reserva) {
+                    ClaseAsistida::firstOrCreate(
+                        [
+                            'user_id' => $reserva->user_id,
+                            'horario_clase_id' => $clase->id,
+                        ],
+                        [
+                            'fecha' => $clase->fecha,
+                            'hora_inicio' => $clase->hora_inicio,
+                            'hora_fin' => $clase->hora_fin,
+                        ]
+                    );
+                }
+            }
+
+            self::whereIn('id', $expiradas->pluck('id'))->delete();
         }
 
         return $count;

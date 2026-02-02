@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, useForm, Link, usePage } from '@inertiajs/react';
+import { Head, useForm, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Create({ niveles, ejercicios }) {
@@ -57,7 +57,13 @@ export default function Create({ niveles, ejercicios }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('guias.store'));
+        const formData = {
+            titulo: data.titulo,
+            nivel: data.nivel,
+            contenido: data.contenido,
+            ejercicios: ejerciciosList,
+        };
+        router.post(route('guias.store'), formData);
     };
 
     return (
@@ -79,11 +85,7 @@ export default function Create({ niveles, ejercicios }) {
                             </div>
                         )}
 
-                        <form onSubmit={(e) => {
-                            e.preventDefault();
-                            setData('ejercicios', ejerciciosList);
-                            post(route('guias.store'));
-                        }}>
+                        <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
                                 <input
