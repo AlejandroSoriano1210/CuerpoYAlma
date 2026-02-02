@@ -146,6 +146,8 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
     Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
     Route::patch('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
     Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+    Route::post('/clientes/marcar-pagos', [ClienteController::class, 'marcarPagos'])->name('clientes.marcarPagos');
+    Route::get('/clientes/{cliente}/factura/{pago}/descargar', [ClienteController::class, 'descargarFactura'])->name('clientes.descargarFactura');
 });
 
 require __DIR__ . '/auth.php';

@@ -27,6 +27,8 @@ class User extends Authenticatable
         'altura_cm',
         'grasa_corporal_pct',
         'imc',
+        'ultimo_pago_mes',
+        'ultimo_pago_ano',
     ];
 
     /**
@@ -82,5 +84,10 @@ class User extends Authenticatable
     public function measurements()
     {
         return $this->hasMany(UserMeasurement::class);
+    }
+
+    public function pagos()
+    {
+        return $this->hasMany(Pago::class);
     }
 }
