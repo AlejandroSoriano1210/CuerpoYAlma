@@ -10,12 +10,19 @@ use Inertia\Inertia;
 
 class EntrenadorController extends Controller
 {
-    // Listar entrenadores
+    // Listar empleados (entrenadores, técnicos, limpieza)
     public function index(Request $request)
     {
         $search = $request->query('search', '');
+        $rolFiltro = $request->query('rol', ''); // Filtro por rol
 
-        $query = User::role('entrenador');
+        // Obtener todos los usuarios con roles de empleados (excluyendo superusuario y cliente)
+        // Si hay filtro de rol, usar solo ese rol, sino todos
+        if (!empty($rolFiltro) && in_array($rolFiltro, ['entrenador', 'tecnico', 'limpieza'])) {
+            $query = User::role($rolFiltro);
+        } else {
+            $query = User::role(['entrenador', 'tecnico', 'limpieza']);
+        }
 
         if (!empty($search)) {
             $operator = DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
@@ -25,11 +32,30 @@ class EntrenadorController extends Controller
             });
         }
 
-        $entrenadores = $query->get();
+        // Cargar los roles y horarios de cada empleado
+        $entrenadores = $query->with(['roles', 'horarioTrabajo'])->get()->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'telefono' => $user->telefono,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+                'rol' => $user->roles->first()->name ?? 'sin rol',
+                'horario_trabajo' => $user->horarioTrabajo->map(function ($h) {
+                    return [
+                        'dia_semana' => (int) $h->dia_semana,
+                        'hora_inicio' => substr($h->hora_inicio, 0, 5),
+                        'hora_fin' => substr($h->hora_fin, 0, 5),
+                    ];
+                }),
+            ];
+        });
 
         return Inertia::render('Entrenadores/Index', [
             'entrenadores' => $entrenadores,
             'search' => $search,
+            'rolFiltro' => $rolFiltro,
         ]);
     }
 
@@ -44,7 +70,9 @@ class EntrenadorController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'telefono' => 'nullable|string|max:20',
             'password' => 'required|min:8|confirmed',
+            'rol' => 'required|in:entrenador,tecnico,limpieza',
             'horarios' => 'nullable|array',
             'horarios.*.dia_semana' => 'required|integer|between:0,5',
             'horarios.*.hora_inicio' => 'required|date_format:H:i',
@@ -72,10 +100,11 @@ class EntrenadorController extends Controller
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
+                'telefono' => $validated['telefono'] ?? null,
                 'password' => bcrypt($validated['password']),
             ]);
 
-            $user->assignRole('entrenador');
+            $user->assignRole($validated['rol']);
 
             if (!empty($validated['horarios'])) {
                 foreach ($validated['horarios'] as $horario) {
@@ -90,7 +119,7 @@ class EntrenadorController extends Controller
 
             return redirect()
                 ->route('entrenadores.index')
-                ->with('success', 'Entrenador creado correctamente.');
+                ->with('success', 'Empleado creado correctamente.');
         } catch (\Exception $e) {
             return redirect()
                 ->back()
@@ -100,11 +129,12 @@ class EntrenadorController extends Controller
 
     public function show(User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
-            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        // Verificar que sea un empleado (no superusuario ni cliente)
+        if (!$entrenador->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un empleado.']);
         }
 
-        $entrenador->load('horariosClases', 'horarioTrabajo');
+        $entrenador->load('horarioTrabajo', 'roles');
 
         $horariosPorDia = $entrenador->horarioTrabajo
             ->groupBy('dia_semana')
@@ -118,39 +148,67 @@ class EntrenadorController extends Controller
                 })->values();
             });
 
-        return Inertia::render('Entrenadores/Show', [
-            'entrenador' => [
-                'id' => $entrenador->id,
-                'name' => $entrenador->name,
-                'email' => $entrenador->email,
-                'created_at' => $entrenador->created_at,
-                'updated_at' => $entrenador->updated_at,
-                'horarioTrabajo' => $horariosPorDia,
-                'clasesCreadas' => $entrenador->horariosClases->map(function ($clase) {
+        $data = [
+            'id' => $entrenador->id,
+            'name' => $entrenador->name,
+            'email' => $entrenador->email,
+            'telefono' => $entrenador->telefono,
+            'rol' => $entrenador->roles->first()->name ?? 'sin rol',
+            'created_at' => $entrenador->created_at,
+            'updated_at' => $entrenador->updated_at,
+            'horarioTrabajo' => $horariosPorDia,
+        ];
+
+        // Si es entrenador, cargar las clases que imparte
+        if ($entrenador->hasRole('entrenador')) {
+            $entrenador->load(['horariosClases' => function ($query) {
+                $query->orderBy('fecha', 'asc')->orderBy('hora_inicio', 'asc');
+            }]);
+            $data['clasesCreadas'] = $entrenador->horariosClases->map(function ($clase) {
+                return [
+                    'id' => $clase->id,
+                    'nombre' => $clase->nombre,
+                    'fecha' => $clase->fecha,
+                    'hora_inicio' => substr($clase->hora_inicio, 0, 5),
+                    'hora_fin' => substr($clase->hora_fin, 0, 5),
+                    'capacidad' => $clase->capacidad,
+                    'inscritos' => $clase->clientes()->wherePivot('estado', '!=', 'cancelado')->count(),
+                ];
+            });
+        }
+
+        // Si es técnico, cargar las máquinas en mantenimiento o fuera de servicio
+        if ($entrenador->hasRole('tecnico')) {
+            $maquinasMantenimiento = \App\Models\Maquina::whereIn('estado', ['mantenimiento', 'fuera_de_servicio'])
+                ->get()
+                ->map(function ($maquina) {
                     return [
-                        'id' => $clase->id,
-                        'nombre' => $clase->nombre,
-                        'fecha' => $clase->fecha,
-                        'hora_inicio' => substr($clase->hora_inicio, 0, 5),
-                        'hora_fin' => substr($clase->hora_fin, 0, 5),
-                        'capacidad' => $clase->capacidad,
-                        // Contar solo reservas no canceladas
-                        'inscritos' => $clase->clientes()->wherePivot('estado', '!=', 'cancelado')->count(),
+                        'id' => $maquina->id,
+                        'nombre' => $maquina->nombre,
+                        'descripcion' => $maquina->descripcion,
+                        'estado' => $maquina->estado,
+                        'ubicacion' => $maquina->ubicacion,
                     ];
-                }),
-            ],
+                });
+            $data['maquinasMantenimiento'] = $maquinasMantenimiento;
+        }
+
+        return Inertia::render('Entrenadores/Show', [
+            'entrenador' => $data,
         ]);
     }
 
     public function edit(User $entrenador)
     {
-        $entrenador->load('horarioTrabajo');
+        $entrenador->load('horarioTrabajo', 'roles');
 
         return Inertia::render('Entrenadores/Edit', [
             'entrenador' => [
                 'id' => $entrenador->id,
                 'name' => $entrenador->name,
                 'email' => $entrenador->email,
+                'telefono' => $entrenador->telefono,
+                'rol' => $entrenador->roles->first()->name ?? 'entrenador',
             ],
             'horarioTrabajo' => $entrenador->horarioTrabajo->map(fn($h) => [
                 'dia_semana' => (int) $h->dia_semana,
@@ -165,6 +223,8 @@ class EntrenadorController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', "unique:users,email,{$entrenador->id}"],
+            'telefono' => ['nullable', 'string', 'max:20'],
+            'rol' => ['required', 'in:entrenador,tecnico,limpieza'],
             'horarios' => ['nullable', 'array'],
             'horarios.*.dia_semana' => ['required', 'integer', 'between:0,6'],
             'horarios.*.hora_inicio' => ['required', 'date_format:H:i'],
@@ -191,7 +251,11 @@ class EntrenadorController extends Controller
         $entrenador->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'telefono' => $validated['telefono'] ?? null,
         ]);
+
+        // Actualizar el rol
+        $entrenador->syncRoles([$validated['rol']]);
 
         // Borrar horarios previos y recrear
         HorarioTrabajo::where('user_id', $entrenador->id)->delete();
@@ -207,20 +271,21 @@ class EntrenadorController extends Controller
             }
         }
 
-        return redirect()->route('entrenadores.show', $entrenador)->with('success', 'Entrenador actualizado.');
+        return redirect()->route('entrenadores.show', $entrenador)->with('success', 'Empleado actualizado.');
     }
 
     public function destroy(User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
-            return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
+        // Verificar que sea un empleado (no superusuario ni cliente)
+        if (!$entrenador->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un empleado.']);
         }
 
         $entrenador->delete();
 
         return redirect()
             ->route('entrenadores.index')
-            ->with('success', 'Entrenador eliminado correctamente.');
+            ->with('success', 'Empleado eliminado correctamente.');
     }
 
     public function clasesEntrenador(Request $request)

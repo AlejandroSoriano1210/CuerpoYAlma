@@ -29,7 +29,7 @@ export default function Show({ maquina }) {
                         {maquina.descripcion ? <p className="text-gray-700">{maquina.descripcion}</p> : <p className="text-gray-500">Sin descripción.</p>}
 
                         <div className="mt-4">
-                            {hasAnyRole(['superusuario', 'entrenador']) &&
+                            {hasAnyRole(['superusuario', 'tecnico']) &&
 
                             <Link href={route('maquinas.edit', maquina.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Editar</Link>
                             }

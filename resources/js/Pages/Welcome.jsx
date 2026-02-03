@@ -43,7 +43,7 @@ export default function Welcome({ auth }) {
                                                 "entrenadores.index"
                                             )}
                                         >
-                                            Entrenadores
+                                            Empleados
                                         </NavLink>
                                     )}
                                     {hasRole("superusuario") && (
@@ -235,7 +235,7 @@ export default function Welcome({ auth }) {
                                     href={route("entrenadores.index")}
                                     active={route().current("entrenadores.index")}
                                 >
-                                    Entrenadores
+                                    Empleados
                                 </ResponsiveNavLink>
                             )}
                             {hasRole("superusuario") && (
@@ -476,7 +476,7 @@ export default function Welcome({ auth }) {
                                 <Link href={route("entrenadores.index")} className="h-full">
                                     <Card
                                         icon="👥"
-                                        title="Entrenadores"
+                                        title="Empleados"
                                         containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
                                     >
                                         <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>
@@ -492,7 +492,7 @@ export default function Welcome({ auth }) {
                                 >
                                     <Card
                                         icon="👥"
-                                        title="Entrenadores"
+                                        title="Empleados"
                                         containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition cursor-pointer"
                                     >
                                         <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>

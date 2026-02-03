@@ -101,8 +101,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/ejercicios/{ejercicio}/editar', [EjercicioController::class, 'edit'])->name('ejercicios.edit');
         Route::patch('/ejercicios/{ejercicio}', [EjercicioController::class, 'update'])->name('ejercicios.update');
         Route::delete('/ejercicios/{ejercicio}', [EjercicioController::class, 'destroy'])->name('ejercicios.destroy');
+    });
 
-        // CRUD de maquinas (solo para entrenadores y superusuario)
+    Route::middleware('role:superusuario|tecnico')->group(function () {
+        // CRUD de máquinas (solo para técnicos y superusuario)
         Route::get('/maquinas/crear', [MaquinaController::class, 'create'])->name('maquinas.create');
         Route::post('/maquinas', [MaquinaController::class, 'store'])->name('maquinas.store');
         Route::get('/maquinas/{maquina}/editar', [MaquinaController::class, 'edit'])->name('maquinas.edit');
