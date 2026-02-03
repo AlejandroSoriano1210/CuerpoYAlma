@@ -13,7 +13,7 @@ use App\Models\ClaseAsistida;
 class ClienteDashboardController extends Controller
 {
     /**
-     * Mostrar dashboard del cliente autenticado
+     * Mostrar estadisticas del cliente autenticado
      */
     public function index()
     {

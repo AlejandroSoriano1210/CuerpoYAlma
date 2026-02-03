@@ -5,6 +5,27 @@ import SearchBar from "@/Components/SearchBar";
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+const ESTADO_CONFIG = {
+    disponible: {
+        label: 'Disponible',
+        bgColor: 'bg-green-100',
+        textColor: 'text-green-800',
+        icon: '✓'
+    },
+    baja: {
+        label: 'De Baja',
+        bgColor: 'bg-red-100',
+        textColor: 'text-red-800',
+        icon: '✕'
+    },
+    vacaciones: {
+        label: 'De Vacaciones',
+        bgColor: 'bg-blue-100',
+        textColor: 'text-blue-800',
+        icon: '✈'
+    }
+};
+
 export default function Index({ entrenadores, search: initialSearch, rolFiltro: initialRolFiltro }) {
     const { flash } = usePage().props;
     const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(entrenadores.length > 0 ? entrenadores[0] : null);
@@ -175,6 +196,19 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                                 </span>
                                             </div>
 
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Estado</p>
+                                                {(() => {
+                                                    const estado = empleadoSeleccionado.estado_empleado || 'disponible';
+                                                    const config = ESTADO_CONFIG[estado];
+                                                    return (
+                                                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${config.bgColor} ${config.textColor}`}>
+                                                            {config.icon} {config.label}
+                                                        </span>
+                                                    );
+                                                })()}
+                                            </div>
+
                                             <div className="pt-4 border-t">
                                                 <Link
                                                     href={route("entrenadores.show", empleadoSeleccionado.id)}
@@ -223,7 +257,7 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                                         <p className="text-sm text-gray-600 truncate">
                                                             {empleado.email}
                                                         </p>
-                                                        <div className="mt-1">
+                                                        <div className="mt-1 flex items-center gap-2">
                                                             <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold
                                                                 ${empleado.rol === 'entrenador' ? 'bg-blue-100 text-blue-800' :
                                                                   empleado.rol === 'tecnico' ? 'bg-green-100 text-green-800' :
@@ -231,6 +265,15 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                                                   'bg-gray-100 text-gray-800'}`}>
                                                                 {empleado.rol.charAt(0).toUpperCase() + empleado.rol.slice(1)}
                                                             </span>
+                                                            {(() => {
+                                                                const estado = empleado.estado_empleado || 'disponible';
+                                                                const config = ESTADO_CONFIG[estado];
+                                                                return (
+                                                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${config.bgColor} ${config.textColor}`}>
+                                                                        {config.icon} {config.label}
+                                                                    </span>
+                                                                );
+                                                            })()}
                                                         </div>
                                                     </div>
 

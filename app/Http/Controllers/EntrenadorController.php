@@ -42,6 +42,7 @@ class EntrenadorController extends Controller
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
                 'rol' => $user->roles->first()->name ?? 'sin rol',
+                'estado_empleado' => $user->estado_empleado ?? 'disponible',
                 'horario_trabajo' => $user->horarioTrabajo->map(function ($h) {
                     return [
                         'dia_semana' => (int) $h->dia_semana,
@@ -175,6 +176,12 @@ class EntrenadorController extends Controller
                     'inscritos' => $clase->clientes()->wherePivot('estado', '!=', 'cancelado')->count(),
                 ];
             });
+
+            // Contar clases impartidas este año
+            $anoActual = now()->year;
+            $data['clasesEsteAno'] = $entrenador->horariosClases()
+                ->whereYear('fecha', $anoActual)
+                ->count();
         }
 
         // Si es técnico, cargar las máquinas en mantenimiento o fuera de servicio

@@ -126,6 +126,10 @@ Route::middleware(['auth', 'role:entrenador|superusuario'])->group(function () {
     Route::delete('/panel/clases/{horarioClase}/lista/{listaEspera}', [EntrenadorPanelController::class, 'removerDelista'])->name('panel.remover-lista');
 });
 
+Route::middleware(['auth', 'role:entrenador|tecnico|limpieza'])->group(function () {
+    Route::post('/panel/cambiar-estado', [EntrenadorPanelController::class, 'cambiarEstado'])->name('panel.cambiarEstado');
+});
+
 Route::middleware(['auth', 'role:entrenador'])->group(function () {
     Route::get('/entrenadores/clases', [EntrenadorController::class, 'clasesEntrenador']);
     Route::get('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'show']);

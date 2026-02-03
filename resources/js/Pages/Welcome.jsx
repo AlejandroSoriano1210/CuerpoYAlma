@@ -56,6 +56,14 @@ export default function Welcome({ auth }) {
                                             Clientes
                                         </NavLink>
                                     )}
+                                    {hasRole('entrenador') && (
+                                        <NavLink
+                                            href={route("panel.clases.index")}
+                                            active={route().current("panel.clases.index")}
+                                        >
+                                            Panel de control
+                                        </NavLink>
+                                    )}
                                     {user ? (
                                         <NavLink
                                             href={route("clases.index")}
@@ -73,14 +81,6 @@ export default function Welcome({ auth }) {
                                         >
                                             Clases
                                         </button>
-                                    )}
-                                    {hasRole('entrenador') && (
-                                        <NavLink
-                                            href={route("panel.clases.index")}
-                                            active={route().current("panel.clases.index")}
-                                        >
-                                            Panel de control
-                                        </NavLink>
                                     )}
                                     {user ? (
                                         <NavLink
@@ -216,150 +216,6 @@ export default function Welcome({ auth }) {
                             </div>
                         </div>
                     </div>
-
-                    <div
-                        className={
-                            (showingNavigationDropdown ? "block" : "hidden") +
-                            " sm:hidden"
-                        }
-                    >
-                        <div className="space-y-1 pb-3 pt-2">
-                            <ResponsiveNavLink
-                                href={route('welcome')}
-                                active={route().current('welcome')}
-                            >
-                                Inicio
-                            </ResponsiveNavLink>
-                            {hasRole("superusuario") && (
-                                <ResponsiveNavLink
-                                    href={route("entrenadores.index")}
-                                    active={route().current("entrenadores.index")}
-                                >
-                                    Empleados
-                                </ResponsiveNavLink>
-                            )}
-                            {hasRole("superusuario") && (
-                                <ResponsiveNavLink
-                                    href={route("clientes.index")}
-                                    active={route().current("clientes.index")}
-                                >
-                                    Clientes
-                                </ResponsiveNavLink>
-                            )}
-                            {user ? (
-                                <ResponsiveNavLink
-                                    href={route("clases.index")}
-                                    active={route().current("clases.index")}
-                                >
-                                    Clases
-                                </ResponsiveNavLink>
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        setAuthMode('login');
-                                        setShowAuthModal(true);
-                                        setShowingNavigationDropdown(false);
-                                    }}
-                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
-                                >
-                                    Clases
-                                </button>
-                            )}
-                            {user ? (
-                                <ResponsiveNavLink
-                                    href={route("guias.index")}
-                                    active={route().current("guias.index")}
-                                >
-                                    Guías
-                                </ResponsiveNavLink>
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        setAuthMode('login');
-                                        setShowAuthModal(true);
-                                        setShowingNavigationDropdown(false);
-                                    }}
-                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
-                                >
-                                    Guías
-                                </button>
-                            )}
-                            {user ? (
-                                <ResponsiveNavLink
-                                    href={route("maquinas.index")}
-                                    active={route().current("maquinas.index")}
-                                >
-                                    Máquinas
-                                </ResponsiveNavLink>
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        setAuthMode('login');
-                                        setShowAuthModal(true);
-                                        setShowingNavigationDropdown(false);
-                                    }}
-                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
-                                >
-                                    Máquinas
-                                </button>
-                            )}
-                        </div>
-
-                        {user ? (
-                            <>
-                                <div className="px-4">
-                                    <div className="text-base font-medium text-gray-800">
-                                        {user.name}
-                                    </div>
-                                    <div className="text-sm font-medium text-gray-500">
-                                        {user.email}
-                                    </div>
-                                </div>
-
-                                <div className="mt-3 space-y-1">
-                                    <ResponsiveNavLink href={route("notifications.index")}>
-                                        Notificaciones
-                                    </ResponsiveNavLink>
-
-                                    <ResponsiveNavLink href={route("profile.edit")}>
-                                        Perfil
-                                    </ResponsiveNavLink>
-
-                                    <ResponsiveNavLink
-                                        method="post"
-                                        href={route("logout")}
-                                        as="button"
-                                    >
-                                        Cerrar sesión
-                                    </ResponsiveNavLink>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="mt-3 space-y-1 px-4">
-                                <button
-                                    onClick={() => {
-                                        setAuthMode('login');
-                                        setShowAuthModal(true);
-                                        setShowingNavigationDropdown(false);
-                                    }}
-                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
-                                >
-                                    Iniciar sesión
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        setAuthMode('register');
-                                        setShowAuthModal(true);
-                                        setShowingNavigationDropdown(false);
-                                    }}
-                                    className="w-full text-left block rounded-md py-2 pe-3 ps-3 text-base font-medium text-gray-600 transition duration-150 ease-in-out hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 focus:border-gray-300 focus:bg-gray-50 focus:text-gray-800 focus:outline-none"
-                                >
-                                    Registrarse
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </nav>
                 <div
                     className="relative h-[70vh] bg-cover bg-center flex items-center justify-center"
@@ -399,6 +255,17 @@ export default function Welcome({ auth }) {
                                     className="bg-blue-500 hover:bg-blue-600 transition px-6 py-3 rounded-xl text-lg md:text-xl font-bold shadow-lg hover:shadow-2xl inline-block"
                                 >
                                     Mis Estadísticas
+                                </Link>
+                            </div>
+                        )}
+
+                        {auth.user && hasRole("entrenador") && (
+                            <div className="mt-8">
+                                <Link
+                                    href={route("panel.clases.index")}
+                                    className="bg-blue-500 hover:bg-blue-600 transition px-6 py-3 rounded-xl text-lg md:text-xl font-bold shadow-lg hover:shadow-2xl inline-block"
+                                >
+                                    Panel de Control
                                 </Link>
                             </div>
                         )}

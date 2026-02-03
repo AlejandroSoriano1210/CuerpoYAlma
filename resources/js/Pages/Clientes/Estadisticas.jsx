@@ -118,6 +118,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                             <div>
                                 <h1 className="text-4xl font-bold text-gray-900">{user.name}</h1>
                                 <p className="text-gray-600 mt-2 text-lg">{user.email}</p>
+                                <p className="text-gray-600 mt-2 text-lg">{user.telefono}</p>
                                 <p className="text-gray-500 mt-1">Revisa tu progreso y desempeño en el entrenamiento</p>
                             </div>
                         </div>

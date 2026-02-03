@@ -177,10 +177,19 @@ export default function Show({ entrenador }) {
                         {/* Clases que Imparte (solo para entrenadores) */}
                         {entrenador.rol === 'entrenador' && (
                             <div className="mb-8">
-                                <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                                    Clases que Imparte (
-                                    {entrenador.clasesCreadas?.length || 0})
-                                </h2>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-700">
+                                        Clases que Imparte (
+                                        {entrenador.clasesCreadas?.length || 0})
+                                    </h2>
+
+                                    {entrenador.clasesEsteAno !== undefined && (
+                                        <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
+                                            <span className="text-sm font-medium">Clases este año ({new Date().getFullYear()}): </span>
+                                            <span className="text-2xl font-bold">{entrenador.clasesEsteAno}</span>
+                                        </div>
+                                    )}
+                                </div>
 
                                 {entrenador.clasesCreadas &&
                                 entrenador.clasesCreadas.length > 0 ? (
