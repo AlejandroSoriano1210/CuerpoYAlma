@@ -13,13 +13,13 @@ use App\Models\ClaseAsistida;
 class ClienteDashboardController extends Controller
 {
     /**
-     * Mostrar dashboard del cliente autenticado
+     * Mostrar estadisticas del cliente autenticado
      */
     public function index()
     {
         $user = auth()->user();
 
-        // Próximas clases (todas las futuras)
+        // Próximas clases (enviamos todas las reservadas, el frontend filtrará)
         $proximasClases = HorarioClase::with(['clase', 'entrenador', 'listaEspera'])
             ->where(function ($query) use ($user) {
                 $query->whereHas('clientes', function ($q) use ($user) {
@@ -27,7 +27,7 @@ class ClienteDashboardController extends Controller
                       ->where('estado', '!=', 'cancelado');
                 });
             })
-            ->where('fecha', '>=', now()->startOfDay())
+            ->where('fecha', '>=', now()->toDateString())
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->get()
@@ -43,7 +43,7 @@ class ClienteDashboardController extends Controller
                 ];
             });
 
-        // Historial de clases (últimas 10 clases tomadas)
+        // Historial de clases (enviamos todas las pasadas, el frontend filtrará)
         $historialClases = HorarioClase::with(['clase', 'entrenador'])
             ->where(function ($query) use ($user) {
                 $query->whereHas('clientes', function ($q) use ($user) {
@@ -51,9 +51,10 @@ class ClienteDashboardController extends Controller
                       ->where('estado', '!=', 'cancelado');
                 });
             })
-            ->where('fecha', '<', now())
+            ->where('fecha', '<=', now()->toDateString())
             ->orderBy('fecha', 'desc')
-            ->limit(10)
+            ->orderBy('hora_inicio', 'desc')
+            ->limit(50)
             ->get()
             ->map(function ($clase) {
                 return [
@@ -109,7 +110,21 @@ class ClienteDashboardController extends Controller
         }
 
         // Estadísticas del usuario
-                $totalClasesTomadas = ClaseAsistida::where('user_id', $user->id)->count();
+        // Contar clases asistidas: clases reservadas cuya hora_fin ya pasó
+        $totalClasesTomadas = HorarioClase::where(function ($query) use ($user) {
+                $query->whereHas('clientes', function ($q) use ($user) {
+                    $q->where('user_id', $user->id)
+                      ->where('estado', '!=', 'cancelado');
+                });
+            })
+            ->where(function ($query) {
+                $query->where('fecha', '<', now()->toDateString())
+                    ->orWhere(function ($q) {
+                        $q->where('fecha', '=', now()->toDateString())
+                          ->where('hora_fin', '<=', now()->format('H:i:s'));
+                    });
+            })
+            ->count();
 
         $totalClasesReservadas = HorarioClase::where(function ($query) use ($user) {
                 $query->whereHas('clientes', function ($q) use ($user) {
@@ -117,7 +132,13 @@ class ClienteDashboardController extends Controller
                       ->where('estado', '!=', 'cancelado');
                 });
             })
-            ->where('fecha', '>=', now())
+            ->where(function ($query) {
+                $query->where('fecha', '>', now()->toDateString())
+                    ->orWhere(function ($q) {
+                        $q->where('fecha', '=', now()->toDateString())
+                          ->where('hora_fin', '>', now()->format('H:i:s'));
+                    });
+            })
             ->count();
 
         $enListaEspera = \App\Models\ListaEsperaClase::where('user_id', $user->id)->count();

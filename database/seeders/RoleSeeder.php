@@ -46,6 +46,8 @@ class RoleSeeder extends Seeder
         $roles = [
             'superusuario',
             'entrenador',
+            'tecnico',
+            'limpieza',
             'cliente',
         ];
 
@@ -56,6 +58,8 @@ class RoleSeeder extends Seeder
         // --- Asignar permisos a roles ---
         $superusuario = Role::findByName('superusuario');
         $entrenador = Role::findByName('entrenador');
+        $tecnico = Role::findByName('tecnico');
+        $limpieza = Role::findByName('limpieza');
         $cliente = Role::findByName('cliente');
 
         $superusuario->syncPermissions(Permission::all());
@@ -68,6 +72,16 @@ class RoleSeeder extends Seeder
             'editar horario clase',
             'eliminar horario clase',
         ]);
+
+        // Técnico: permisos para gestionar máquinas
+        $tecnico->syncPermissions([
+            'crear máquina',
+            'editar máquina',
+            'eliminar máquina',
+        ]);
+
+        // Limpieza: sin permisos especiales por ahora
+        $limpieza->syncPermissions([]);
 
         $cliente->syncPermissions(['ver guia']);
 

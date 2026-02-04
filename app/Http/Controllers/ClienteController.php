@@ -278,7 +278,7 @@ class ClienteController extends Controller
     /**
      * Agregar una nueva medición a un cliente
      */
-    public function agregarMedicion(Request $request, User $cliente = null)
+    public function agregarMedicion(Request $request)
     {
         $cliente = $cliente ?? $request->user();
 

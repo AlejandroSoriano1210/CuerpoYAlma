@@ -13,6 +13,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
 
+    // Estados disponibles para empleados
+    const ESTADO_DISPONIBLE = 'disponible';
+    const ESTADO_BAJA = 'baja';
+    const ESTADO_VACACIONES = 'vacaciones';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -29,6 +34,7 @@ class User extends Authenticatable
         'imc',
         'ultimo_pago_mes',
         'ultimo_pago_ano',
+        'estado_empleado',
     ];
 
     /**

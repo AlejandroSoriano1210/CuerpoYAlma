@@ -14,9 +14,18 @@ const DIAS_SEMANA = [
 export default function Show({ entrenador }) {
     const { flash } = usePage().props;
 
+    const getRoleBadge = (rol) => {
+        const colors = {
+            entrenador: 'bg-blue-100 text-blue-800',
+            tecnico: 'bg-green-100 text-green-800',
+            limpieza: 'bg-purple-100 text-purple-800',
+        };
+        return colors[rol] || 'bg-gray-100 text-gray-800';
+    };
+
     return (
         <AuthenticatedLayout>
-            <Head title={`Entrenador: ${entrenador.name}`} />
+            <Head title={`Empleado: ${entrenador.name}`} />
 
             <div className="py-12">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,6 +63,24 @@ export default function Show({ entrenador }) {
                                     <p className="text-gray-900 text-lg font-medium">
                                         {entrenador.email}
                                     </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">
+                                        Teléfono
+                                    </label>
+                                    <p className="text-gray-900 text-lg font-medium">
+                                        {entrenador.telefono || 'No especificado'}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">
+                                        Rol
+                                    </label>
+                                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${getRoleBadge(entrenador.rol)}`}>
+                                        {entrenador.rol.charAt(0).toUpperCase() + entrenador.rol.slice(1)}
+                                    </span>
                                 </div>
 
                                 <div>
@@ -147,83 +174,150 @@ export default function Show({ entrenador }) {
                             )}
                         </div>
 
-                        {/* Clases que Imparte */}
-                        <div className="mb-8">
-                            <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                                Clases que Imparte (
-                                {entrenador.clasesCreadas?.length || 0})
-                            </h2>
+                        {/* Clases que Imparte (solo para entrenadores) */}
+                        {entrenador.rol === 'entrenador' && (
+                            <div className="mb-8">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-700">
+                                        Clases que Imparte (
+                                        {entrenador.clasesCreadas?.length || 0})
+                                    </h2>
 
-                            {entrenador.clasesCreadas &&
-                            entrenador.clasesCreadas.length > 0 ? (
-                                <div className="space-y-4">
-                                    {entrenador.clasesCreadas.map((clase) => (
-                                        <div
-                                            key={clase.id}
-                                            className="p-4 bg-blue-50 border border-blue-200 rounded-lg"
-                                        >
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <h3 className="font-bold text-gray-900 text-lg">
-                                                        {clase.nombre}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-600">
-                                                        📅{" "}
-                                                        {new Date(
-                                                            clase.fecha
-                                                        ).toLocaleDateString(
-                                                            "es-ES",
-                                                            {
-                                                                weekday: "long",
-                                                                year: "numeric",
-                                                                month: "long",
-                                                                day: "numeric",
-                                                            }
-                                                        )}
-                                                    </p>
-                                                </div>
-                                                <span
-                                                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                                        clase.inscritos >=
-                                                        clase.capacidad
-                                                            ? "bg-red-200 text-red-800"
-                                                            : "bg-green-200 text-green-800"
-                                                    }`}
-                                                >
-                                                    {clase.inscritos}/
-                                                    {clase.capacidad}
-                                                </span>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <span className="text-gray-600">
-                                                        ⏰ Horario:
-                                                    </span>
-                                                    <p className="font-medium text-gray-900">
-                                                        {clase.hora_inicio} -{" "}
-                                                        {clase.hora_fin}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-gray-600">
-                                                        👥 Capacidad:
-                                                    </span>
-                                                    <p className="font-medium text-gray-900">
-                                                        {clase.capacidad}{" "}
-                                                        personas
-                                                    </p>
-                                                </div>
-                                            </div>
+                                    {entrenador.clasesEsteAno !== undefined && (
+                                        <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
+                                            <span className="text-sm font-medium">Clases este año ({new Date().getFullYear()}): </span>
+                                            <span className="text-2xl font-bold">{entrenador.clasesEsteAno}</span>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                            ) : (
-                                <p className="text-gray-500">
-                                    No ha creado clases aún
-                                </p>
-                            )}
-                        </div>
+
+                                {entrenador.clasesCreadas &&
+                                entrenador.clasesCreadas.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {entrenador.clasesCreadas.map((clase) => (
+                                            <div
+                                                key={clase.id}
+                                                className="p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                                            >
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-900 text-lg">
+                                                            {clase.nombre}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-600">
+                                                            📅{" "}
+                                                            {new Date(
+                                                                clase.fecha
+                                                            ).toLocaleDateString(
+                                                                "es-ES",
+                                                                {
+                                                                    weekday: "long",
+                                                                    year: "numeric",
+                                                                    month: "long",
+                                                                    day: "numeric",
+                                                                }
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                            clase.inscritos >=
+                                                            clase.capacidad
+                                                                ? "bg-red-200 text-red-800"
+                                                                : "bg-green-200 text-green-800"
+                                                        }`}
+                                                    >
+                                                        {clase.inscritos}/
+                                                        {clase.capacidad}
+                                                    </span>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-600">
+                                                            ⏰ Horario:
+                                                        </span>
+                                                        <p className="font-medium text-gray-900">
+                                                            {clase.hora_inicio} -{" "}
+                                                            {clase.hora_fin}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">
+                                                            👥 Capacidad:
+                                                        </span>
+                                                        <p className="font-medium text-gray-900">
+                                                            {clase.capacidad}{" "}
+                                                            personas
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500">
+                                        No ha creado clases aún
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Máquinas en Mantenimiento (solo para técnicos) */}
+                        {entrenador.rol === 'tecnico' && (
+                            <div className="mb-8">
+                                <h2 className="text-lg font-semibold text-gray-700 mb-4">
+                                    Máquinas en Mantenimiento/Fuera de Servicio (
+                                    {entrenador.maquinasMantenimiento?.length || 0})
+                                </h2>
+
+                                {entrenador.maquinasMantenimiento &&
+                                entrenador.maquinasMantenimiento.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {entrenador.maquinasMantenimiento.map((maquina) => (
+                                            <div
+                                                key={maquina.id}
+                                                className={`p-4 border rounded-lg ${
+                                                    maquina.estado === 'mantenimiento'
+                                                        ? 'bg-yellow-50 border-yellow-200'
+                                                        : 'bg-red-50 border-red-200'
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex-1">
+                                                        <h3 className="font-bold text-gray-900 text-lg">
+                                                            {maquina.nombre}
+                                                        </h3>
+                                                        <p className="text-sm text-gray-600">
+                                                            📍 {maquina.ubicacion}
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                                                            maquina.estado === 'mantenimiento'
+                                                                ? 'bg-yellow-200 text-yellow-800'
+                                                                : 'bg-red-200 text-red-800'
+                                                        }`}
+                                                    >
+                                                        {maquina.estado.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+
+                                                {maquina.descripcion && (
+                                                    <p className="text-sm text-gray-700 mt-2">
+                                                        {maquina.descripcion}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500">
+                                        No hay máquinas en mantenimiento o fuera de servicio
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
                         {/* Botones de acción */}
                         <div className="flex gap-4">

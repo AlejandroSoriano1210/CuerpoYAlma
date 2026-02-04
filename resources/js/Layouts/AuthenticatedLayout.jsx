@@ -34,7 +34,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             "entrenadores.index"
                                         )}
                                     >
-                                        Entrenadores
+                                        Empleados
                                     </NavLink>
                                 )}
                                 {hasRole("superusuario") && (
@@ -45,6 +45,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         )}
                                     >
                                         Clientes
+                                    </NavLink>
+                                )}
+                                {hasRole('entrenador') && (
+                                    <NavLink
+                                        href={route("panel.clases.index")}
+                                        active={route().current("panel.clases.index")}
+                                    >
+                                        Panel de control
                                     </NavLink>
                                 )}
                                 {hasRole("cliente") && (
@@ -61,14 +69,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Clases
                                 </NavLink>
-                                {hasRole('entrenador') && (
-                                    <NavLink
-                                        href={route("panel.clases.index")}
-                                        active={route().current("panel.clases.index")}
-                                    >
-                                        Panel de control
-                                    </NavLink>
-                                )}
                                 <NavLink
                                     href={route("guias.index")}
                                     active={route().current("guias.index")}

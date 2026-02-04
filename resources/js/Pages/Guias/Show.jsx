@@ -72,7 +72,7 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
     };
 
     const manejarCompletar = () => {
-        if (confirm('¿Marcar esta guía como completada? Se eliminará de tu dashboard.')) {
+        if (confirm('¿Marcar esta guía como completada? Se eliminará de tu panel de estadísticas.')) {
             router.delete(route('guias.unassign', guia.id));
         }
     };

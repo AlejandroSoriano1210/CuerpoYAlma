@@ -134,6 +134,15 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         });
     }, [horarios, diasSemana, momento]);
 
+    const horariosParaCalendario = useMemo(() => {
+        return horariosFiltrados.filter((h) => {
+            const fechaClase = new Date(h.fecha);
+            const horaFin = h.hora_fin.substring(0, 5).split(':');
+            fechaClase.setHours(parseInt(horaFin[0]), parseInt(horaFin[1]));
+            return fechaClase >= new Date();
+        });
+    }, [horariosFiltrados]);
+
     const clasesDelDia = selectedDate
         ? horariosFiltrados
             .filter((h) => h.fecha.substring(0, 10) === selectedDate)
@@ -345,7 +354,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                             <Calendario
                                 mes={mes}
                                 ano={ano}
-                                horarios={horariosFiltrados}
+                                horarios={horariosParaCalendario}
                                 onSelectDate={handleSelectDateForCreation}
                                 selectedDate={selectedDate}
                             />
@@ -556,135 +565,165 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
 
                                     <div className="space-y-4">
                                         {clasesDelDia.length > 0 ? (
-                                            clasesDelDia.map((clase) => (
-                                                <div
-                                                    key={clase.id}
-                                                    className={`p-4 rounded-lg border-2 ${clase.completa
-                                                        ? "border-red-300 bg-red-50"
-                                                        : "border-green-300 bg-green-50"
-                                                        }`}
-                                                >
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div>
-                                                            <h3 className="font-bold text-gray-900">
-                                                                {clase.nombre || clase.nombre_clase}
-                                                            </h3>
-                                                            <p className="text-sm text-gray-600">
-                                                                Entrenador: {clase.entrenador}
+                                            clasesDelDia.map((clase) => {
+                                                // Determinar si la clase es pasada
+                                                const fechaClase = new Date(clase.fecha);
+                                                const horaFin = clase.hora_fin.substring(0, 5).split(':');
+                                                fechaClase.setHours(parseInt(horaFin[0]), parseInt(horaFin[1]));
+
+                                                const ahora = new Date();
+                                                const clasePasada = fechaClase < ahora;
+
+                                                return (
+                                                    <div
+                                                        key={clase.id}
+                                                        className={`p-4 rounded-lg border-2 transition ${clasePasada
+                                                                ? 'opacity-60 border-gray-300 bg-gray-50'
+                                                                : clase.completa
+                                                                    ? 'border-red-300 bg-red-50'
+                                                                    : 'border-green-300 bg-green-50'
+                                                            }`}
+                                                    >
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <h3 className={`font-bold ${clasePasada ? 'text-gray-500' : 'text-gray-900'
+                                                                        }`}>
+                                                                        {clase.nombre || clase.nombre_clase}
+                                                                    </h3>
+                                                                    {clasePasada && (
+                                                                        <span className="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded-full font-semibold">
+                                                                            Pasada
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className={`text-sm ${clasePasada ? 'text-gray-500' : 'text-gray-600'}`}>
+                                                                    Entrenador: {clase.entrenador}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={`text-sm mb-3 ${clasePasada ? 'text-gray-500' : 'text-gray-600'}`}>
+                                                            <p>⏰ {clase.hora_inicio.substring(0, 5)} - {clase.hora_fin.substring(0, 5)}</p>
+                                                            <p>
+                                                                👥 {clase.inscritos}/{clase.capacidad}{" "}
+                                                                inscritos
                                                             </p>
                                                         </div>
-                                                    </div>
 
-                                                    <div className="text-sm text-gray-600 mb-3">
-                                                        <p>⏰ {clase.hora_inicio.substring(0, 5)} - {clase.hora_fin.substring(0, 5)}</p>
-                                                        <p>
-                                                            👥 {clase.inscritos}/{clase.capacidad}{" "}
-                                                            inscritos
-                                                        </p>
-                                                    </div>
-
-                                                    {/* Botones de acción */}
-                                                    <div className="space-y-2">
-                                                        <Link
-                                                            href={route("clases.show", clase.id)}
-                                                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center text-sm"
-                                                        >
-                                                            Ver Detalles
-                                                        </Link>
-
-                                                        {/* Botón de reserva - para clases con espacios disponibles */}
-                                                        {!clase.completa && !yaInscrito(clase) && !enListaEspera(clase) && (
-                                                            <button
-                                                                onClick={() => handleReserva(clase)}
-                                                                disabled={isReservando === clase.id}
-                                                                className="block w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                        {/* Botones de acción */}
+                                                        <div className="space-y-2">
+                                                            <Link
+                                                                href={route("clases.show", clase.id)}
+                                                                className={`block w-full font-bold py-2 px-4 rounded text-center text-sm transition ${clasePasada
+                                                                        ? 'bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed'
+                                                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                                                    }`}
+                                                                onClick={(e) => {
+                                                                    if (clasePasada) e.preventDefault();
+                                                                }}
                                                             >
-                                                                {isReservando === clase.id
-                                                                    ? "Reservando..."
-                                                                    : "Reservar"}
-                                                            </button>
-                                                        )}
+                                                                Ver Detalles
+                                                            </Link>
 
-                                                        {/* Botón cancelar reserva (si ya inscrito) */}
-                                                        {yaInscrito(clase) && (
-                                                            <button
-                                                                onClick={() => handleCancelarReserva(clase)}
-                                                                disabled={isCancelando === clase.reserva_id}
-                                                                className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
-                                                            >
-                                                                {isCancelando === clase.reserva_id ? 'Cancelando...' : 'Cancelar Reserva'}
-                                                            </button>
-                                                        )}
-
-                                                        {/* Botón de lista de espera - para clases completas sin reserva */}
-                                                        {clase.completa && !yaInscrito(clase) && !enListaEspera(clase) && (
-                                                            <button
-                                                                onClick={() => handleReserva(clase)}
-                                                                disabled={isReservando === clase.id}
-                                                                className="block w-full bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
-                                                            >
-                                                                {isReservando === clase.id ? 'Procesando...' : '⏳ Lista de Espera'}
-                                                            </button>
-                                                        )}
-
-                                                        {/* Botón cancelar de lista de espera */}
-                                                        {enListaEspera(clase) && !yaInscrito(clase) && (
-                                                            <div className="space-y-1">
-                                                                <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded text-center text-xs font-bold">
-                                                                    ⏳ Pos. {clase.posicion_lista_espera}/{clase.lista_espera_count}
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => handleCancelarListaEspera(clase)}
-                                                                    disabled={isCancelando === clase.lista_espera_id}
-                                                                    className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
-                                                                >
-                                                                    {isCancelando === clase.lista_espera_id ? 'Cancelando...' : 'Cancelar Lista'}
-                                                                </button>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Editar/Eliminar - solo para propietario o admin */}
-                                                        {canEdit(clase) && (
-                                                            <div className="flex gap-2">
-                                                                <Link
-                                                                    href={route(
-                                                                        "clases.edit",
-                                                                        clase.id
+                                                            {!clasePasada && (
+                                                                <>
+                                                                    {/* Botón de reserva - para clases con espacios disponibles */}
+                                                                    {!clase.completa && !yaInscrito(clase) && !enListaEspera(clase) && (
+                                                                        <button
+                                                                            onClick={() => handleReserva(clase)}
+                                                                            disabled={isReservando === clase.id}
+                                                                            className="block w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                                        >
+                                                                            {isReservando === clase.id
+                                                                                ? "Reservando..."
+                                                                                : "Reservar"}
+                                                                        </button>
                                                                     )}
-                                                                    className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-center text-sm"
-                                                                >
-                                                                    Editar
-                                                                </Link>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        if (
-                                                                            confirm(
-                                                                                "¿Estás seguro de que deseas eliminar esta clase?"
-                                                                            )
-                                                                        ) {
-                                                                            router.delete(
-                                                                                route(
-                                                                                    "clases.destroy",
+
+                                                                    {/* Botón cancelar reserva (si ya inscrito) */}
+                                                                    {yaInscrito(clase) && (
+                                                                        <button
+                                                                            onClick={() => handleCancelarReserva(clase)}
+                                                                            disabled={isCancelando === clase.reserva_id}
+                                                                            className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                                        >
+                                                                            {isCancelando === clase.reserva_id ? 'Cancelando...' : 'Cancelar Reserva'}
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* Botón de lista de espera - para clases completas sin reserva */}
+                                                                    {clase.completa && !yaInscrito(clase) && !enListaEspera(clase) && (
+                                                                        <button
+                                                                            onClick={() => handleReserva(clase)}
+                                                                            disabled={isReservando === clase.id}
+                                                                            className="block w-full bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                                        >
+                                                                            {isReservando === clase.id ? 'Procesando...' : '⏳ Lista de Espera'}
+                                                                        </button>
+                                                                    )}
+
+                                                                    {/* Botón cancelar de lista de espera */}
+                                                                    {enListaEspera(clase) && !yaInscrito(clase) && (
+                                                                        <div className="space-y-1">
+                                                                            <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded text-center text-xs font-bold">
+                                                                                ⏳ Pos. {clase.posicion_lista_espera}/{clase.lista_espera_count}
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => handleCancelarListaEspera(clase)}
+                                                                                disabled={isCancelando === clase.lista_espera_id}
+                                                                                className="block w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                                            >
+                                                                                {isCancelando === clase.lista_espera_id ? 'Cancelando...' : 'Cancelar Lista'}
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Editar/Eliminar - solo para propietario o admin */}
+                                                                    {canEdit(clase) && (
+                                                                        <div className="flex gap-2">
+                                                                            <Link
+                                                                                href={route(
+                                                                                    "clases.edit",
                                                                                     clase.id
-                                                                                ),
-                                                                                {},
-                                                                                {
-                                                                                    onSuccess: () => {
-                                                                                        // El mensaje flash se muestra automáticamente
-                                                                                    },
-                                                                                }
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
-                                                                >
-                                                                    Eliminar
-                                                                </button>
-                                                            </div>
-                                                        )}
+                                                                                )}
+                                                                                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                                            >
+                                                                                Editar
+                                                                            </Link>
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    if (
+                                                                                        confirm(
+                                                                                            "¿Estás seguro de que deseas eliminar esta clase?"
+                                                                                        )
+                                                                                    ) {
+                                                                                        router.delete(
+                                                                                            route(
+                                                                                                "clases.destroy",
+                                                                                                clase.id
+                                                                                            ),
+                                                                                            {},
+                                                                                            {
+                                                                                                onSuccess: () => {
+                                                                                                    // El mensaje flash se muestra solo
+                                                                                                },
+                                                                                            }
+                                                                                        );
+                                                                                    }
+                                                                                }}
+                                                                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                                                                            >
+                                                                                Eliminar
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         ) : (
                                             <p className="text-gray-500 text-center py-8">
                                                 No hay clases en esta fecha

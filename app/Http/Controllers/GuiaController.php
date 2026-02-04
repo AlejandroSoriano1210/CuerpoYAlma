@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class GuiaController extends Controller
@@ -39,8 +40,8 @@ class GuiaController extends Controller
 
         // Obtener IDs de las guías asignadas al usuario actual
         $assignedGuiaIds = [];
-        if (auth()->check()) {
-            $assignedGuiaIds = \App\Models\GuiaView::where('user_id', auth()->id())
+        if (Auth::check()) {
+            $assignedGuiaIds = \App\Models\GuiaView::where('user_id', Auth::id())
                 ->pluck('guia_id')
                 ->toArray();
         }
@@ -86,6 +87,8 @@ class GuiaController extends Controller
             'ejercicios.*.instrucciones' => 'nullable|string',
         ]);
 
+        $guia = Guia::create($validated);
+
         // Guardar ejercicios si vienen
         if (!empty($validated['ejercicios'])) {
             $orden = 1;
@@ -115,8 +118,8 @@ class GuiaController extends Controller
 
         // Verificar si el usuario actual tiene asignada esta guía
         $isAssigned = false;
-        if (auth()->check()) {
-            $isAssigned = \App\Models\GuiaView::where('user_id', auth()->id())
+        if (Auth::check()) {
+            $isAssigned = \App\Models\GuiaView::where('user_id', Auth::id())
                 ->where('guia_id', $guia->id)
                 ->exists();
         }
@@ -198,7 +201,7 @@ class GuiaController extends Controller
     public function assignToClient(Request $request, Guia $guia)
     {
         // Validar que el usuario sea entrenador o superusuario
-        if (!auth()->user()->hasAnyRole(['entrenador', 'superusuario'])) {
+        if (!Auth::user()->hasAnyRole(['entrenador', 'superusuario'])) {
             return back()->with('error', 'No tienes permiso para asignar guías.');
         }
 
@@ -226,13 +229,13 @@ class GuiaController extends Controller
      */
     public function assign(Guia $guia)
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'Debes iniciar sesión para asignar una guía.');
         }
 
         // Crear o actualizar el registro en guia_views
         \App\Models\GuiaView::firstOrCreate([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'guia_id' => $guia->id,
         ]);
 
@@ -244,17 +247,17 @@ class GuiaController extends Controller
      */
     public function unassign(Guia $guia)
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'Debes iniciar sesión.');
         }
 
         // Eliminar el progreso de la guía
-        \App\Models\GuiaProgreso::where('user_id', auth()->id())
+        \App\Models\GuiaProgreso::where('user_id', Auth::id())
             ->where('guia_id', $guia->id)
             ->delete();
 
         // Eliminar el registro de guia_views
-        \App\Models\GuiaView::where('user_id', auth()->id())
+        \App\Models\GuiaView::where('user_id', Auth::id())
             ->where('guia_id', $guia->id)
             ->delete();
 
@@ -281,7 +284,7 @@ class GuiaController extends Controller
      */
     public function saveProgress(Request $request, Guia $guia)
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -299,7 +302,7 @@ class GuiaController extends Controller
         // Crear o actualizar el registro de progreso
         $progreso = \App\Models\GuiaProgreso::updateOrCreate(
             [
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'guia_id' => $guia->id,
                 'guia_ejercicio_id' => $validated['guia_ejercicio_id'],
             ],
@@ -310,7 +313,7 @@ class GuiaController extends Controller
 
         // Obtener el total de ejercicios y el total completados
         $totalEjercicios = \App\Models\GuiaEjercicio::where('guia_id', $guia->id)->count();
-        $completados = \App\Models\GuiaProgreso::where('user_id', auth()->id())
+        $completados = \App\Models\GuiaProgreso::where('user_id', Auth::id())
             ->where('guia_id', $guia->id)
             ->where('completado', true)
             ->count();
@@ -322,13 +325,13 @@ class GuiaController extends Controller
 
             // Guardar registro de completación
             \App\Models\GuiaCompletada::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'guia_id' => $guia->id,
                 'completada_el' => now(),
             ]);
 
             // Eliminar la asignación de la guía
-            \App\Models\GuiaView::where('user_id', auth()->id())
+            \App\Models\GuiaView::where('user_id', Auth::id())
                 ->where('guia_id', $guia->id)
                 ->delete();
         }
@@ -346,11 +349,11 @@ class GuiaController extends Controller
      */
     public function getProgress(Guia $guia)
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $progreso = \App\Models\GuiaProgreso::where('user_id', auth()->id())
+        $progreso = \App\Models\GuiaProgreso::where('user_id', Auth::id())
             ->where('guia_id', $guia->id)
             ->get()
             ->mapWithKeys(function ($item) {

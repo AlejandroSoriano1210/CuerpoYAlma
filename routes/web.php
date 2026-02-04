@@ -101,8 +101,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/ejercicios/{ejercicio}/editar', [EjercicioController::class, 'edit'])->name('ejercicios.edit');
         Route::patch('/ejercicios/{ejercicio}', [EjercicioController::class, 'update'])->name('ejercicios.update');
         Route::delete('/ejercicios/{ejercicio}', [EjercicioController::class, 'destroy'])->name('ejercicios.destroy');
+    });
 
-        // CRUD de maquinas (solo para entrenadores y superusuario)
+    Route::middleware('role:superusuario|tecnico')->group(function () {
+        // CRUD de máquinas (solo para técnicos y superusuario)
         Route::get('/maquinas/crear', [MaquinaController::class, 'create'])->name('maquinas.create');
         Route::post('/maquinas', [MaquinaController::class, 'store'])->name('maquinas.store');
         Route::get('/maquinas/{maquina}/editar', [MaquinaController::class, 'edit'])->name('maquinas.edit');
@@ -122,6 +124,10 @@ Route::middleware(['auth', 'role:entrenador|superusuario'])->group(function () {
     Route::get('/panel/clases/{horarioClase}', [EntrenadorPanelController::class, 'show'])->name('panel.clases.show');
     Route::patch('/panel/clases/{horarioClase}/promover/{listaEspera}', [EntrenadorPanelController::class, 'promover'])->name('panel.promover');
     Route::delete('/panel/clases/{horarioClase}/lista/{listaEspera}', [EntrenadorPanelController::class, 'removerDelista'])->name('panel.remover-lista');
+});
+
+Route::middleware(['auth', 'role:entrenador|tecnico|limpieza'])->group(function () {
+    Route::post('/panel/cambiar-estado', [EntrenadorPanelController::class, 'cambiarEstado'])->name('panel.cambiarEstado');
 });
 
 Route::middleware(['auth', 'role:entrenador'])->group(function () {

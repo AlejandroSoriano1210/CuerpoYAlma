@@ -7,9 +7,50 @@ import Card from '@/Components/Card';
 export default function Dashboard({ user, metricas, proximasClases, historialClases, guiaActual, guiaRecomendadas = [], nivelCondicion = 'Sin datos', estadisticas, clasesPorMes }) {
     const { flash } = usePage().props;
 
-    // Obtener la última medición registrada de clasesPorMes
+    // Estado para forzar re-render cada minuto
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setNow(new Date());
+        }, 60000); // Actualizar cada minuto
+
+        return () => clearInterval(interval);
+    }, []);
+
+    // Filtrar clases según hora actual
+    const proximasClasesFiltradas = useMemo(() => {
+        return proximasClases.filter((clase) => {
+            const fechaClase = new Date(`${clase.fecha}T${clase.hora_fin}:00`);
+            return fechaClase >= now;
+        });
+    }, [proximasClases, now]);
+
+    const historialClasesFiltrado = useMemo(() => {
+        return historialClases.filter((clase) => {
+            const fechaClase = new Date(`${clase.fecha}T${clase.hora_fin}:00`);
+            return fechaClase < now;
+        });
+    }, [historialClases, now]);
+
+    // Calcular estadísticas dinámicamente basadas en las clases filtradas
+    const estadisticasDinamicas = useMemo(() => {
+        return {
+            total_clases_tomadas: historialClasesFiltrado.length,
+            total_clases_reservadas: proximasClasesFiltradas.length,
+            en_lista_espera: estadisticas.en_lista_espera,
+            total_guias_completadas: estadisticas.total_guias_completadas,
+        };
+    }, [historialClasesFiltrado, proximasClasesFiltradas, estadisticas]);
+
+    // Obtener la última medición registrada de clasesPorMes (excluyendo el mes actual)
     const ultimaMedicion = useMemo(() => {
-        const medicionesConDatos = clasesPorMes?.filter(m => m.peso_kg || m.grasa_corporal_pct) ?? [];
+        const mesActual = new Date().toLocaleDateString('es-ES', { month: 'long' });
+        const mesActualCapitalizado = mesActual.charAt(0).toUpperCase() + mesActual.slice(1);
+
+        const medicionesConDatos = clasesPorMes?.filter(m =>
+            (m.peso_kg || m.grasa_corporal_pct) && m.mes !== mesActualCapitalizado
+        ) ?? [];
         return medicionesConDatos.length > 0 ? medicionesConDatos[medicionesConDatos.length - 1] : null;
     }, [clasesPorMes]);
 
@@ -89,12 +130,12 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
     // Recomendaciones llegan desde el backend; no se calculan en cliente
 
-    const totalProximas = proximasClases?.length ?? 0;
+    const totalProximas = proximasClasesFiltradas?.length ?? 0;
     const totalProximasPages = Math.max(1, Math.ceil(totalProximas / pageSize));
     const proximasPage = useMemo(() => {
         const start = (clasesPage - 1) * pageSize;
-        return proximasClases.slice(start, start + pageSize);
-    }, [clasesPage, proximasClases]);
+        return proximasClasesFiltradas.slice(start, start + pageSize);
+    }, [clasesPage, proximasClasesFiltradas]);
 
     useEffect(() => {
         if (clasesPage > totalProximasPages) {
@@ -118,6 +159,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                             <div>
                                 <h1 className="text-4xl font-bold text-gray-900">{user.name}</h1>
                                 <p className="text-gray-600 mt-2 text-lg">{user.email}</p>
+                                <p className="text-gray-600 mt-2 text-lg">{user.telefono}</p>
                                 <p className="text-gray-500 mt-1">Revisa tu progreso y desempeño en el entrenamiento</p>
                             </div>
                         </div>
@@ -275,28 +317,28 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         <Card icon="📊" containerClassName="bg-white rounded-lg shadow p-6">
                             <p className="text-gray-600 text-sm font-medium">Clases asistidas</p>
                             <p className="text-3xl font-bold text-blue-600 mt-2">
-                                {estadisticas.total_clases_tomadas}
+                                {estadisticasDinamicas.total_clases_tomadas}
                             </p>
                         </Card>
 
                         <Card icon="🎯" containerClassName="bg-white rounded-lg shadow p-6">
                             <p className="text-gray-600 text-sm font-medium">Próximas Clases</p>
                             <p className="text-3xl font-bold text-green-600 mt-2">
-                                {estadisticas.total_clases_reservadas}
+                                {estadisticasDinamicas.total_clases_reservadas}
                             </p>
                         </Card>
 
                         <Card icon="⏳" containerClassName="bg-white rounded-lg shadow p-6">
                             <p className="text-gray-600 text-sm font-medium">En Lista de Espera</p>
                             <p className="text-3xl font-bold text-orange-600 mt-2">
-                                {estadisticas.en_lista_espera}
+                                {estadisticasDinamicas.en_lista_espera}
                             </p>
                         </Card>
 
                         <Card icon="📋" containerClassName="bg-white rounded-lg shadow p-6">
                             <p className="text-gray-600 text-sm font-medium">Guías Completadas</p>
                             <p className="text-3xl font-bold text-purple-600 mt-2">
-                                {estadisticas.total_guias_completadas}
+                                {estadisticasDinamicas.total_guias_completadas}
                             </p>
                         </Card>
 
@@ -314,16 +356,8 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         <div className="lg:col-span-2">
                             <Card
                                 title="📅 Próximas Clases"
-                                headerAction={
-                                    <Link
-                                        href="/clases"
-                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                    >
-                                        Ver más →
-                                    </Link>
-                                }
                             >
-                                {proximasClases.length > 0 ? (
+                                {proximasClasesFiltradas.length > 0 ? (
                                     <div className="space-y-4">
                                         {proximasPage.map((clase) => (
                                             <div
@@ -363,7 +397,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                                 </div>
                                             </div>
                                         ))}
-                                        {proximasClases.length > pageSize && (
+                                        {proximasClasesFiltradas.length > pageSize && (
                                             <div className="flex items-center justify-between pt-2 text-sm text-gray-600">
                                                 <div>
                                                     Mostrando {Math.min((clasesPage - 1) * pageSize + 1, totalProximas)}-
@@ -525,8 +559,8 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Registro de Medición Corporal</h3>
                                 <p className="text-gray-600 text-sm mb-4">
                                     {ultimaMedicion
-                                        ? `Los campos están pre-rellenados con tus datos del mes anterior (${ultimaMedicion.mes}). Actualiza si es necesario.`
-                                        : 'Los campos están pre-rellenados con tus datos iniciales. Actualiza tus medidas actuales.'}
+                                        ? `Los campos están pre-rellenados con tus últimos datos registrados (${ultimaMedicion.mes}). Actualízalos con tus medidas actuales.`
+                                        : 'Los campos están pre-rellenados con tus datos iniciales. Registra tus medidas actuales.'}
                                 </p>
                                 <form onSubmit={(e) => {
                                     e.preventDefault();
@@ -534,6 +568,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                         peso_kg: measurementFormData.peso_kg || null,
                                         altura_cm: measurementFormData.altura_cm || null,
                                         grasa_corporal_pct: measurementFormData.grasa_corporal_pct || null,
+                                        fecha_medicion: new Date().toISOString().split('T')[0],
                                     }, {
                                         preserveScroll: true,
                                         onSuccess: () => {
@@ -613,15 +648,6 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                 <Tooltip />
                                 <Legend />
                                 <Line
-                                    yAxisId="left"
-                                    type="monotone"
-                                    dataKey="cantidad"
-                                    stroke="#3b82f6"
-                                    name="Clases asistidas"
-                                    strokeWidth={2}
-                                    dot={{ fill: '#3b82f6' }}
-                                />
-                                <Line
                                     yAxisId="right"
                                     type="monotone"
                                     dataKey="peso_kg"
@@ -655,16 +681,8 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                     {/* Historial de Clases */}
                     <Card
                         title="📝 Historial de Clases"
-                        headerAction={
-                            <Link
-                                href="/clases"
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                            >
-                                Ver más →
-                            </Link>
-                        }
                     >
-                        {historialClases.length > 0 ? (
+                        {historialClasesFiltrado.length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
@@ -684,7 +702,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {historialClases.map((clase) => (
+                                        {historialClasesFiltrado.map((clase) => (
                                             <tr key={clase.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {clase.nombre}

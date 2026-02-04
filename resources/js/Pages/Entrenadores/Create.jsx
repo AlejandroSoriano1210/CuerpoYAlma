@@ -44,8 +44,10 @@ export default function Create() {
     const { data, setData, post, errors, processing } = useForm({
         name: '',
         email: '',
+        telefono: '',
         password: '',
         password_confirmation: '',
+        rol: 'entrenador',
         horarios: [],
     });
 
@@ -99,13 +101,13 @@ export default function Create() {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Crear Entrenador" />
+            <Head title="Crear Empleado" />
 
             <div className="py-12">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white shadow rounded-lg p-6">
                         <h1 className="text-2xl font-bold mb-6 text-gray-900">
-                            Crear Nuevo Entrenador
+                            Crear Nuevo Empleado
                         </h1>
 
                         {flash?.success && (
@@ -159,6 +161,54 @@ export default function Create() {
                                     {errors.email && (
                                         <p className="text-red-500 text-sm mt-1">
                                             {errors.email}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Rol */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Rol
+                                    </label>
+                                    <select
+                                        value={data.rol}
+                                        onChange={(e) => setData('rol', e.target.value)}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            errors.rol
+                                                ? 'border-red-500'
+                                                : 'border-gray-300'
+                                        }`}
+                                    >
+                                        <option value="entrenador">Entrenador</option>
+                                        <option value="tecnico">Técnico</option>
+                                        <option value="limpieza">Limpieza</option>
+                                    </select>
+                                    {errors.rol && (
+                                        <p className="text-red-500 text-sm mt-1">
+                                            {errors.rol}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Teléfono */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Teléfono (opcional)
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={data.telefono}
+                                        onChange={(e) => setData('telefono', e.target.value)}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            errors.telefono
+                                                ? 'border-red-500'
+                                                : 'border-gray-300'
+                                        }`}
+                                        placeholder="600123456"
+                                    />
+                                    {errors.telefono && (
+                                        <p className="text-red-500 text-sm mt-1">
+                                            {errors.telefono}
                                         </p>
                                     )}
                                 </div>
@@ -340,7 +390,7 @@ export default function Create() {
                                 >
                                     {processing
                                         ? 'Guardando...'
-                                        : 'Crear Entrenador'}
+                                        : 'Crear Empleado'}
                                 </button>
                                 <Link
                                     href={route('entrenadores.index')}

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\HorarioClase;
 use App\Models\ListaEsperaClase;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -193,5 +192,27 @@ class EntrenadorPanelController extends Controller
             9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
         ];
         return $meses[$mes] ?? '';
+    }
+
+    /**
+     * Cambiar el estado del empleado
+     */
+    public function cambiarEstado(Request $request)
+    {
+        $request->validate([
+            'estado' => 'required|in:disponible,baja,vacaciones'
+        ]);
+
+        $user = auth()->user();
+
+        // Verificar que el usuario sea un empleado
+        if (!$user->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
+            return back()->withErrors(['error' => 'Solo los empleados pueden cambiar su estado.']);
+        }
+
+        $user->estado_empleado = $request->estado;
+        $user->save();
+
+        return back()->with('success', 'Estado actualizado correctamente.');
     }
 }
