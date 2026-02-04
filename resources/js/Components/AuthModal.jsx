@@ -6,11 +6,12 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Checkbox from '@/Components/Checkbox';
 import { useForm } from '@inertiajs/react';
+import { validarEmail, validarPassword, validarPasswordConfirmation, validarNombre } from '@/Utils/validations';
 
 export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode }) {
     const isLogin = mode === 'login';
 
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+    const { data, setData, post, processing, reset, clearErrors } = useForm({
         name: '',
         email: '',
         password: '',
@@ -18,79 +19,52 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
         remember: false,
     });
 
-    const [clientErrors, setClientErrors] = useState({});
+    const [touched, setTouched] = useState({
+        name: false,
+        email: false,
+        password: false,
+        password_confirmation: false,
+    });
 
-    // Validación en tiempo real
-    const validateEmail = (email) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    };
-
-    const validatePassword = (password) => {
-        return password.length >= 8;
-    };
-
-    const validateName = (name) => {
-        return name.trim().length >= 2;
-    };
+    // Validaciones en tiempo real
+    const nombreError = validarNombre(data.name);
+    const emailError = validarEmail(data.email);
+    const passwordError = validarPassword(data.password, 8);
+    const passwordConfirmationError = validarPasswordConfirmation(data.password, data.password_confirmation);
 
     const handleClose = () => {
         reset();
         clearErrors();
-        setClientErrors({});
+        setTouched({
+            name: false,
+            email: false,
+            password: false,
+            password_confirmation: false,
+        });
         onClose();
-    };
-
-    const handleInputChange = (field, value) => {
-        setData(field, value);
-
-        // Limpiar error cuando el usuario empieza a escribir
-        if (clientErrors[field]) {
-            setClientErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
-        }
-    };
-
-    const validateForm = () => {
-        const newErrors = {};
-
-        if (!isLogin) {
-            if (!validateName(data.name)) {
-                newErrors.name = 'El nombre debe tener al menos 2 caracteres';
-            }
-        }
-
-        if (!data.email) {
-            newErrors.email = 'El email es obligatorio';
-        } else if (!validateEmail(data.email)) {
-            newErrors.email = 'El formato del email no es válido';
-        }
-
-        if (!data.password) {
-            newErrors.password = 'La contraseña es obligatoria';
-        } else if (!validatePassword(data.password)) {
-            newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-        }
-
-        if (!isLogin) {
-            if (!data.password_confirmation) {
-                newErrors.password_confirmation = 'Debes confirmar la contraseña';
-            } else if (data.password !== data.password_confirmation) {
-                newErrors.password_confirmation = 'Las contraseñas no coinciden';
-            }
-        }
-
-        setClientErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!validateForm()) {
+        // Validar todos los campos
+        if (!isLogin && nombreError !== true) {
+            setTouched(prev => ({ ...prev, name: true }));
+            return;
+        }
+
+        if (emailError !== true) {
+            setTouched(prev => ({ ...prev, email: true }));
+            return;
+        }
+
+        if (passwordError !== true) {
+            setTouched(prev => ({ ...prev, password: true }));
+            return;
+        }
+
+        if (!isLogin && passwordConfirmationError !== true) {
+            setTouched(prev => ({ ...prev, password_confirmation: true }));
             return;
         }
 
@@ -99,9 +73,6 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
         post(route(route_name), {
             onSuccess: () => {
                 handleClose();
-            },
-            onError: (errors) => {
-                console.log('Server errors:', errors);
             },
             onFinish: () => {
                 if (!isLogin) {
@@ -116,7 +87,12 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
     const switchMode = () => {
         reset();
         clearErrors();
-        setClientErrors({});
+        setTouched({
+            name: false,
+            email: false,
+            password: false,
+            password_confirmation: false,
+        });
         onSwitchMode();
     };
 
@@ -136,15 +112,19 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                                 type="text"
                                 name="name"
                                 value={data.name}
-                                className="mt-1 block w-full"
+                                className={`mt-1 block w-full ${
+                                    touched.name && nombreError !== true
+                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                        : ''
+                                }`}
                                 autoComplete="name"
                                 isFocused={!isLogin}
-                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                onChange={(e) => setData('name', e.target.value)}
+                                onBlur={() => setTouched({ ...touched, name: true })}
                             />
-                            <InputError
-                                message={clientErrors.name || errors.name}
-                                className="mt-2"
-                            />
+                            {touched.name && nombreError !== true && (
+                                <p className="text-red-500 text-sm mt-1">{nombreError}</p>
+                            )}
                         </div>
                     )}
 
@@ -155,15 +135,19 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                             type="email"
                             name="email"
                             value={data.email}
-                            className="mt-1 block w-full"
+                            className={`mt-1 block w-full ${
+                                touched.email && emailError !== true
+                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                    : ''
+                            }`}
                             autoComplete="username"
                             isFocused={isLogin}
-                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            onChange={(e) => setData('email', e.target.value)}
+                            onBlur={() => setTouched({ ...touched, email: true })}
                         />
-                        <InputError
-                            message={clientErrors.email || errors.email}
-                            className="mt-2"
-                        />
+                        {touched.email && emailError !== true && (
+                            <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                        )}
                     </div>
 
                     <div className="mb-4">
@@ -173,14 +157,18 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                             type="password"
                             name="password"
                             value={data.password}
-                            className="mt-1 block w-full"
+                            className={`mt-1 block w-full ${
+                                touched.password && passwordError !== true
+                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                    : ''
+                            }`}
                             autoComplete={isLogin ? 'current-password' : 'new-password'}
-                            onChange={(e) => handleInputChange('password', e.target.value)}
+                            onChange={(e) => setData('password', e.target.value)}
+                            onBlur={() => setTouched({ ...touched, password: true })}
                         />
-                        <InputError
-                            message={clientErrors.password || errors.password}
-                            className="mt-2"
-                        />
+                        {touched.password && passwordError !== true && (
+                            <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+                        )}
                     </div>
 
                     {!isLogin && (
@@ -191,14 +179,18 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                                 type="password"
                                 name="password_confirmation"
                                 value={data.password_confirmation}
-                                className="mt-1 block w-full"
+                                className={`mt-1 block w-full ${
+                                    touched.password_confirmation && passwordConfirmationError !== true
+                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                        : ''
+                                }`}
                                 autoComplete="new-password"
-                                onChange={(e) => handleInputChange('password_confirmation', e.target.value)}
+                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                onBlur={() => setTouched({ ...touched, password_confirmation: true })}
                             />
-                            <InputError
-                                message={clientErrors.password_confirmation || errors.password_confirmation}
-                                className="mt-2"
-                            />
+                            {touched.password_confirmation && passwordConfirmationError !== true && (
+                                <p className="text-red-500 text-sm mt-1">{passwordConfirmationError}</p>
+                            )}
                         </div>
                     )}
 

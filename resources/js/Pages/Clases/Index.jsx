@@ -3,6 +3,8 @@ import { Head, Link, usePage, router, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
 import Calendario from "@/Components/Calendario";
+import { Calendar, RotateCcw } from "lucide-react";
+import { validarRequerido } from "@/Utils/validations";
 
 export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, entrenadores }) {
     const { hasRole } = usaRoleUser();
@@ -13,6 +15,14 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
     const [diasSemana, setDiasSemana] = useState(filtros?.dias_semana || []);
     const [momento, setMomento] = useState(filtros?.momento || "");
     const [modoCrear, setModoCrear] = useState(false); // Estado para modo crear clase
+    const [touched, setTouched] = useState({
+        nombre: false,
+        capacidad: false,
+        fecha: false,
+        hora_inicio: false,
+        hora_fin: false,
+        user_id: false,
+    });
 
     // Obtener mes y año actual
     const ahora = new Date();
@@ -21,7 +31,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
     const esMesActual = mes === mesActual && ano === anoActual;
 
     // Form para crear clase
-    const { data, setData, post, errors, processing, reset } = useForm({
+    const { data, setData, post, processing, reset } = useForm({
         nombre: '',
         capacidad: 10,
         fecha: '',
@@ -31,6 +41,75 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         user_id: null,
         semanal: false,
     });
+
+    // Validaciones en tiempo real
+    const nombreError = validarRequerido(data.nombre, 'Nombre de la clase');
+    const capacidadError = !data.capacidad || data.capacidad < 1 || data.capacidad > 50
+        ? 'La capacidad debe estar entre 1 y 50'
+        : true;
+
+    // Validar fecha
+    let fechaError = validarRequerido(data.fecha, 'Fecha');
+    if (fechaError === true && data.fecha) {
+        const fechaSeleccionada = new Date(data.fecha);
+        fechaSeleccionada.setHours(0, 0, 0, 0);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        if (fechaSeleccionada <= hoy) {
+            fechaError = 'La fecha debe ser futura (no puede ser hoy ni un día anterior)';
+        }
+    }
+
+    const horaInicioError = validarRequerido(data.hora_inicio, 'Hora de inicio');
+
+    // Validar hora fin
+    let horaFinError = validarRequerido(data.hora_fin, 'Hora de fin');
+    if (horaFinError === true && data.hora_inicio && data.hora_fin) {
+        const horaInicioMinutos = parseInt(data.hora_inicio.split(':')[0]) * 60 + parseInt(data.hora_inicio.split(':')[1]);
+        const horaFinMinutos = parseInt(data.hora_fin.split(':')[0]) * 60 + parseInt(data.hora_fin.split(':')[1]);
+        if (horaFinMinutos <= horaInicioMinutos) {
+            horaFinError = 'La hora de fin debe ser posterior a la hora de inicio';
+        }
+    }
+
+    // Validar entrenador si es superusuario
+    let entrenadorError = true;
+    if (hasRole('superusuario')) {
+        if (!data.user_id) {
+            entrenadorError = 'Debes seleccionar un entrenador';
+        } else if (data.user_id && data.hora_inicio && data.hora_fin && data.fecha) {
+            const entrenador = entrenadores.find(et => et.id == data.user_id);
+            if (entrenador && entrenador.horarios && entrenador.horarios.length > 0) {
+                // Obtener día de la semana de la fecha seleccionada (1=Lunes, 6=Sábado)
+                const fechaObj = new Date(data.fecha + 'T00:00:00');
+                const diaDelDia = fechaObj.getDay();
+                const diaSemana = diaDelDia === 0 ? 6 : diaDelDia - 1; // Convertir: 0 (domingo) -> 6, 1 (lunes) -> 0
+
+                const horaInicioMinutos = parseInt(data.hora_inicio.split(':')[0]) * 60 + parseInt(data.hora_inicio.split(':')[1]);
+                const horaFinMinutos = parseInt(data.hora_fin.split(':')[0]) * 60 + parseInt(data.hora_fin.split(':')[1]);
+
+                // Buscar si el entrenador tiene horario para ese día
+                const tieneHorarioDia = entrenador.horarios.some(horario => {
+                    if (horario.dia_semana !== diaSemana) return false;
+
+                    // Parsear el rango de horarios del entrenador
+                    const rangos = horario.horarios.split(',').map(r => r.trim());
+                    return rangos.some(rango => {
+                        const [inicio, fin] = rango.split('-').map(h => {
+                            const [horas, minutos] = h.trim().split(':').map(Number);
+                            return horas * 60 + minutos;
+                        });
+                        // Verificar que la clase esté dentro del rango
+                        return horaInicioMinutos >= inicio && horaFinMinutos <= fin;
+                    });
+                });
+
+                if (!tieneHorarioDia) {
+                    entrenadorError = 'El horario de la clase no está dentro del horario de trabajo del entrenador seleccionado';
+                }
+            }
+        }
+    }
     const diasSemanaOptions = [
         { value: 1, label: "Lunes" },
         { value: 2, label: "Martes" },
@@ -65,6 +144,14 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
             setModoCrear(false);
             setSelectedDate(null);
             reset();
+            setTouched({
+                nombre: false,
+                capacidad: false,
+                fecha: false,
+                hora_inicio: false,
+                hora_fin: false,
+                user_id: false,
+            });
         } else {
             // Entrar en modo crear
             setModoCrear(true);
@@ -74,12 +161,53 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
 
     const handleSubmitForm = (e) => {
         e.preventDefault();
+
+        // Validar todos los campos
+        if (nombreError !== true) {
+            setTouched(prev => ({ ...prev, nombre: true }));
+            return;
+        }
+
+        if (capacidadError !== true) {
+            setTouched(prev => ({ ...prev, capacidad: true }));
+            return;
+        }
+
+        if (fechaError !== true) {
+            setTouched(prev => ({ ...prev, fecha: true }));
+            return;
+        }
+
+        if (horaInicioError !== true) {
+            setTouched(prev => ({ ...prev, hora_inicio: true }));
+            return;
+        }
+
+        if (horaFinError !== true) {
+            setTouched(prev => ({ ...prev, hora_fin: true }));
+            return;
+        }
+
+        // Validar entrenador si es superusuario
+        if (hasRole('superusuario') && entrenadorError !== true) {
+            setTouched(prev => ({ ...prev, user_id: true }));
+            return;
+        }
+
         post(route('clases.store'), {
             preserveScroll: true,
             onSuccess: () => {
                 setModoCrear(false);
                 setSelectedDate(null);
                 reset();
+                setTouched({
+                    nombre: false,
+                    capacidad: false,
+                    fecha: false,
+                    hora_inicio: false,
+                    hora_fin: false,
+                    user_id: false,
+                });
             },
         });
     };
@@ -238,75 +366,91 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         <AuthenticatedLayout>
             <Head title="Clases" />
 
-            <div className="py-12">
-                <div className="mx-52 px-2 sm:px-6 lg:px-8">
+            <div className="py-12 bg-gray-50 min-h-screen">
+                <div className="mx-64 px-4 sm:px-6 lg:px-8">
 
-                    {/* Header con navegación de meses */}
-                    <div className="mb-6 flex justify-between items-center">
-                        <button
-                            onClick={() => router.get(route('clases.index', buildParams({ mes: mesAnterior, ano: anoAnterior })), {
-                                preserveState: true,
-                                preserveScroll: true,
-                                replace: true,
-                            })}
-                            disabled={esMesActual}
-                            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded"
-                        >
-                            ← Anterior
-                        </button>
-
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            Calendario de Clases - {mesNombre} {ano}
+                    {/* Header */}
+                    <div className="mb-8">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 mb-2">
+                            <Calendar className="text-green-600 flex-shrink-0" size={32} />
+                            <span>Calendario de Clases</span>
                         </h1>
-
-                        <Link
-                            href={route('clases.index', buildParams({ mes: mesSiguiente, ano: anoSiguiente }))}
-                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                        >
-                            Siguiente →
-                        </Link>
+                        <p className="text-sm sm:text-base text-gray-600 mt-2">Explora, reserva y gestiona tus clases de entrenamiento</p>
                     </div>
 
-                    {/* Botón crear clase */}
-                    <div className="mb-6 text-right">
-                        {!hasRole('cliente') && (
+                    {/* Navegación de meses */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
                             <button
-                                onClick={handleToggleModoCrear}
-                                className={`${modoCrear
-                                    ? 'bg-red-600 hover:bg-red-700'
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                                    } text-white font-bold py-2 px-4 rounded inline-block`}
+                                onClick={() => router.get(route('clases.index', buildParams({ mes: mesAnterior, ano: anoAnterior })), {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    replace: true,
+                                })}
+                                disabled={esMesActual}
+                                className="w-full sm:w-auto bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-lg transition text-sm sm:text-base"
                             >
-                                {modoCrear ? '✕ Cancelar' : '+ Crear Clase'}
+                                ← Anterior
                             </button>
+
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center">
+                                {mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)} {ano}
+                            </h2>
+
+                            <Link
+                                href={route('clases.index', buildParams({ mes: mesSiguiente, ano: anoSiguiente }))}
+                                className="w-full sm:w-auto text-center bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition text-sm sm:text-base"
+                            >
+                                Siguiente →
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Botón crear clase y mensajes flash */}
+                    <div className="mb-6 space-y-4">
+                        {!hasRole('cliente') && (
+                            <div className="text-center sm:text-right">
+                                <button
+                                    onClick={handleToggleModoCrear}
+                                    className={`w-full sm:w-auto ${modoCrear
+                                        ? 'bg-red-600 hover:bg-red-700'
+                                        : 'bg-green-600 hover:bg-green-700'
+                                        } text-white font-bold py-2 px-4 sm:px-6 rounded-lg transition text-sm sm:text-base`}
+                                >
+                                    {modoCrear ? '✕ Cancelar' : '+ Nueva Clase'}
+                                </button>
+                            </div>
+                        )}
+
+                        {flash?.success && (
+                            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-sm sm:text-base">
+                                {flash.success}
+                            </div>
+                        )}
+
+                        {flash?.error && (
+                            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm sm:text-base">
+                                {flash.error}
+                            </div>
                         )}
                     </div>
 
-                    {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                            {flash.success}
-                        </div>
-                    )}
-
-                    {flash?.error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                            {flash.error}
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
                         {/* Filtros a la izquierda */}
-                        <div className="lg:col-span-1 bg-white rounded-lg shadow p-4">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-3">Filtros</h2>
+                        <div className="md:col-span-1 lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <RotateCcw size={20} className="text-gray-600 flex-shrink-0" />
+                                Filtros
+                            </h2>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Días de la semana</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Días de la semana</label>
                                     <div className="space-y-2">
                                         {diasSemanaOptions.map((d) => (
-                                            <label key={d.value} className="inline-flex items-center gap-2 text-sm text-gray-700 w-full">
+                                            <label key={d.value} className="inline-flex items-center gap-2 text-sm text-gray-700 w-full cursor-pointer">
                                                 <input
                                                     type="checkbox"
-                                                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                    className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
                                                     checked={diasSemana.includes(d.value)}
                                                     onChange={(e) => {
                                                         const next = e.target.checked
@@ -316,14 +460,14 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                         pushFiltros({ diasSemana: next });
                                                     }}
                                                 />
-                                                <span>{d.label}</span>
+                                                <span className="font-medium">{d.label}</span>
                                             </label>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Momento</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Momento del día</label>
                                     <select
                                         value={momento}
                                         onChange={(e) => {
@@ -331,26 +475,26 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                             setMomento(value);
                                             pushFiltros({ momento: value });
                                         }}
-                                        className="w-full rounded border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                                     >
-                                        <option value="">Todos</option>
-                                        <option value="manana">Mañana</option>
-                                        <option value="tarde">Tarde</option>
+                                        <option value="">Todos los horarios</option>
+                                        <option value="manana">Mañana (antes de 14:00)</option>
+                                        <option value="tarde">Tarde (14:00 en adelante)</option>
                                     </select>
                                 </div>
 
                                 <button
                                     onClick={limpiarFiltros}
-                                    className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
+                                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={(!diasSemana || diasSemana.length === 0) && !momento}
                                 >
-                                    Limpiar
+                                    Limpiar Filtros
                                 </button>
                             </div>
                         </div>
 
                         {/* Calendario en el centro */}
-                        <div className="lg:col-span-2 bg-white rounded-lg shadow p-3">
+                        <div className="md:col-span-1 lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 overflow-x-auto">
                             <Calendario
                                 mes={mes}
                                 ano={ano}
@@ -361,11 +505,11 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                         </div>
 
                         {/* Panel lateral con clases del día o formulario a la derecha */}
-                        <div className="lg:col-span-1 bg-white rounded-lg shadow p-6">
+                        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                             {modoCrear ? (
                                 // Formulario de creación de clase
                                 <>
-                                    <h2 className="text-xl font-bold text-gray-900 mb-4">Crear Nueva Clase</h2>
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4"> Nueva Clase</h2>
 
                                     <form onSubmit={handleSubmitForm}>
                                         {/* Nombre */}
@@ -377,12 +521,16 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 type="text"
                                                 value={data.nombre}
                                                 onChange={(e) => setData('nombre', e.target.value)}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.nombre ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
-                                                placeholder="Clase con Juan, Yoga Matutino, etc."
+                                                onBlur={() => setTouched({ ...touched, nombre: true })}
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
+                                                    touched.nombre && nombreError !== true
+                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                        : 'border-gray-300'
+                                                }`}
+                                                placeholder="Yoga, Pilates, Zumba..."
                                             />
-                                            {errors.nombre && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                                            {touched.nombre && nombreError !== true && (
+                                                <p className="text-red-500 text-sm mt-1">{nombreError}</p>
                                             )}
                                         </div>
 
@@ -395,13 +543,17 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 type="number"
                                                 value={data.capacidad}
                                                 onChange={(e) => setData('capacidad', e.target.value)}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.capacidad ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
+                                                onBlur={() => setTouched({ ...touched, capacidad: true })}
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
+                                                    touched.capacidad && capacidadError !== true
+                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                        : 'border-gray-300'
+                                                }`}
                                                 min="1"
                                                 max="50"
                                             />
-                                            {errors.capacidad && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.capacidad}</p>
+                                            {touched.capacidad && capacidadError !== true && (
+                                                <p className="text-red-500 text-sm mt-1">{capacidadError}</p>
                                             )}
                                         </div>
 
@@ -414,11 +566,15 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 type="date"
                                                 value={data.fecha}
                                                 onChange={(e) => setData('fecha', e.target.value)}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.fecha ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
+                                                onBlur={() => setTouched({ ...touched, fecha: true })}
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
+                                                    touched.fecha && fechaError !== true
+                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                        : 'border-gray-300'
+                                                }`}
                                             />
-                                            {errors.fecha && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.fecha}</p>
+                                            {touched.fecha && fechaError !== true && (
+                                                <p className="text-red-500 text-sm mt-1">{fechaError}</p>
                                             )}
                                             {selectedDate && (
                                                 <p className="text-xs text-gray-500 mt-1">
@@ -436,11 +592,15 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 type="time"
                                                 value={data.hora_inicio}
                                                 onChange={(e) => setData('hora_inicio', e.target.value)}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.hora_inicio ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
+                                                onBlur={() => setTouched({ ...touched, hora_inicio: true })}
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
+                                                    touched.hora_inicio && horaInicioError !== true
+                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                        : 'border-gray-300'
+                                                }`}
                                             />
-                                            {errors.hora_inicio && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.hora_inicio}</p>
+                                            {touched.hora_inicio && horaInicioError !== true && (
+                                                <p className="text-red-500 text-sm mt-1">{horaInicioError}</p>
                                             )}
                                         </div>
 
@@ -453,11 +613,15 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 type="time"
                                                 value={data.hora_fin}
                                                 onChange={(e) => setData('hora_fin', e.target.value)}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.hora_fin ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
+                                                onBlur={() => setTouched({ ...touched, hora_fin: true })}
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
+                                                    touched.hora_fin && horaFinError !== true
+                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                        : 'border-gray-300'
+                                                }`}
                                             />
-                                            {errors.hora_fin && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.hora_fin}</p>
+                                            {touched.hora_fin && horaFinError !== true && (
+                                                <p className="text-red-500 text-sm mt-1">{horaFinError}</p>
                                             )}
                                         </div>
 
@@ -467,14 +631,21 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 <select
                                                     value={data.user_id}
                                                     onChange={(e) => setData('user_id', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg ${errors.user_id ? 'border-red-500' : 'border-gray-300'}`}
+                                                    onBlur={() => setTouched({ ...touched, user_id: true })}
+                                                    className={`w-full px-3 py-2 border rounded-lg ${
+                                                        touched.user_id && entrenadorError !== true
+                                                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                            : 'border-gray-300'
+                                                    }`}
                                                 >
                                                     <option value="">-- Seleccionar --</option>
                                                     {entrenadores.map((et) => (
                                                         <option key={et.id} value={et.id}>{et.name}</option>
                                                     ))}
                                                 </select>
-                                                {errors.user_id && <p className="text-red-500 text-sm mt-1">{errors.user_id}</p>}
+                                                {touched.user_id && entrenadorError !== true && (
+                                                    <p className="text-red-500 text-sm mt-1">{entrenadorError}</p>
+                                                )}
 
                                                 {/* Mostrar horario del entrenador seleccionado */}
                                                 {entrenadorSeleccionado && entrenadorSeleccionado.horarios.length > 0 && (
@@ -510,7 +681,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                     type="checkbox"
                                                     checked={data.semanal}
                                                     onChange={(e) => setData('semanal', e.target.checked)}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                                                 />
                                                 <span className="text-sm font-medium text-gray-700">
                                                     Crear clase semanal
@@ -518,31 +689,19 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                             </label>
                                         </div>
 
-                                        {/* Errores de validación */}
-                                        {Object.keys(errors).length > 0 && (
-                                            <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-4">
-                                                <p className="font-bold text-sm">Errores:</p>
-                                                <ul className="list-disc list-inside mt-1 text-sm">
-                                                    {Object.entries(errors).map(([key, value]) => (
-                                                        <li key={key}>{value}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-
                                         {/* Botones */}
                                         <div className="flex gap-2">
                                             <button
                                                 type="submit"
                                                 disabled={processing}
-                                                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded text-sm"
+                                                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition text-sm"
                                             >
                                                 {processing ? 'Guardando...' : 'Crear'}
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={handleToggleModoCrear}
-                                                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm"
+                                                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-sm"
                                             >
                                                 Cancelar
                                             </button>
@@ -552,7 +711,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                             ) : (
                                 // Panel de clases del día
                                 <>
-                                    <h2 className="text-xl font-bold text-gray-900 mb-4">
+                                    <h2 className="text-xl font-bold text-gray-900 mb-4 pb-3 border-b-2 border-gray-200">
                                         {selectedDate
                                             ? new Date(selectedDate).toLocaleDateString("es-ES", {
                                                 weekday: "long",
@@ -563,7 +722,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                             : "Selecciona una fecha"}
                                     </h2>
 
-                                    <div className="space-y-4">
+                                    <div className="space-y-3">
                                         {clasesDelDia.length > 0 ? (
                                             clasesDelDia.map((clase) => {
                                                 // Determinar si la clase es pasada
@@ -578,10 +737,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                     <div
                                                         key={clase.id}
                                                         className={`p-4 rounded-lg border-2 transition ${clasePasada
-                                                                ? 'opacity-60 border-gray-300 bg-gray-50'
-                                                                : clase.completa
-                                                                    ? 'border-red-300 bg-red-50'
-                                                                    : 'border-green-300 bg-green-50'
+                                                            ? 'opacity-60 border-gray-300 bg-gray-50'
+                                                            : clase.completa
+                                                                ? 'border-red-300 bg-red-50'
+                                                                : 'border-green-300 bg-green-50'
                                                             }`}
                                                     >
                                                         <div className="flex justify-between items-start mb-2">
@@ -616,8 +775,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                             <Link
                                                                 href={route("clases.show", clase.id)}
                                                                 className={`block w-full font-bold py-2 px-4 rounded text-center text-sm transition ${clasePasada
-                                                                        ? 'bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed'
-                                                                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                                                    ? 'bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed'
+                                                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
                                                                     }`}
                                                                 onClick={(e) => {
                                                                     if (clasePasada) e.preventDefault();

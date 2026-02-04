@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Head, Link, usePage, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import SearchBar from "@/Components/SearchBar";
+import EntrenadorCreateModal from "@/Components/EntrenadorCreateModal";
+import { Users, RotateCcw } from "lucide-react";
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -30,6 +32,7 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
     const { flash } = usePage().props;
     const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(entrenadores.length > 0 ? entrenadores[0] : null);
     const [rolFiltro, setRolFiltro] = useState(initialRolFiltro || '');
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleFiltroRol = (nuevoRol) => {
         setRolFiltro(nuevoRol);
@@ -75,32 +78,19 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
         <AuthenticatedLayout>
             <Head title="Empleados" />
 
-            <div className="py-12">
+            <div className="py-12 bg-gray-50 min-h-screen">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Encabezado */}
-                    <div className="mb-6 flex justify-between items-center">
-                        <h1 className="text-3xl font-bold text-gray-900">
+                    {/* Header */}
+                    <div className="mb-8">
+                        <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3 mb-2">
+                            <Users className="text-green-600" size={36} />
                             Empleados
                         </h1>
-
-                        <div className="flex gap-3">
-                            <Link
-                                href={route("gimnasio-horario.edit")}
-                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
-                            >
-                                🕐 Horario del Gimnasio
-                            </Link>
-                            <Link
-                                href={route("entrenadores.create")}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                            >
-                                + Nuevo Empleado
-                            </Link>
-                        </div>
+                        <p className="text-gray-600">Gestiona a los entrenadores, técnicos y personal del gimnasio</p>
                     </div>
 
                     {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
                             {flash.success}
                         </div>
                     )}
@@ -110,19 +100,40 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                         <SearchBar initialSearch={initialSearch} routeName="entrenadores.index" />
                     </div>
 
-                    {/* Filtro por Rol */}
-                    <div className="mb-6 bg-white shadow rounded-lg p-4">
-                        <div className="flex items-center gap-4">
+                    {/* Filtros y Acciones */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                                <RotateCcw size={20} className="text-gray-600" />
+                                Filtros
+                            </h2>
+                            <div className="flex gap-3">
+                                <Link
+                                    href={route("gimnasio-horario.edit")}
+                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2"
+                                >
+                                    🕐 Horario del Gimnasio
+                                </Link>
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                                >
+                                    + Nuevo Empleado
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 flex-wrap">
                             <label className="text-sm font-medium text-gray-700">
                                 Filtrar por rol:
                             </label>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                                 <button
                                     onClick={() => handleFiltroRol('')}
                                     className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                                         rolFiltro === ''
                                             ? 'bg-gray-800 text-white'
-                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
                                     Todos {rolFiltro === '' && `(${entrenadores.length})`}
@@ -352,6 +363,12 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                     )}
                 </div>
             </div>
+
+            <EntrenadorCreateModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={() => router.reload()}
+            />
         </AuthenticatedLayout>
     );
 }

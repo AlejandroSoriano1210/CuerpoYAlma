@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:cliente'])->group(function () {
     Route::get('/estadisticas', [ClienteDashboardController::class, 'index'])->name('estadisticas');
     Route::post('/estadisticas/medidas', [ClienteDashboardController::class, 'updateMetrics'])->name('estadisticas.medidas');
+    Route::patch('/estadisticas/perfil', [ClienteDashboardController::class, 'updateProfile'])->name('estadisticas.perfil');
     Route::post('/mediciones', [ClienteController::class, 'agregarMedicion'])->name('mediciones.store');
 });
 
@@ -159,8 +160,6 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
     Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
-    Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
-    Route::patch('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
     Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
     Route::post('/clientes/marcar-pagos', [ClienteController::class, 'marcarPagos'])->name('clientes.marcarPagos');
     Route::get('/clientes/{cliente}/factura/{pago}/descargar', [ClienteController::class, 'descargarFactura'])->name('clientes.descargarFactura');

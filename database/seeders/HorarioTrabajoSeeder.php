@@ -89,7 +89,7 @@ class HorarioTrabajoSeeder extends Seeder
                 $turnos = [
                     ['07:00:00', '15:00:00'],
                     ['09:00:00', '17:00:00'],
-                    ['15:00:00', '23:00:00'],
+                    ['15:00:00', '22:00:00'],
                 ];
                 $turnoElegido = $turnos[array_rand($turnos)];
 

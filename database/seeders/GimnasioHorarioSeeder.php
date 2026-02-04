@@ -18,7 +18,7 @@ class GimnasioHorarioSeeder extends Seeder
         foreach ($dias as $dia) {
             GimnasioHorario::create([
                 'dia_semana' => $dia,
-                'hora_apertura' => '06:00:00',
+                'hora_apertura' => '07:00:00',
                 'hora_cierre' => '22:00:00',
             ]);
         }

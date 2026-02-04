@@ -9,6 +9,8 @@ use Inertia\Inertia;
 use App\Models\Guia;
 use App\Models\GuiaProgreso;
 use App\Models\ClaseAsistida;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
 
 class ClienteDashboardController extends Controller
 {
@@ -203,6 +205,7 @@ class ClienteDashboardController extends Controller
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
+                'telefono' => $user->telefono,
             ],
             'metricas' => [
                 'peso_kg' => $user->peso_kg,
@@ -253,6 +256,45 @@ class ClienteDashboardController extends Controller
         return redirect()
             ->route('estadisticas')
             ->with('success', 'Medidas actualizadas correctamente.');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'telefono' => ['nullable', 'string', 'max:50'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'telefono' => $validated['telefono'] ?? null,
+        ]);
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        return redirect()
+            ->route('estadisticas')
+            ->with('profile_success', 'Datos actualizados correctamente.');
     }
 
     private function nivelDesdeImc(?float $imc): string

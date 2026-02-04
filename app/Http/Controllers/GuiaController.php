@@ -29,7 +29,7 @@ class GuiaController extends Controller
             });
         }
 
-        $guias = $query->orderBy('created_at', 'desc')->paginate(5);
+        $guias = $query->orderBy('created_at', 'desc')->paginate(6);
 
         // Obtener todos los músculos únicos disponibles
         $musculos = \App\Models\Ejercicio::distinct()
@@ -46,6 +46,8 @@ class GuiaController extends Controller
                 ->toArray();
         }
 
+        $ejercicios = \App\Models\Ejercicio::orderBy('nombre')->get();
+
         return Inertia::render('Guias/Index', [
             'guias' => $guias,
             'niveles' => ['principiante', 'intermedio', 'avanzado'],
@@ -55,6 +57,7 @@ class GuiaController extends Controller
                 'nivel' => $request->input('nivel'),
                 'musculo_objetivo' => $request->input('musculo_objetivo'),
             ],
+            'ejercicios' => $ejercicios,
         ]);
     }
 

@@ -88,13 +88,6 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
 
                             {/* Botones de acción */}
                             <div className="mt-8 space-y-3">
-                                <Link
-                                    href={route('clientes.edit', cliente.id)}
-                                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center"
-                                >
-                                    Editar Cliente
-                                </Link>
-
                                 <button
                                     onClick={handleDelete}
                                     className="block w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"

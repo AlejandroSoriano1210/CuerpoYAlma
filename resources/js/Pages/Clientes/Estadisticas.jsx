@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Card from '@/Components/Card';
+import { validarTelefono } from '@/Utils/validations';
 
 export default function Dashboard({ user, metricas, proximasClases, historialClases, guiaActual, guiaRecomendadas = [], nivelCondicion = 'Sin datos', estadisticas, clasesPorMes }) {
     const { flash } = usePage().props;
@@ -68,16 +69,69 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
         grasa_corporal_pct: metricas?.grasa_corporal_pct ?? '',
     });
 
+    const {
+        data: profileData,
+        setData: setProfileData,
+        patch: patchProfile,
+        processing: processingProfile,
+        errors: profileErrors,
+        reset: resetProfile,
+    } = useForm({
+        name: user?.name ?? '',
+        email: user?.email ?? '',
+        telefono: user?.telefono ?? '',
+        password: '',
+        password_confirmation: '',
+    });
+
     const hasMetrics = Boolean(metricas?.peso_kg || metricas?.altura_cm || metricas?.grasa_corporal_pct);
     const [clasesPage, setClasesPage] = useState(1);
     const [showMeasurementForm, setShowMeasurementForm] = useState(false);
+    const [showProfileForm, setShowProfileForm] = useState(false);
     const [rangoMeses, setRangoMeses] = useState(12);
+    const [profileValidationErrors, setProfileValidationErrors] = useState({});
     const [measurementFormData, setMeasurementFormData] = useState({
         peso_kg: getValorInicial('peso_kg'),
         altura_cm: getValorInicial('altura_cm'),
         grasa_corporal_pct: getValorInicial('grasa_corporal_pct'),
     });
     const pageSize = 3;
+
+    // Validación del formulario de perfil
+    const validateProfileForm = () => {
+        const errors = {};
+
+        if (!profileData.name || profileData.name.trim() === '') {
+            errors.name = 'El nombre es requerido';
+        } else if (profileData.name.length > 255) {
+            errors.name = 'El nombre no debe exceder 255 caracteres';
+        }
+
+        if (!profileData.email || profileData.email.trim() === '') {
+            errors.email = 'El email es requerido';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
+            errors.email = 'El email debe ser válido';
+        }
+
+        if (profileData.telefono && profileData.telefono.trim() !== '') {
+            const telefonoValidation = validarTelefono(profileData.telefono, false);
+            if (telefonoValidation !== true) {
+                errors.telefono = telefonoValidation;
+            }
+        }
+
+        if (profileData.password || profileData.password_confirmation) {
+            if (profileData.password.length < 8) {
+                errors.password = 'La contraseña debe tener al menos 8 caracteres';
+            }
+            if (profileData.password !== profileData.password_confirmation) {
+                errors.password_confirmation = 'Las contraseñas no coinciden';
+            }
+        }
+
+        setProfileValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const imcCalculado = useMemo(() => {
         const peso = parseFloat(data.peso_kg);
@@ -151,36 +205,189 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
         <AuthenticatedLayout>
             <Head title="Mis Estadísticas" />
 
-            <div className="py-12">
+            <div className="py-8 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 min-h-screen">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {/* Encabezado con datos del usuario */}
-                    <div className="mb-8 bg-white rounded-lg shadow p-6">
+                    <div className="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h1 className="text-4xl font-bold text-gray-900">{user.name}</h1>
-                                <p className="text-gray-600 mt-2 text-lg">{user.email}</p>
-                                <p className="text-gray-600 mt-2 text-lg">{user.telefono}</p>
-                                <p className="text-gray-500 mt-1">Revisa tu progreso y desempeño en el entrenamiento</p>
+                                <h1 className="text-5xl font-extrabold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
+                                    {user.name}
+                                </h1>
+                                <div className="space-y-2">
+                                    <p className="text-blue-100 text-lg flex items-center gap-2">
+                                        {user.email}
+                                    </p>
+                                    <p className="text-blue-100 text-lg flex items-center gap-2">
+                                        {user.telefono}
+                                    </p>
+                                </div>
+                                <p className="text-blue-200 mt-3 text-base">Revisa tu progreso y desempeño en el entrenamiento</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowProfileForm((prev) => !prev)}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-white text-blue-600 px-6 py-3 font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-200"
+                                >
+                                    {showProfileForm ? '✕ Cerrar edición' : 'Editar datos'}
+                                </button>
+                                {flash?.profile_success && (
+                                    <span className="text-green-700 bg-green-50 border border-green-300 rounded-lg px-4 py-2 text-sm font-semibold shadow-md">
+                                        ✓ {flash.profile_success}
+                                    </span>
+                                )}
                             </div>
                         </div>
+
+                        {showProfileForm && (
+                            <div className="mt-6 border-t border-white/30 pt-6">
+                                <h2 className="text-2xl font-bold text-white mb-6">✏️ Editar datos personales</h2>
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        if (validateProfileForm()) {
+                                            patchProfile(route('estadisticas.perfil'), {
+                                                preserveScroll: true,
+                                                onSuccess: () => {
+                                                    resetProfile('password', 'password_confirmation');
+                                                    setShowProfileForm(false);
+                                                    setProfileValidationErrors({});
+                                                },
+                                            });
+                                        }
+                                    }}
+                                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                                >
+                                    <div>
+                                        <label className="block text-sm font-bold text-white mb-2">Nombre *</label>
+                                        <input
+                                            type="text"
+                                            className={`w-full rounded-xl border-2 px-4 py-3 bg-white/90 text-gray-900 focus:border-white focus:ring-2 focus:ring-white/50 transition-all ${profileValidationErrors.name || profileErrors.name ? 'border-red-300' : 'border-white/30'
+                                                }`}
+                                            value={profileData.name}
+                                            onChange={(e) => {
+                                                setProfileData('name', e.target.value);
+                                                if (profileValidationErrors.name) {
+                                                    setProfileValidationErrors((prev) => ({ ...prev, name: '' }));
+                                                }
+                                            }}
+                                        />
+                                        {(profileValidationErrors.name || profileErrors.name) && (
+                                            <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.name || profileErrors.name}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-white mb-2">Email *</label>
+                                        <input
+                                            type="email"
+                                            className={`w-full rounded-xl border-2 px-4 py-3 bg-white/90 text-gray-900 focus:border-white focus:ring-2 focus:ring-white/50 transition-all ${profileValidationErrors.email || profileErrors.email ? 'border-red-300' : 'border-white/30'
+                                                }`}
+                                            value={profileData.email}
+                                            onChange={(e) => {
+                                                setProfileData('email', e.target.value);
+                                                if (profileValidationErrors.email) {
+                                                    setProfileValidationErrors((prev) => ({ ...prev, email: '' }));
+                                                }
+                                            }}
+                                        />
+                                        {(profileValidationErrors.email || profileErrors.email) && (
+                                            <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.email || profileErrors.email}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-white mb-2">Teléfono</label>
+                                        <input
+                                            type="text"
+                                            className={`w-full rounded-xl border-2 px-4 py-3 bg-white/90 text-gray-900 focus:border-white focus:ring-2 focus:ring-white/50 transition-all ${profileValidationErrors.telefono ? 'border-red-300' : 'border-white/30'
+                                                }`}
+                                            value={profileData.telefono}
+                                            onChange={(e) => {
+                                                setProfileData('telefono', e.target.value);
+                                                if (profileValidationErrors.telefono) {
+                                                    setProfileValidationErrors((prev) => ({ ...prev, telefono: '' }));
+                                                }
+                                            }}
+                                        />
+                                        {profileValidationErrors.telefono && (
+                                            <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.telefono}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-white mb-2">Nueva contraseña</label>
+                                        <input
+                                            type="password"
+                                            className={`w-full rounded-xl border-2 px-4 py-3 bg-white/90 text-gray-900 focus:border-white focus:ring-2 focus:ring-white/50 transition-all ${profileValidationErrors.password ? 'border-red-300' : 'border-white/30'
+                                                }`}
+                                            value={profileData.password}
+                                            onChange={(e) => {
+                                                setProfileData('password', e.target.value);
+                                                if (profileValidationErrors.password) {
+                                                    setProfileValidationErrors((prev) => ({ ...prev, password: '' }));
+                                                }
+                                            }}
+                                            placeholder="Dejar en blanco para mantener"
+                                        />
+                                        {profileValidationErrors.password && (
+                                            <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.password}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-white mb-2">Confirmar contraseña</label>
+                                        <input
+                                            type="password"
+                                            className={`w-full rounded-xl border-2 px-4 py-3 bg-white/90 text-gray-900 focus:border-white focus:ring-2 focus:ring-white/50 transition-all ${profileValidationErrors.password_confirmation ? 'border-red-300' : 'border-white/30'
+                                                }`}
+                                            value={profileData.password_confirmation}
+                                            onChange={(e) => {
+                                                setProfileData('password_confirmation', e.target.value);
+                                                if (profileValidationErrors.password_confirmation) {
+                                                    setProfileValidationErrors((prev) => ({ ...prev, password_confirmation: '' }));
+                                                }
+                                            }}
+                                        />
+                                        {profileValidationErrors.password_confirmation && (
+                                            <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.password_confirmation}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="md:col-span-2 flex justify-end">
+                                        <button
+                                            type="submit"
+                                            disabled={processingProfile}
+                                            className="inline-flex items-center gap-2 rounded-xl bg-white text-blue-600 px-8 py-3 font-bold shadow-lg hover:shadow-2xl hover:scale-105 disabled:opacity-50 transition-all duration-200"
+                                        >
+                                            Guardar cambios
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
                     </div>
 
                     {/* Formulario de métricas corporales */}
-                    <div className={`mb-8 rounded-lg shadow p-6 ${hasMetrics ? 'bg-blue-50 border-2 border-blue-200' : 'bg-white'}`}>
-                        <div className="flex items-center justify-between mb-4">
+                    <div className={`mb-8 rounded-2xl shadow-xl p-8 border-2 ${hasMetrics
+                        ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-300'
+                        : 'bg-white border-gray-200'
+                        }`}>
+                        <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900">
-                                    {hasMetrics ? 'Empezaste así' : 'Tus métricas'}
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                    {hasMetrics ? '🎯 Empezaste así' : '📊 Tus métricas'}
                                 </h2>
-                                <p className="text-gray-600 mt-1 text-sm">
+                                <p className="text-gray-700 text-base">
                                     {hasMetrics
                                         ? 'Este es tu punto de partida.'
                                         : 'Rellena tus datos iniciales para llevar un seguimiento más preciso.'}
                                 </p>
                             </div>
                             {flash?.success && (
-                                <span className="text-green-700 bg-green-50 border border-green-200 rounded px-3 py-1 text-sm">
-                                    {flash.success}
+                                <span className="text-green-700 bg-green-100 border-2 border-green-300 rounded-xl px-4 py-2 text-sm font-bold shadow-md">
+                                    ✓ {flash.success}
                                 </span>
                             )}
                         </div>
@@ -191,58 +398,58 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                 post(route('estadisticas.medidas'), {
                                     preserveScroll: true,
                                 });
-                            }} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            }} className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Peso (kg)</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Peso (kg)</label>
                                     <input
                                         type="number"
                                         step="0.1"
                                         min="1"
                                         max="500"
-                                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                                        className="w-full rounded-xl border-2 border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                                         value={data.peso_kg}
                                         onChange={(e) => setData('peso_kg', e.target.value)}
                                         placeholder="ej: 75.5"
                                     />
-                                    {errors.peso_kg && <p className="text-sm text-red-600 mt-1">{errors.peso_kg}</p>}
+                                    {errors.peso_kg && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-1 mt-2">{errors.peso_kg}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Altura (cm)</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Altura (cm)</label>
                                     <input
                                         type="number"
                                         step="0.5"
                                         min="50"
                                         max="260"
-                                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                                        className="w-full rounded-xl border-2 border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                                         value={data.altura_cm}
                                         onChange={(e) => setData('altura_cm', e.target.value)}
                                         placeholder="ej: 180"
                                     />
-                                    {errors.altura_cm && <p className="text-sm text-red-600 mt-1">{errors.altura_cm}</p>}
+                                    {errors.altura_cm && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-1 mt-2">{errors.altura_cm}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Grasa corporal (%)</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Grasa corporal (%)</label>
                                     <input
                                         type="number"
                                         step="0.1"
                                         min="0"
                                         max="80"
-                                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                                        className="w-full rounded-xl border-2 border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                                         value={data.grasa_corporal_pct}
                                         onChange={(e) => setData('grasa_corporal_pct', e.target.value)}
                                         placeholder="ej: 15.5"
                                     />
-                                    {errors.grasa_corporal_pct && <p className="text-sm text-red-600 mt-1">{errors.grasa_corporal_pct}</p>}
+                                    {errors.grasa_corporal_pct && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-1 mt-2">{errors.grasa_corporal_pct}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">IMC</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">IMC</label>
                                     <input
                                         type="text"
                                         readOnly
-                                        className="mt-1 w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700"
+                                        className="w-full rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-3 text-gray-700"
                                         value={imcCalculado || ''}
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Calculado automáticamente</p>
@@ -252,61 +459,37 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white font-semibold shadow hover:bg-blue-700 disabled:opacity-50"
+                                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-3 text-white font-bold shadow-lg hover:shadow-2xl hover:scale-105 disabled:opacity-50 transition-all duration-200"
                                     >
                                         Guardar métricas iniciales
                                     </button>
                                 </div>
                             </form>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Peso (kg)</label>
-                                    <input
-                                        type="number"
-                                        className="mt-1 w-full rounded-md border border-blue-300 bg-white px-3 py-2 text-gray-700 cursor-not-allowed"
-                                        value={data.peso_kg}
-                                        readOnly
-                                        disabled
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">⚖️ Peso (kg)</label>
+                                    <div className="text-3xl font-bold text-blue-600">{data.peso_kg}</div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Altura (cm)</label>
-                                    <input
-                                        type="number"
-                                        className="mt-1 w-full rounded-md border border-blue-300 bg-white px-3 py-2 text-gray-700 cursor-not-allowed"
-                                        value={data.altura_cm}
-                                        readOnly
-                                        disabled
-                                    />
+                                <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">📏 Altura (cm)</label>
+                                    <div className="text-3xl font-bold text-blue-600">{data.altura_cm}</div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Grasa corporal (%)</label>
-                                    <input
-                                        type="number"
-                                        className="mt-1 w-full rounded-md border border-blue-300 bg-white px-3 py-2 text-gray-700 cursor-not-allowed"
-                                        value={data.grasa_corporal_pct}
-                                        readOnly
-                                        disabled
-                                    />
+                                <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">📊 Grasa corporal (%)</label>
+                                    <div className="text-3xl font-bold text-blue-600">{data.grasa_corporal_pct}</div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">IMC</label>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        disabled
-                                        className="mt-1 w-full rounded-md border border-blue-300 bg-white px-3 py-2 text-gray-700 cursor-not-allowed"
-                                        value={imcCalculado || ''}
-                                    />
+                                <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">🧮 IMC</label>
+                                    <div className="text-3xl font-bold text-blue-600">{imcCalculado || ''}</div>
                                     <p className="text-xs text-gray-500 mt-1">Calculado automáticamente</p>
                                 </div>
 
                                 <div className="md:col-span-4 flex justify-center pt-2">
-                                    <p className="text-sm text-blue-700 font-medium">Estos datos no pueden ser modificados</p>
+                                    <p className="text-sm text-blue-700 font-bold bg-blue-100 px-4 py-2 rounded-xl">🔒 Estos datos no pueden ser modificados</p>
                                 </div>
                             </div>
                         )}
@@ -314,39 +497,54 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                     {/* Cards de Estadísticas */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                        <Card icon="📊" containerClassName="bg-white rounded-lg shadow p-6">
-                            <p className="text-gray-600 text-sm font-medium">Clases asistidas</p>
-                            <p className="text-3xl font-bold text-blue-600 mt-2">
-                                {estadisticasDinamicas.total_clases_tomadas}
-                            </p>
+                        <Card containerClassName="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
+                            <div className="text-center">
+                                <div className="text-5xl mb-3">📊</div>
+                                <p className="text-blue-100 text-sm font-bold mb-2">Clases asistidas</p>
+                                <p className="text-5xl font-extrabold text-white">
+                                    {estadisticasDinamicas.total_clases_tomadas}
+                                </p>
+                            </div>
                         </Card>
 
-                        <Card icon="🎯" containerClassName="bg-white rounded-lg shadow p-6">
-                            <p className="text-gray-600 text-sm font-medium">Próximas Clases</p>
-                            <p className="text-3xl font-bold text-green-600 mt-2">
-                                {estadisticasDinamicas.total_clases_reservadas}
-                            </p>
+                        <Card containerClassName="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
+                            <div className="text-center">
+                                <div className="text-5xl mb-3">🎯</div>
+                                <p className="text-green-100 text-sm font-bold mb-2">Próximas Clases</p>
+                                <p className="text-5xl font-extrabold text-white">
+                                    {estadisticasDinamicas.total_clases_reservadas}
+                                </p>
+                            </div>
                         </Card>
 
-                        <Card icon="⏳" containerClassName="bg-white rounded-lg shadow p-6">
-                            <p className="text-gray-600 text-sm font-medium">En Lista de Espera</p>
-                            <p className="text-3xl font-bold text-orange-600 mt-2">
-                                {estadisticasDinamicas.en_lista_espera}
-                            </p>
+                        <Card containerClassName="bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
+                            <div className="text-center">
+                                <div className="text-5xl mb-3">⏳</div>
+                                <p className="text-orange-100 text-sm font-bold mb-2">En Lista de Espera</p>
+                                <p className="text-5xl font-extrabold text-white">
+                                    {estadisticasDinamicas.en_lista_espera}
+                                </p>
+                            </div>
                         </Card>
 
-                        <Card icon="📋" containerClassName="bg-white rounded-lg shadow p-6">
-                            <p className="text-gray-600 text-sm font-medium">Guías Completadas</p>
-                            <p className="text-3xl font-bold text-purple-600 mt-2">
-                                {estadisticasDinamicas.total_guias_completadas}
-                            </p>
+                        <Card containerClassName="bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
+                            <div className="text-center">
+                                <div className="text-5xl mb-3">📋</div>
+                                <p className="text-purple-100 text-sm font-bold mb-2">Guías Completadas</p>
+                                <p className="text-5xl font-extrabold text-white">
+                                    {estadisticasDinamicas.total_guias_completadas}
+                                </p>
+                            </div>
                         </Card>
 
-                        <Card containerClassName="bg-white rounded-lg shadow p-6">
-                            <p className="text-gray-600 text-sm font-medium">Nivel actual</p>
-                            <p className="text-2xl font-bold text-indigo-600 mt-2">
-                                {nivelCondicion}
-                            </p>
+                        <Card containerClassName="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
+                            <div className="text-center">
+                                <div className="text-5xl mb-3">🌟</div>
+                                <p className="text-indigo-100 text-sm font-bold mb-2">Nivel actual</p>
+                                <p className="text-2xl font-extrabold text-white mt-2">
+                                    {nivelCondicion}
+                                </p>
+                            </div>
                         </Card>
                     </div>
 
@@ -356,27 +554,28 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         <div className="lg:col-span-2">
                             <Card
                                 title="📅 Próximas Clases"
+                                containerClassName="p-4 bg-white rounded-2xl shadow-xl"
                             >
                                 {proximasClasesFiltradas.length > 0 ? (
                                     <div className="space-y-4">
                                         {proximasPage.map((clase) => (
                                             <div
                                                 key={clase.id}
-                                                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition"
+                                                className="border-2 border-gray-200 rounded-2xl p-5 hover:border-blue-400 hover:shadow-lg bg-gradient-to-r from-white to-blue-50 transition-all duration-200"
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
-                                                        <h3 className="text-lg font-semibold text-gray-900">
+                                                        <h3 className="text-xl font-bold text-gray-900 mb-1">
                                                             {clase.nombre}
                                                         </h3>
-                                                        <p className="text-gray-600 text-sm mt-1">
+                                                        <p className="text-gray-600 font-medium text-base mt-1">
                                                             🏋️ {clase.entrenador}
                                                         </p>
                                                         <div className="flex items-center gap-4 mt-3">
-                                                            <span className="text-sm text-gray-600">
+                                                            <span className="text-sm text-gray-700 font-medium bg-gray-100 px-3 py-1 rounded-lg">
                                                                 📍 {clase.fecha}
                                                             </span>
-                                                            <span className="text-sm text-gray-600">
+                                                            <span className="text-sm text-gray-700 font-medium bg-gray-100 px-3 py-1 rounded-lg">
                                                                 🕐 {clase.hora_inicio} - {clase.hora_fin}
                                                             </span>
                                                         </div>
@@ -387,7 +586,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                                                             return (
                                                                 <span
-                                                                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${tiempo.tone}`}
+                                                                    className={`inline-block px-4 py-2 rounded-xl text-sm font-bold shadow-md ${tiempo.tone}`}
                                                                 >
                                                                     {tiempo.label}
                                                                 </span>
@@ -398,44 +597,45 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                             </div>
                                         ))}
                                         {proximasClasesFiltradas.length > pageSize && (
-                                            <div className="flex items-center justify-between pt-2 text-sm text-gray-600">
-                                                <div>
+                                            <div className="flex items-center justify-between pt-4 text-sm text-gray-700 font-medium border-t border-gray-200">
+                                                <div className="bg-gray-100 px-4 py-2 rounded-lg">
                                                     Mostrando {Math.min((clasesPage - 1) * pageSize + 1, totalProximas)}-
                                                     {Math.min(clasesPage * pageSize, totalProximas)} de {totalProximas}
                                                 </div>
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-3">
                                                     <button
                                                         type="button"
                                                         onClick={() => setClasesPage((p) => Math.max(1, p - 1))}
                                                         disabled={clasesPage === 1}
-                                                        className={`px-3 py-1 rounded border ${clasesPage === 1
+                                                        className={`px-4 py-2 rounded-xl border-2 font-bold transition-all ${clasesPage === 1
                                                             ? 'text-gray-400 border-gray-200 cursor-not-allowed'
-                                                            : 'text-gray-700 border-gray-300 hover:bg-gray-100'
+                                                            : 'text-blue-700 border-blue-300 hover:bg-blue-50 hover:border-blue-500'
                                                             }`}
                                                     >
-                                                        Anterior
+                                                        ← Anterior
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setClasesPage((p) => Math.min(totalProximasPages, p + 1))}
                                                         disabled={clasesPage === totalProximasPages}
-                                                        className={`px-3 py-1 rounded border ${clasesPage === totalProximasPages
+                                                        className={`px-4 py-2 rounded-xl border-2 font-bold transition-all ${clasesPage === totalProximasPages
                                                             ? 'text-gray-400 border-gray-200 cursor-not-allowed'
-                                                            : 'text-gray-700 border-gray-300 hover:bg-gray-100'
+                                                            : 'text-blue-700 border-blue-300 hover:bg-blue-50 hover:border-blue-500'
                                                             }`}
                                                     >
-                                                        Siguiente
+                                                        Siguiente →
                                                     </button>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-8">
-                                        <p className="text-gray-600">No tienes clases próximas reservadas</p>
+                                    <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl">
+                                        <div className="text-6xl mb-4">📅</div>
+                                        <p className="text-gray-700 font-semibold text-lg mb-3">No tienes clases próximas reservadas</p>
                                         <Link
                                             href="/clases"
-                                            className="text-blue-600 hover:text-blue-800 font-medium mt-3 inline-block"
+                                            className="text-blue-600 hover:text-blue-800 font-bold text-lg mt-4 inline-block bg-white px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-all"
                                         >
                                             Ver clases disponibles →
                                         </Link>
@@ -446,70 +646,69 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                         {/* Guía Actual / Recomendaciones */}
                         <div>
-                            <Card title="📚 Guía">
-                                <p className="text-gray-600 text-sm mb-4">Nivel actual: <span className="font-semibold text-purple-700">{nivelCondicion}</span></p>
+                            <Card title="📚 Guía" containerClassName="p-5 bg-white rounded-2xl shadow-xl">
+                                <p className="text-gray-700 text-sm mb-4 font-medium">Nivel actual: <span className="font-bold text-purple-700 bg-purple-100 px-3 py-1 rounded-lg">{nivelCondicion}</span></p>
 
                                 {guiaActual ? (
                                     <div className="space-y-4">
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-gray-900">
+                                        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-5 border-2 border-purple-200">
+                                            <h3 className="text-xl font-bold text-gray-900 mb-3">
                                                 {guiaActual.titulo}
                                             </h3>
-                                            <p className="text-gray-600 text-sm mt-2">
-                                                Nivel: <span className="font-medium text-gray-900">{guiaActual.nivel}</span>
-                                            </p>
-                                            <p className="text-gray-600 text-sm">
-                                                Ejercicios: <span className="font-medium text-gray-900">
-                                                    {guiaActual.ejercicios_count}
-                                                </span>
-                                            </p>
-                                            <p className="text-gray-600 text-sm">
-                                                Faltan: <span className="font-medium text-gray-900">
-                                                    {guiaActual.ejercicios_faltan}
-                                                </span>
-                                            </p>
-                                            <p className="text-gray-600 text-sm">
-                                                Siguiente: <span className="font-medium text-gray-900">
-                                                    {guiaActual.siguiente_ejercicio ?? '—'}
-                                                </span>
-                                            </p>
-                                            <p className="text-gray-600 text-sm">
-                                                Completada: <span className="font-medium text-purple-700">
-                                                    {guiaActual.veces_completada} {guiaActual.veces_completada === 1 ? 'vez' : 'veces'}
-                                                </span>
-                                            </p>
-                                            <p className="text-gray-600 text-xs mt-3">
+                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                                                    <p className="text-xs text-gray-600 mb-1">Nivel</p>
+                                                    <p className="font-bold text-purple-700">{guiaActual.nivel}</p>
+                                                </div>
+                                                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                                                    <p className="text-xs text-gray-600 mb-1">Ejercicios</p>
+                                                    <p className="font-bold text-purple-700">{guiaActual.ejercicios_count}</p>
+                                                </div>
+                                                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                                                    <p className="text-xs text-gray-600 mb-1">Faltan</p>
+                                                    <p className="font-bold text-orange-600">{guiaActual.ejercicios_faltan}</p>
+                                                </div>
+                                                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                                                    <p className="text-xs text-gray-600 mb-1">Completada</p>
+                                                    <p className="font-bold text-green-600">{guiaActual.veces_completada}x</p>
+                                                </div>
+                                            </div>
+                                            <div className="bg-white rounded-lg p-3 border border-purple-200 mb-3">
+                                                <p className="text-xs text-gray-600 mb-1">Siguiente ejercicio</p>
+                                                <p className="font-bold text-gray-900">{guiaActual.siguiente_ejercicio ?? '—'}</p>
+                                            </div>
+                                            <p className="text-xs text-gray-500 text-center">
                                                 Asignada: {guiaActual.asignada_el}
                                             </p>
                                         </div>
 
                                         <Link
                                             href={`/guias/${guiaActual.id}`}
-                                            className="block w-full bg-purple-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-purple-700 transition text-center"
+                                            className="block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-4 rounded-xl hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all text-center"
                                         >
                                             Ver Guía →
                                         </Link>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        <div className="text-gray-700 text-sm">
-                                            <p className="font-semibold">No tienes una guía asignada.</p>
-                                            <p className="text-gray-500">Te recomendamos estas opciones según tu nivel:</p>
+                                        <div className="text-gray-700 text-sm bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
+                                            <p className="font-bold text-yellow-800 mb-2">⚠️ No tienes una guía asignada.</p>
+                                            <p className="text-gray-600">Te recomendamos estas opciones según tu nivel:</p>
                                         </div>
 
                                         <div className="grid grid-cols-1 gap-3">
                                             {guiaRecomendadas.length > 0 ? (
                                                 guiaRecomendadas.map((g, idx) => (
-                                                    <div key={idx} className="border border-purple-200 rounded-lg p-4 bg-purple-50">
+                                                    <div key={idx} className="border-2 border-purple-200 rounded-xl p-4 bg-gradient-to-br from-purple-50 to-pink-50 hover:border-purple-400 transition-all">
                                                         <div className="flex items-center justify-between">
                                                             <div>
-                                                                <p className="text-sm text-gray-600">Nivel: <span className="font-semibold text-purple-700">{g.nivel}</span></p>
-                                                                <p className="text-lg font-semibold text-gray-900">{g.titulo}</p>
-                                                                <p className="text-xs text-gray-500">Ejercicios: {g.ejercicios_count}</p>
+                                                                <p className="text-xs text-purple-600 mb-1 font-bold">Nivel: {g.nivel}</p>
+                                                                <p className="text-base font-bold text-gray-900">{g.titulo}</p>
+                                                                <p className="text-xs text-gray-600 mt-1">Ejercicios: {g.ejercicios_count}</p>
                                                             </div>
                                                             <Link
                                                                 href={`/guias/${g.id}`}
-                                                                className="text-sm font-medium text-purple-700 hover:text-purple-900"
+                                                                className="text-sm font-bold text-purple-700 hover:text-purple-900 bg-white px-4 py-2 rounded-lg shadow hover:shadow-md transition-all"
                                                             >
                                                                 Ver →
                                                             </Link>
@@ -517,7 +716,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                                     </div>
                                                 ))
                                             ) : (
-                                                <p className="text-sm text-gray-500">No hay recomendaciones disponibles</p>
+                                                <p className="text-sm text-gray-500 text-center py-4">No hay recomendaciones disponibles</p>
                                             )}
                                         </div>
                                     </div>
@@ -529,14 +728,15 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                     {/* Gráfico de Clases por Mes */}
                     <Card
                         title="📈 Progreso"
+                        containerClassName="bg-white p-5 rounded-2xl shadow-xl mb-8"
                         headerAction={
                             <div className="flex flex-wrap items-center gap-3">
                                 <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-600">Ver:</label>
+                                    <label className="text-sm text-gray-700 font-bold">Ver:</label>
                                     <select
                                         value={rangoMeses}
                                         onChange={(e) => setRangoMeses(Number(e.target.value))}
-                                        className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:ring-green-500"
+                                        className="rounded-xl border-2 border-gray-300 px-4 py-2 text-sm font-medium focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
                                     >
                                         <option value={12}>Últimos 12 meses</option>
                                         <option value={6}>Últimos 6 meses</option>
@@ -546,18 +746,20 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                 <button
                                     type="button"
                                     onClick={() => setShowMeasurementForm(!showMeasurementForm)}
-                                    className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white font-semibold shadow hover:bg-green-700 transition"
+                                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3 text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
                                 >
-                                    {showMeasurementForm ? '✕ Cancelar' : 'Registrar Medición'}
+                                    {showMeasurementForm ? '✕ Cancelar' : '📊 Registrar Medición'}
                                 </button>
                             </div>
                         }
                         className="mb-8"
                     >
                         {showMeasurementForm && (
-                            <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Registro de Medición Corporal</h3>
-                                <p className="text-gray-600 text-sm mb-4">
+                            <div className="mb-6 p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-300 rounded-2xl shadow-lg">
+                                <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    📊 Registro de Medición Corporal
+                                </h3>
+                                <p className="text-gray-700 text-sm mb-5 bg-white/60 rounded-lg p-3 border border-green-200">
                                     {ultimaMedicion
                                         ? `Los campos están pre-rellenados con tus últimos datos registrados (${ultimaMedicion.mes}). Actualízalos con tus medidas actuales.`
                                         : 'Los campos están pre-rellenados con tus datos iniciales. Registra tus medidas actuales.'}
@@ -582,13 +784,13 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     });
                                 }} className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Peso (kg)</label>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">⚖️ Peso (kg)</label>
                                         <input
                                             type="number"
                                             step="0.1"
                                             min="1"
                                             max="500"
-                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-green-500 focus:ring-green-500"
+                                            className="w-full rounded-xl border-2 border-green-300 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
                                             name="peso_kg"
                                             value={measurementFormData.peso_kg}
                                             onChange={(e) => setMeasurementFormData({ ...measurementFormData, peso_kg: e.target.value })}
@@ -597,13 +799,13 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Altura (cm)</label>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">📏 Altura (cm)</label>
                                         <input
                                             type="number"
                                             step="0.5"
                                             min="50"
                                             max="260"
-                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-green-500 focus:ring-green-500"
+                                            className="w-full rounded-xl border-2 border-green-300 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
                                             name="altura_cm"
                                             value={measurementFormData.altura_cm}
                                             onChange={(e) => setMeasurementFormData({ ...measurementFormData, altura_cm: e.target.value })}
@@ -612,13 +814,13 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Grasa corporal (%)</label>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">📊 Grasa corporal (%)</label>
                                         <input
                                             type="number"
                                             step="0.1"
                                             min="0"
                                             max="80"
-                                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-green-500 focus:ring-green-500"
+                                            className="w-full rounded-xl border-2 border-green-300 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all"
                                             name="grasa_corporal_pct"
                                             value={measurementFormData.grasa_corporal_pct}
                                             onChange={(e) => setMeasurementFormData({ ...measurementFormData, grasa_corporal_pct: e.target.value })}
@@ -630,7 +832,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                         <button
                                             type="submit"
                                             disabled={processing}
-                                            className="flex-1 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
+                                            className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all"
                                         >
                                             💾 Guardar
                                         </button>
@@ -681,39 +883,40 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                     {/* Historial de Clases */}
                     <Card
                         title="📝 Historial de Clases"
+                        containerClassName="bg-white p-5 rounded-2xl shadow-xl"
                     >
                         {historialClasesFiltrado.length > 0 ? (
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto rounded-xl">
                                 <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
+                                    <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                                 Clase
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                                 Entrenador
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                                 Fecha
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                                 Hora
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {historialClasesFiltrado.map((clase) => (
-                                            <tr key={clase.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <tr key={clase.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                                                     {clase.nombre}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
                                                     {clase.entrenador}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                     {clase.fecha}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                     {clase.hora_inicio} - {clase.hora_fin}
                                                 </td>
                                             </tr>
@@ -722,8 +925,9 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                 </table>
                             </div>
                         ) : (
-                            <div className="text-center py-8">
-                                <p className="text-gray-600">No hay clases en el historial</p>
+                            <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl">
+                                <div className="text-6xl mb-4">📝</div>
+                                <p className="text-gray-700 font-semibold text-lg">No hay clases en el historial</p>
                             </div>
                         )}
                     </Card>
