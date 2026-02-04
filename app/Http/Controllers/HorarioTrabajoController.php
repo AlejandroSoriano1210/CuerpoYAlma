@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HorarioTrabajo;
 use App\Models\User;
+use App\Models\GimnasioHorario;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -31,8 +32,39 @@ class HorarioTrabajoController extends Controller
             'semanal' => 'required|array',
             'semanal.*' => 'array',
             'semanal.*.*.hora_inicio' => 'required|date_format:H:i',
-            'semanal.*.*.hora_fin' => 'required|date_format:H:i',
+            'semanal.*.*.hora_fin' => 'required|date_format:H:i|after:semanal.*.*.hora_inicio',
         ]);
+
+        // Obtener los horarios del gimnasio
+        $horarioGimnasio = GimnasioHorario::all()->keyBy('dia_semana');
+
+        // Mapeo de días numéricos a nombres en español
+        $diasMap = [0 => 'Lunes', 1 => 'Martes', 2 => 'Miércoles', 3 => 'Jueves', 4 => 'Viernes', 5 => 'Sábado', 6 => 'Domingo'];
+
+        // Validar que todos los horarios estén dentro del horario del gimnasio
+        foreach ($validated['semanal'] as $dia => $bloques) {
+            $nombreDia = $diasMap[$dia] ?? null;
+
+            if (!$nombreDia || !isset($horarioGimnasio[$nombreDia])) {
+                return response()->json([
+                    'error' => "El gimnasio no tiene horario asignado para el {$nombreDia}."
+                ], 422);
+            }
+
+            $horaApertura = substr($horarioGimnasio[$nombreDia]->hora_apertura, 0, 5);
+            $horaCierre = substr($horarioGimnasio[$nombreDia]->hora_cierre, 0, 5);
+
+            foreach ($bloques as $bloque) {
+                $horaInicio = $bloque['hora_inicio'];
+                $horaFin = $bloque['hora_fin'];
+
+                if ($horaInicio < $horaApertura || $horaFin > $horaCierre) {
+                    return response()->json([
+                        'error' => "El horario de trabajo del {$nombreDia} debe estar entre {$horaApertura} y {$horaCierre} (horario del gimnasio)."
+                    ], 422);
+                }
+            }
+        }
 
         // Borrar horarios previos del entrenador y crear los nuevos
         HorarioTrabajo::where('user_id', $entrenador->id)->delete();

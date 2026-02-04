@@ -83,12 +83,20 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                             Empleados
                         </h1>
 
-                        <Link
-                            href={route("entrenadores.create")}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                        >
-                            + Nuevo Empleado
-                        </Link>
+                        <div className="flex gap-3">
+                            <Link
+                                href={route("gimnasio-horario.edit")}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+                            >
+                                🕐 Horario del Gimnasio
+                            </Link>
+                            <Link
+                                href={route("entrenadores.create")}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            >
+                                + Nuevo Empleado
+                            </Link>
+                        </div>
                     </div>
 
                     {flash?.success && (

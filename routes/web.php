@@ -5,6 +5,7 @@ use App\Http\Controllers\ClienteDashboardController;
 use App\Http\Controllers\ClaseController;
 use App\Http\Controllers\EntrenadorController;
 use App\Http\Controllers\EntrenadorPanelController;
+use App\Http\Controllers\GimnasioHorarioController;
 use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
 use App\Http\Controllers\ProfileController;
@@ -24,6 +25,10 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 })->name('welcome');
+
+Route::get('/conocenos', function () {
+    return Inertia::render('Conocenos');
+})->name('conocenos');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -146,6 +151,10 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
 
     Route::get('/entrenador/horario-trabajo', [HorarioTrabajoController::class, 'index']);
     Route::post('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'store']);
+
+    // Rutas para gestionar horarios del gimnasio
+    Route::get('/gimnasio/horario/editar', [GimnasioHorarioController::class, 'edit'])->name('gimnasio-horario.edit');
+    Route::post('/gimnasio/horario/actualizar', [GimnasioHorarioController::class, 'update'])->name('gimnasio-horario.update');
 
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');

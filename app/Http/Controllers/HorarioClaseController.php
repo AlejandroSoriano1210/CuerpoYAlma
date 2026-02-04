@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HorarioClase;
+use App\Models\GimnasioHorario;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -106,22 +107,22 @@ class HorarioClaseController extends Controller
                 ->withErrors(['horario' => 'El entrenador no tiene horario de trabajo asignado para ese día de la semana.']);
         }
 
-        // Verificar que la hora de inicio y fin estén dentro de alguno de los bloques horarios
+        // Verificar que la hora de inicio y fin estén dentro de alguno de los bloques horarios del entrenador
         $horaInicio = $validated['hora_inicio'];
         $horaFin = $validated['hora_fin'];
-        $dentroDeHorario = false;
+        $dentroDeHorarioEntrenador = false;
 
         foreach ($horariosEntrenador as $horario) {
             $horarioInicio = substr($horario->hora_inicio, 0, 5);
             $horarioFin = substr($horario->hora_fin, 0, 5);
 
             if ($horaInicio >= $horarioInicio && $horaFin <= $horarioFin) {
-                $dentroDeHorario = true;
+                $dentroDeHorarioEntrenador = true;
                 break;
             }
         }
 
-        if (!$dentroDeHorario) {
+        if (!$dentroDeHorarioEntrenador) {
             $horariosTexto = $horariosEntrenador->map(function($h) {
                 return substr($h->hora_inicio, 0, 5) . ' - ' . substr($h->hora_fin, 0, 5);
             })->join(' / ');
@@ -132,6 +133,27 @@ class HorarioClaseController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['horario' => "La clase debe estar dentro del horario de trabajo del entrenador para {$nombreDia}: {$horariosTexto}"]);
+        }
+
+        // Validar que la clase también esté dentro del horario del gimnasio
+        $diasSemanaSpanish = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        $nombreDiaSpanish = $diasSemanaSpanish[$fecha->dayOfWeek];
+
+        $horarioGimnasio = GimnasioHorario::where('dia_semana', $nombreDiaSpanish)->first();
+
+        if (!$horarioGimnasio) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['horario' => "El gimnasio no tiene horario asignado para el {$nombreDiaSpanish}."]);
+        }
+
+        $horaAperturaGimnasio = substr($horarioGimnasio->hora_apertura, 0, 5);
+        $horaCierreGimnasio = substr($horarioGimnasio->hora_cierre, 0, 5);
+
+        if ($horaInicio < $horaAperturaGimnasio || $horaFin > $horaCierreGimnasio) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['horario' => "La clase debe estar dentro del horario del gimnasio para {$nombreDiaSpanish}: {$horaAperturaGimnasio} - {$horaCierreGimnasio}"]);
         }
 
         // Crear o usar la Clase base

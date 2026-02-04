@@ -277,7 +277,7 @@ export default function Welcome({ auth }) {
                         Explora
                     </h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div className="transform transition hover:scale-105">
                             {auth.user ? (
                                 <Link href={route("guias.index")} className="h-full">
@@ -339,33 +339,17 @@ export default function Welcome({ auth }) {
                         </div>
 
                         <div className="transform transition hover:scale-105">
-                            {auth.user ? (
-                                <Link href={route("entrenadores.index")} className="h-full">
-                                    <Card
-                                        icon="👥"
-                                        title="Empleados"
-                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
-                                    >
-                                        <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>
-                                    </Card>
-                                </Link>
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        setAuthMode('login');
-                                        setShowAuthModal(true);
-                                    }}
-                                    className="h-full w-full text-left"
+                            <Link href={route("conocenos")} className="h-full">
+                                <Card
+                                    icon="✨"
+                                    title="Conócenos"
+                                    containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
                                 >
-                                    <Card
-                                        icon="👥"
-                                        title="Empleados"
-                                        containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition cursor-pointer"
-                                    >
-                                        <p className="text-gray-600">Conoce nuestro increíble equipo especializado en distintas partes del cuerpo</p>
-                                    </Card>
-                                </button>
-                            )}
+                                    <p className="text-gray-600">
+                                        Nuestra historia, misión y el equipo que te acompaña.
+                                    </p>
+                                </Card>
+                            </Link>
                         </div>
                     </div>
                 </div>

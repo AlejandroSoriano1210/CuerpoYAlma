@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\GimnasioHorario;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -39,6 +40,8 @@ class HandleInertiaRequests extends Middleware
                     'estado_empleado' => $request->user()->estado_empleado,
                 ] : null,
             ],
+            'gimnasioHorarios' => GimnasioHorario::all(),
         ]);
     }
 }
+

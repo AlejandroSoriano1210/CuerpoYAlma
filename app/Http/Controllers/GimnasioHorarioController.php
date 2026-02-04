@@ -4,62 +4,70 @@ namespace App\Http\Controllers;
 
 use App\Models\GimnasioHorario;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class GimnasioHorarioController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Show the form for editing the gym hours.
      */
-    public function index()
+    public function edit()
     {
-        //
+        // Obtener horarios agrupados por día
+        $horarios = GimnasioHorario::all();
+
+        // Si no existen horarios, crear los por defecto
+        if ($horarios->isEmpty()) {
+            $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            foreach ($diasSemana as $dia) {
+                GimnasioHorario::create([
+                    'dia_semana' => $dia,
+                    'hora_apertura' => '06:00:00',
+                    'hora_cierre' => '22:00:00',
+                ]);
+            }
+            $horarios = GimnasioHorario::all();
+        }
+
+        return Inertia::render('GimnasioHorario/Edit', [
+            'horarios' => $horarios,
+        ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Update the gym hours.
      */
-    public function create()
+    public function update(Request $request)
     {
-        //
-    }
+        $validated = $request->validate([
+            'horarios' => 'required|array',
+            'horarios.*' => 'required|array',
+            'horarios.*.hora_apertura' => 'required|date_format:H:i',
+            'horarios.*.hora_cierre' => 'required|date_format:H:i|after:horarios.*.hora_apertura',
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(GimnasioHorario $gimnasioHorario)
-    {
-        //
-    }
+        foreach ($diasSemana as $dia) {
+            if (isset($validated['horarios'][$dia])) {
+                $horario = GimnasioHorario::where('dia_semana', $dia)->first();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(GimnasioHorario $gimnasioHorario)
-    {
-        //
-    }
+                if ($horario) {
+                    $horario->update([
+                        'hora_apertura' => $validated['horarios'][$dia]['hora_apertura'] . ':00',
+                        'hora_cierre' => $validated['horarios'][$dia]['hora_cierre'] . ':00',
+                    ]);
+                } else {
+                    GimnasioHorario::create([
+                        'dia_semana' => $dia,
+                        'hora_apertura' => $validated['horarios'][$dia]['hora_apertura'] . ':00',
+                        'hora_cierre' => $validated['horarios'][$dia]['hora_cierre'] . ':00',
+                    ]);
+                }
+            }
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, GimnasioHorario $gimnasioHorario)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(GimnasioHorario $gimnasioHorario)
-    {
-        //
+        return redirect()->route('entrenadores.index')
+            ->with('success', 'Horarios del gimnasio actualizados correctamente');
     }
 }
