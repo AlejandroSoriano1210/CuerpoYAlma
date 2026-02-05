@@ -23,14 +23,27 @@ class GuiaController extends Controller
         }
 
         // Filtro por músculo objetivo
+        $musculoFiltrado = null;
         if ($request->filled('musculo_objetivo')) {
-            $musculo = $request->input('musculo_objetivo');
-            $query->whereHas('guiaEjercicio.ejercicio', function ($q) use ($musculo) {
-                $q->where('musculo_objetivo', $musculo);
+            $musculoFiltrado = $request->input('musculo_objetivo');
+            $query->whereHas('guiaEjercicio.ejercicio', function ($q) use ($musculoFiltrado) {
+                $q->where('musculo_objetivo', $musculoFiltrado);
             });
         }
 
         $guias = $query->orderBy('created_at', 'desc')->paginate(6);
+
+        // Si hay un filtro de músculo, contar cuántos ejercicios de cada guía tienen ese músculo
+        if ($musculoFiltrado) {
+            $guias->getCollection()->transform(function ($guia) use ($musculoFiltrado) {
+                $guia->ejercicios_con_musculo = $guia->guiaEjercicio()
+                    ->whereHas('ejercicio', function ($q) use ($musculoFiltrado) {
+                        $q->where('musculo_objetivo', $musculoFiltrado);
+                    })
+                    ->count();
+                return $guia;
+            });
+        }
 
         // Obtener todos los músculos únicos disponibles
         $musculos = \App\Models\Ejercicio::distinct()

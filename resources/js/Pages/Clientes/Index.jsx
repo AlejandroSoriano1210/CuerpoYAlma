@@ -229,7 +229,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                             <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
                                                 <Link
                                                     href={route('clientes.show', cliente.id)}
-                                                    className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                                    className="text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
                                                     Ver
                                                 </Link>
                                                 <button

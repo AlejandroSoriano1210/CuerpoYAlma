@@ -1,6 +1,7 @@
 import React from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Wrench, DollarSign } from 'lucide-react';
 
 const DIAS_SEMANA = [
     "Lunes",
@@ -315,6 +316,107 @@ export default function Show({ entrenador }) {
                                     <p className="text-gray-500">
                                         No hay máquinas en mantenimiento o fuera de servicio
                                     </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Historial de Reportes de Reparación (solo para técnicos) */}
+                        {entrenador.rol === 'tecnico' && (
+                            <div className="mb-8">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                                        <Wrench className="text-gray-600" size={20} />
+                                        Historial de Reparaciones ({entrenador.totalReportes || 0})
+                                    </h2>
+
+                                    <div className="flex gap-4">
+                                        <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2">
+                                            <DollarSign size={18} />
+                                            <div>
+                                                <span className="text-xs font-medium">Total reparaciones</span>
+                                                <p className="text-lg font-bold">
+                                                    {parseFloat(entrenador.totalCosteReparaciones || 0).toFixed(2)} €
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {entrenador.reportes && entrenador.reportes.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {entrenador.reportes.map((reporte) => (
+                                            <div
+                                                key={reporte.id}
+                                                className="p-4 bg-gray-50 border border-gray-200 rounded-lg"
+                                            >
+                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
+                                                    <div>
+                                                        <Link
+                                                            href={route('maquinas.show', reporte.maquina_id)}
+                                                            className="font-bold text-gray-900 text-lg hover:text-blue-600"
+                                                        >
+                                                            {reporte.maquina_nombre}
+                                                        </Link>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                reporte.estado_anterior === 'mantenimiento'
+                                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                                    : 'bg-red-100 text-red-800'
+                                                            }`}>
+                                                                {reporte.estado_anterior.replace('_', ' ')}
+                                                            </span>
+                                                            <span className="text-gray-400">→</span>
+                                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                                operativa
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-sm text-gray-500">
+                                                        {new Date(reporte.created_at).toLocaleDateString('es-ES', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-500">Tiempo:</span>
+                                                        <p className="font-medium text-gray-900">
+                                                            {reporte.tiempo_reparacion} {
+                                                                reporte.unidad_tiempo === 'minutos'
+                                                                    ? (reporte.tiempo_reparacion === 1 ? 'minuto' : 'minutos')
+                                                                    : reporte.unidad_tiempo === 'horas'
+                                                                    ? (reporte.tiempo_reparacion === 1 ? 'hora' : 'horas')
+                                                                    : (reporte.tiempo_reparacion === 1 ? 'día' : 'días')
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-500">Coste:</span>
+                                                        <p className="font-medium text-green-600">
+                                                            {parseFloat(reporte.coste_reparacion).toFixed(2)} €
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {reporte.notas && (
+                                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                                        <span className="text-gray-500 text-sm">Notas:</span>
+                                                        <p className="text-gray-700 text-sm mt-1">{reporte.notas}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                                        <Wrench className="mx-auto text-gray-300 mb-3" size={48} />
+                                        <p className="text-gray-500">No hay reportes de reparación registrados.</p>
+                                    </div>
                                 )}
                             </div>
                         )}

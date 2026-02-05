@@ -36,7 +36,7 @@ class EjercicioController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'musculo_objetivo' => 'nullable|string|max:255',
+            'musculo_objetivo' => 'required|string|max:255',
             'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
@@ -77,7 +77,7 @@ class EjercicioController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'musculo_objetivo' => 'nullable|string|max:255',
+            'musculo_objetivo' => 'required|string|max:255',
             'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'remove_imagen' => 'nullable|boolean',
         ]);

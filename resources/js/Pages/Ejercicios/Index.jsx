@@ -79,6 +79,13 @@ export default function Index() {
                                             <Link href={route('ejercicios.edit', e.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
                                                 Editar
                                             </Link>
+                                            <Link href={route('ejercicios.destroy', e.id)} method="delete" as="button" className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm" onClick={(e) => {
+                                                if (!confirm('¿Estás seguro de que deseas eliminar este ejercicio?')) {
+                                                    e.preventDefault();
+                                                }
+                                            }}>
+                                                Eliminar
+                                            </Link>
                                         </div>
                                     </div>
                                 ))}

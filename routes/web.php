@@ -118,6 +118,8 @@ Route::middleware('auth')->group(function () {
         // Cambiar estado de la máquina (mantenimiento / fuera_de_servicio / operativa)
         Route::patch('/maquinas/{maquina}/estado', [MaquinaController::class, 'cambiarEstado'])->name('maquinas.estado');
         Route::delete('/maquinas/{maquina}', [MaquinaController::class, 'destroy'])->name('maquinas.destroy');
+        // Guardar reporte de reparación
+        Route::post('/maquinas/{maquina}/reporte', [MaquinaController::class, 'storeReporte'])->name('maquinas.reporte');
     });
     Route::get('/ejercicios/{ejercicio}', [EjercicioController::class, 'show'])->name('ejercicios.show');
     Route::get('/maquinas', [MaquinaController::class, 'index'])->name('maquinas.index');

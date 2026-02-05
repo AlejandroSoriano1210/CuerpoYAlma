@@ -198,6 +198,28 @@ class EntrenadorController extends Controller
                     ];
                 });
             $data['maquinasMantenimiento'] = $maquinasMantenimiento;
+
+            // Cargar los reportes de reparación realizados por este técnico
+            $reportes = \App\Models\MaquinaReporte::where('tecnico_id', $entrenador->id)
+                ->with('maquina')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($reporte) {
+                    return [
+                        'id' => $reporte->id,
+                        'maquina_nombre' => $reporte->maquina->nombre ?? 'Máquina eliminada',
+                        'maquina_id' => $reporte->maquina_id,
+                        'estado_anterior' => $reporte->estado_anterior,
+                        'tiempo_reparacion' => $reporte->tiempo_reparacion,
+                        'unidad_tiempo' => $reporte->unidad_tiempo,
+                        'coste_reparacion' => $reporte->coste_reparacion,
+                        'notas' => $reporte->notas,
+                        'created_at' => $reporte->created_at,
+                    ];
+                });
+            $data['reportes'] = $reportes;
+            $data['totalReportes'] = $reportes->count();
+            $data['totalCosteReparaciones'] = $reportes->sum('coste_reparacion');
         }
 
         return Inertia::render('Entrenadores/Show', [

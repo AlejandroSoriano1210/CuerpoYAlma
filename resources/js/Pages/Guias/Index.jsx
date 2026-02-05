@@ -178,9 +178,9 @@ export default function GuiasIndex() {
                                                 <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                                                     {guia.nivel.charAt(0).toUpperCase() + guia.nivel.slice(1)}
                                                 </span>
-                                                {guia.musculo_objetivo && (
-                                                    <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                                                        {guia.musculo_objetivo}
+                                                {musculoObjetivo && guia.ejercicios_con_musculo !== undefined && (
+                                                    <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                                        {guia.ejercicios_con_musculo} ejercicio{guia.ejercicios_con_musculo !== 1 ? 's' : ''} {musculoObjetivo.charAt(0).toUpperCase() + musculoObjetivo.slice(1)}
                                                     </span>
                                                 )}
                                             </div>

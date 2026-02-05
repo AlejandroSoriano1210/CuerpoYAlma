@@ -3,6 +3,7 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import MaquinaCreateModal from '@/Components/MaquinaCreateModal';
+import MaquinaReporteModal from '@/Components/MaquinaReporteModal';
 import { Dumbbell, RotateCcw } from 'lucide-react';
 
 export default function Index() {
@@ -13,6 +14,9 @@ export default function Index() {
     const [zona, setZona] = useState(filtros?.zona || '');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+    const [isReporteModalOpen, setIsReporteModalOpen] = useState(false);
+    const [maquinaReporte, setMaquinaReporte] = useState(null);
+    const [estadoAnteriorReporte, setEstadoAnteriorReporte] = useState(null);
     const estadosDisponibles = filtros?.estados ?? ['operativa', 'mantenimiento', 'fuera_de_servicio'];
 
     // Sincronizar filtros con props del servidor
@@ -40,6 +44,14 @@ export default function Index() {
     };
 
     const handleChangeEstado = (maquina, nuevoEstado) => {
+        // Si cambia de mantenimiento/fuera_de_servicio a operativa, mostrar modal de reporte
+        if (nuevoEstado === 'operativa' && (maquina.estado === 'mantenimiento' || maquina.estado === 'fuera_de_servicio')) {
+            setMaquinaReporte(maquina);
+            setEstadoAnteriorReporte(maquina.estado);
+            setIsReporteModalOpen(true);
+            return;
+        }
+
         if (!confirm(`¿Cambiar estado de "${maquina.nombre}" a "${nuevoEstado.replaceAll('_', ' ')}"?`)) return;
 
         setLoadingEstado({ id: maquina.id, estado: nuevoEstado });
@@ -58,6 +70,13 @@ export default function Index() {
                 },
             }
         );
+    };
+
+    const handleReporteSuccess = () => {
+        setIsReporteModalOpen(false);
+        setMaquinaReporte(null);
+        setEstadoAnteriorReporte(null);
+        router.reload();
     };
 
     return (
@@ -262,6 +281,18 @@ export default function Index() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={() => router.reload()}
+            />
+
+            <MaquinaReporteModal
+                isOpen={isReporteModalOpen}
+                onClose={() => {
+                    setIsReporteModalOpen(false);
+                    setMaquinaReporte(null);
+                    setEstadoAnteriorReporte(null);
+                }}
+                onSuccess={handleReporteSuccess}
+                maquina={maquinaReporte}
+                estadoAnterior={estadoAnteriorReporte}
             />
         </AuthenticatedLayout>
     );
