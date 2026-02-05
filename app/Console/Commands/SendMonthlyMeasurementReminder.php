@@ -28,21 +28,24 @@ class SendMonthlyMeasurementReminder extends Command
     public function handle()
     {
         // Get all users with role 'cliente'
-        $clientes = User::whereHas('roles', function ($query) {
-            $query->where('name', 'cliente');
-        })->get();
-
         $count = 0;
+        $delayMicros = 1000000;
 
-        foreach ($clientes as $cliente) {
-            $cliente->notify(
-                new SimpleNotification(
-                    '📏 ¡Es hora de actualizar tus métricas corporales! Registra tus medidas del mes para ver tu progreso en las gráficas.',
-                    '/estadisticas'
-                )
-            );
-            $count++;
-        }
+        User::whereHas('roles', function ($query) {
+            $query->where('name', 'cliente');
+        })->chunk(50, function ($clientes) use (&$count, $delayMicros) {
+            foreach ($clientes as $cliente) {
+                $cliente->notify(
+                    new SimpleNotification(
+                        '📏 ¡Es hora de actualizar tus métricas corporales! Registra tus medidas del mes para ver tu progreso en las gráficas.',
+                        '/estadisticas'
+                    )
+                );
+
+                $count++;
+                usleep($delayMicros);
+            }
+        });
 
         $this->info("✅ Notificación de actualización de métricas enviada a {$count} clientes.");
 
