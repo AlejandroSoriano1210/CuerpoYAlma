@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Head, Link, usePage, router } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import SearchBar from "@/Components/SearchBar";
 import EntrenadorCreateModal from "@/Components/EntrenadorCreateModal";
+import { SearchBar, PageHeader, FlashMessage, EmptyState, StatusBadge } from '@/Components';
 import { Users, RotateCcw } from "lucide-react";
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -29,7 +29,6 @@ const ESTADO_CONFIG = {
 };
 
 export default function Index({ entrenadores, search: initialSearch, rolFiltro: initialRolFiltro }) {
-    const { flash } = usePage().props;
     const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(entrenadores.length > 0 ? entrenadores[0] : null);
     const [rolFiltro, setRolFiltro] = useState(initialRolFiltro || '');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,20 +79,15 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
 
             <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-white flex items-center gap-3 mb-2">
-                            <Users className="text-green-600" size={36} />
-                            Empleados
-                        </h1>
-                        <p className="text-gray-300">Gestiona a los entrenadores, técnicos y personal del gimnasio</p>
-                    </div>
+                    {/* Header con componente reutilizable */}
+                    <PageHeader
+                        title="Empleados"
+                        description="Gestiona a los entrenadores, técnicos y personal del gimnasio"
+                        icon={<Users size={36} />}
+                    />
 
-                    {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-                            {flash.success}
-                        </div>
-                    )}
+                    {/* Flash messages con componente reutilizable */}
+                    <FlashMessage />
 
                     {/* Barra de búsqueda */}
                     <div className="mb-6">
@@ -206,26 +200,23 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
 
                                             <div>
                                                 <p className="text-sm font-medium text-gray-500">Rol</p>
-                                                <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1
-                                                    ${empleadoSeleccionado.rol === 'entrenador' ? 'bg-blue-100 text-blue-800' :
-                                                      empleadoSeleccionado.rol === 'tecnico' ? 'bg-green-100 text-green-800' :
-                                                      empleadoSeleccionado.rol === 'limpieza' ? 'bg-purple-100 text-purple-800' :
-                                                      'bg-gray-100 text-gray-800'}`}>
-                                                    {empleadoSeleccionado.rol.charAt(0).toUpperCase() + empleadoSeleccionado.rol.slice(1)}
-                                                </span>
+                                                <StatusBadge
+                                                    status={empleadoSeleccionado.rol}
+                                                    customColors={{
+                                                        entrenador: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                                                        tecnico: { bg: 'bg-green-100', text: 'text-green-800' },
+                                                        limpieza: { bg: 'bg-purple-100', text: 'text-purple-800' },
+                                                    }}
+                                                    size="md"
+                                                />
                                             </div>
 
                                             <div>
                                                 <p className="text-sm font-medium text-gray-500">Estado</p>
-                                                {(() => {
-                                                    const estado = empleadoSeleccionado.estado_empleado || 'disponible';
-                                                    const config = ESTADO_CONFIG[estado];
-                                                    return (
-                                                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${config.bgColor} ${config.textColor}`}>
-                                                            {config.icon} {config.label}
-                                                        </span>
-                                                    );
-                                                })()}
+                                                <StatusBadge
+                                                    status={empleadoSeleccionado.estado_empleado || 'disponible'}
+                                                    size="md"
+                                                />
                                             </div>
 
                                             <div className="pt-4 border-t">
@@ -277,22 +268,19 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                                             {empleado.email}
                                                         </p>
                                                         <div className="mt-1 flex items-center gap-2">
-                                                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold
-                                                                ${empleado.rol === 'entrenador' ? 'bg-blue-100 text-blue-800' :
-                                                                  empleado.rol === 'tecnico' ? 'bg-green-100 text-green-800' :
-                                                                  empleado.rol === 'limpieza' ? 'bg-purple-100 text-purple-800' :
-                                                                  'bg-gray-100 text-gray-800'}`}>
-                                                                {empleado.rol.charAt(0).toUpperCase() + empleado.rol.slice(1)}
-                                                            </span>
-                                                            {(() => {
-                                                                const estado = empleado.estado_empleado || 'disponible';
-                                                                const config = ESTADO_CONFIG[estado];
-                                                                return (
-                                                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${config.bgColor} ${config.textColor}`}>
-                                                                        {config.icon} {config.label}
-                                                                    </span>
-                                                                );
-                                                            })()}
+                                                            <StatusBadge
+                                                                status={empleado.rol}
+                                                                customColors={{
+                                                                    entrenador: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                                                                    tecnico: { bg: 'bg-green-100', text: 'text-green-800' },
+                                                                    limpieza: { bg: 'bg-purple-100', text: 'text-purple-800' },
+                                                                }}
+                                                                size="sm"
+                                                            />
+                                                            <StatusBadge
+                                                                status={empleado.estado_empleado || 'disponible'}
+                                                                size="sm"
+                                                            />
                                                         </div>
                                                     </div>
 
@@ -355,11 +343,18 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-white shadow rounded-lg p-8 text-center text-gray-500">
-                            <p className="text-lg">
-                                {initialSearch ? 'No se encontraron empleados que coincidan con la búsqueda' : 'No hay empleados registrados'}
-                            </p>
-                        </div>
+                        <EmptyState
+                            icon={<Users size={48} />}
+                            message={initialSearch ? 'No se encontraron empleados que coincidan con la búsqueda' : 'No hay empleados registrados'}
+                            action={
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition"
+                                >
+                                    + Crear primer empleado
+                                </button>
+                            }
+                        />
                     )}
                 </div>
             </div>

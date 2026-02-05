@@ -1,6 +1,7 @@
 import React from "react";
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { BackLink, FlashMessage, StatusBadge } from '@/Components';
 import { Wrench, DollarSign } from 'lucide-react';
 
 const DIAS_SEMANA = [
@@ -13,8 +14,6 @@ const DIAS_SEMANA = [
 ];
 
 export default function Show({ entrenador }) {
-    const { flash } = usePage().props;
-
     const getRoleBadge = (rol) => {
         const colors = {
             entrenador: 'bg-blue-100 text-blue-800',
@@ -30,16 +29,14 @@ export default function Show({ entrenador }) {
 
             <div className="py-12">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <BackLink href={route('entrenadores.index')} text="Volver a Empleados" />
+
                     <div className="bg-white shadow rounded-lg p-6">
                         <h1 className="text-3xl font-bold mb-6 text-gray-900">
                             {entrenador.name}
                         </h1>
 
-                        {flash?.success && (
-                            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                                {flash.success}
-                            </div>
-                        )}
+                        <FlashMessage />
 
                         {/* Información Personal */}
                         <div className="mb-8">
@@ -79,9 +76,15 @@ export default function Show({ entrenador }) {
                                     <label className="block text-sm font-medium text-gray-600">
                                         Rol
                                     </label>
-                                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${getRoleBadge(entrenador.rol)}`}>
-                                        {entrenador.rol.charAt(0).toUpperCase() + entrenador.rol.slice(1)}
-                                    </span>
+                                    <StatusBadge
+                                        status={entrenador.rol}
+                                        customColors={{
+                                            entrenador: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                                            tecnico: { bg: 'bg-green-100', text: 'text-green-800' },
+                                            limpieza: { bg: 'bg-purple-100', text: 'text-purple-800' },
+                                        }}
+                                        size="md"
+                                    />
                                 </div>
 
                                 <div>

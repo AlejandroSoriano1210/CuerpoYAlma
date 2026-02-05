@@ -4,7 +4,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import MaquinaCreateModal from '@/Components/MaquinaCreateModal';
 import MaquinaReporteModal from '@/Components/MaquinaReporteModal';
-import { Dumbbell, RotateCcw } from 'lucide-react';
+import { PageHeader, FlashMessage, Pagination, EmptyState, StatusBadge, FilterPanel } from '@/Components';
+import { Dumbbell } from 'lucide-react';
 
 export default function Index() {
     const { maquinas, flash, filtros } = usePage().props;
@@ -85,96 +86,60 @@ export default function Index() {
 
             <div className="min-h-screen py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-4xl font-bold text-white flex items-center gap-3">
-                                    <Dumbbell className="text-green-600" size={36} />
-                                    Máquinas del Gimnasio
-                                </h1>
-                                <p className="text-gray-300 mt-2">Gestiona y visualiza el estado de todas las máquinas</p>
-                            </div>
-
-                            {hasAnyRole(['superusuario', 'tecnico']) && (
+                    {/* Header con componente reutilizable */}
+                    <PageHeader
+                        title="Máquinas del Gimnasio"
+                        description="Gestiona y visualiza el estado de todas las máquinas"
+                        icon={<Dumbbell size={36} />}
+                        actions={
+                            hasAnyRole(['superusuario', 'tecnico']) && (
                                 <button
                                     onClick={() => setIsModalOpen(true)}
                                     className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition"
                                 >
                                     + Nueva Máquina
                                 </button>
-                            )}
-                        </div>
-                    </div>
+                            )
+                        }
+                    />
 
-                    {/* Alertas */}
-                    {flash?.success && (
-                        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-                            <span className="text-lg">✓</span>
-                            {flash.success}
-                        </div>
-                    )}
+                    {/* Flash messages con componente reutilizable */}
+                    <FlashMessage />
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        {/* Sidebar Filtros */}
-                        <aside className="lg:col-span-3">
-                            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 lg:sticky lg:top-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                        <RotateCcw size={20} className="text-gray-600" />
-                                        Filtros
-                                    </h2>
-                                    <div className="flex items-center gap-3">
-                                        {(estado || zona) && (
-                                            <button
-                                                onClick={limpiarFiltros}
-                                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                                            >
-                                                Limpiar
-                                            </button>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsFiltersOpen((prev) => !prev)}
-                                            className="lg:hidden text-sm text-blue-600 hover:text-blue-800 font-medium"
-                                        >
-                                            {isFiltersOpen ? 'Ocultar' : 'Mostrar'}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block`}>
-                                    <div className="grid grid-cols-1 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Zona</label>
-                                        <select
-                                            value={zona}
-                                            onChange={(e) => setZona(e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                        >
-                                            <option value="">Todas las zonas</option>
-                                            {filtros?.zonas?.map((z) => (
-                                                <option key={z} value={z}>{z}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                                        <select
-                                            value={estado}
-                                            onChange={(e) => setEstado(e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                        >
-                                            <option value="">Todos los estados</option>
-                                            {estadosDisponibles.map((e) => (
-                                                <option key={e} value={e}>{e.replaceAll('_', ' ')}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    </div>
-                                </div>
+                        {/* Sidebar Filtros con componente reutilizable */}
+                        <FilterPanel
+                            onClear={limpiarFiltros}
+                            showClear={estado || zona}
+                        >
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Zona</label>
+                                <select
+                                    value={zona}
+                                    onChange={(e) => setZona(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                    <option value="">Todas las zonas</option>
+                                    {filtros?.zonas?.map((z) => (
+                                        <option key={z} value={z}>{z}</option>
+                                    ))}
+                                </select>
                             </div>
-                        </aside>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                                <select
+                                    value={estado}
+                                    onChange={(e) => setEstado(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                    <option value="">Todos los estados</option>
+                                    {estadosDisponibles.map((e) => (
+                                        <option key={e} value={e}>{e.replaceAll('_', ' ')}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </FilterPanel>
 
                         {/* Contenido */}
                         <div className="lg:col-span-9">
@@ -201,13 +166,7 @@ export default function Index() {
                                                         </Link>
                                                         <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                                                             <span>{m.ubicacion}</span>
-                                                            <span className={`px-3 py-1 rounded-full font-medium ${
-                                                                m.estado === 'operativa' ? 'bg-green-100 text-green-800' :
-                                                                m.estado === 'mantenimiento' ? 'bg-yellow-100 text-yellow-800' :
-                                                                'bg-red-100 text-red-800'
-                                                            }`}>
-                                                                {m.estado.replaceAll('_', ' ')}
-                                                            </span>
+                                                            <StatusBadge status={m.estado} size="md" />
                                                         </div>
                                                         {m.descripcion && (
                                                             <p className="text-gray-700 mt-3">{m.descripcion}</p>
@@ -253,25 +212,25 @@ export default function Index() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                                        <Dumbbell size={48} className="text-gray-300 mx-auto mb-4" />
-                                        <p className="text-gray-500 text-lg">No hay máquinas registradas</p>
-                                    </div>
+                                    <EmptyState
+                                        icon={<Dumbbell size={48} />}
+                                        message="No hay máquinas registradas"
+                                        action={
+                                            hasAnyRole(['superusuario', 'tecnico']) && (
+                                                <button
+                                                    onClick={() => setIsModalOpen(true)}
+                                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition"
+                                                >
+                                                    + Crear primera máquina
+                                                </button>
+                                            )
+                                        }
+                                    />
                                 )}
                             </div>
 
-                            {/* Paginación */}
-                            {(maquinas?.prev_page_url || maquinas?.next_page_url) && (
-                                <div className="mt-8 flex justify-center items-center gap-3">
-                                    {maquinas?.prev_page_url && (
-                                        <Link href={route('maquinas.index', { page: maquinas.current_page - 1 })} className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">← Anterior</Link>
-                                    )}
-                                    <span className="text-sm text-gray-600 font-medium">Página {maquinas?.current_page} de {maquinas?.last_page}</span>
-                                    {maquinas?.next_page_url && (
-                                        <Link href={route('maquinas.index', { page: maquinas.current_page + 1 })} className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Siguiente →</Link>
-                                    )}
-                                </div>
-                            )}
+                            {/* Paginación con componente reutilizable */}
+                            <Pagination data={maquinas} routeName="maquinas.index" />
                         </div>
                     </div>
                 </div>

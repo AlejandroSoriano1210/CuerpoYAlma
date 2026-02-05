@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import SearchBar from '@/Components/SearchBar';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
+import { SearchBar, PageHeader, FlashMessage, EmptyState } from '@/Components';
 import { Users, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ClientesIndex({ clientes, search: initialSearch, mesActual, anoActual }) {
-    const { flash } = usePage().props;
     const { hasRole } = usaRoleUser();
     const [modoSeleccion, setModoSeleccion] = useState(false);
     const [clientesSeleccionados, setClientesSeleccionados] = useState([]);
@@ -71,26 +70,15 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
             <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-white flex items-center gap-3 mb-2">
-                            <Users className="text-green-600" size={36} />
-                            Clientes
-                        </h1>
-                        <p className="text-gray-300">Gestiona el registro y pagos de los clientes del gimnasio</p>
-                    </div>
+                    {/* Header con componente reutilizable */}
+                    <PageHeader
+                        title="Clientes"
+                        description="Gestiona el registro y pagos de los clientes del gimnasio"
+                        icon={<Users size={36} />}
+                    />
 
-                    {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-                            {flash.success}
-                        </div>
-                    )}
-
-                    {flash?.error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-                            {flash.error}
-                        </div>
-                    )}
+                    {/* Flash messages con componente reutilizable */}
+                    <FlashMessage />
 
                     {/* Barra de búsqueda y acciones */}
                     <div className="mb-6">
@@ -243,12 +231,10 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                 </div>
                             )
                         ) : (
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                                <Users size={48} className="mx-auto text-gray-300 mb-4" />
-                                <p className="text-gray-500 text-lg">
-                                    {initialSearch ? 'No se encontraron clientes que coincidan con la búsqueda' : 'No hay clientes registrados'}
-                                </p>
-                            </div>
+                            <EmptyState
+                                icon={<Users size={48} />}
+                                message={initialSearch ? 'No se encontraron clientes que coincidan con la búsqueda' : 'No hay clientes registrados'}
+                            />
                         )}
                     </div>
                 </div>

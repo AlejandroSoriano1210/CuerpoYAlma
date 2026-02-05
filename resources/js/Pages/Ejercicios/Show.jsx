@@ -1,23 +1,18 @@
 import React from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { BackLink, FlashMessage } from '@/Components';
 
 export default function Show({ ejercicio }) {
-    const { flash } = usePage().props;
-
     return (
         <AuthenticatedLayout>
             <Head title={ejercicio.nombre} />
 
             <div className="py-12">
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <Link href={route('ejercicios.index')} className="text-blue-600 mb-6 inline-block">← Volver a Ejercicios</Link>
+                    <BackLink href={route('ejercicios.index')} text="Volver a Ejercicios" />
 
-                    {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                            {flash.success}
-                        </div>
-                    )}
+                    <FlashMessage />
 
                     <div className="bg-white rounded-lg shadow p-6">
                         {ejercicio.imagen_url && (

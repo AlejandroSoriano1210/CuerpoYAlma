@@ -3,7 +3,8 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import GuiaCreateModal from '@/Components/GuiaCreateModal';
-import { BookOpen, RotateCcw } from 'lucide-react';
+import { PageHeader, FlashMessage, Pagination, EmptyState, StatusBadge, FilterPanel } from '@/Components';
+import { BookOpen } from 'lucide-react';
 
 export default function GuiasIndex() {
     const { hasAnyRole } = usaRoleUser();
@@ -62,107 +63,72 @@ export default function GuiasIndex() {
 
             <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-white flex items-center gap-3 mb-2">
-                            <BookOpen className="text-green-600" size={36} />
-                            Guías de Ejercicios
-                        </h1>
-                        <p className="text-gray-300">Crea, gestiona y asigna guías de entrenamiento personalizadas</p>
-                    </div>
+                    {/* Header con componente reutilizable */}
+                    <PageHeader
+                        title="Guías de Ejercicios"
+                        description="Crea, gestiona y asigna guías de entrenamiento personalizadas"
+                        icon={<BookOpen size={36} />}
+                    />
 
-                    {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
-                            {flash.success}
-                        </div>
-                    )}
+                    {/* Flash messages con componente reutilizable */}
+                    <FlashMessage />
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        {/* Sidebar Filtros */}
-                        <aside className="lg:col-span-3">
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:sticky lg:top-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                                        <RotateCcw size={20} className="text-gray-600" />
-                                        Filtros
-                                    </h2>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsFiltersOpen((prev) => !prev)}
-                                        className="lg:hidden text-sm text-blue-600 hover:text-blue-800 font-medium"
-                                    >
-                                        {isFiltersOpen ? 'Ocultar' : 'Mostrar'}
-                                    </button>
-                                </div>
-                                <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block`}>
-                                    <div className="grid grid-cols-1 gap-4 mb-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Nivel</label>
-                                        <select
-                                            value={nivel}
-                                            onChange={(e) => {
-                                                setNivel(e.target.value);
-                                                setIsFilteringActive(true);
-                                            }}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-                                        >
-                                            <option value="">Todos los niveles</option>
-                                            {niveles?.map((n) => (
-                                                <option key={n} value={n}>
-                                                    {n.charAt(0).toUpperCase() + n.slice(1)}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Músculo objetivo</label>
-                                        <select
-                                            value={musculoObjetivo}
-                                            onChange={(e) => {
-                                                setMusculoObjetivo(e.target.value);
-                                                setIsFilteringActive(true);
-                                            }}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-                                        >
-                                            <option value="">Todos los músculos</option>
-                                            {musculos?.map((m) => (
-                                                <option key={m} value={m}>
-                                                    {m.charAt(0).toUpperCase() + m.slice(1)}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    </div>
-
-                                    <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={limpiarFiltros}
-                                            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition"
-                                        >
-                                            Limpiar Filtros
-                                        </button>
-                                        {hasAnyRole(['entrenador', 'superusuario']) && (
-                                            <button
-                                                onClick={() => setIsModalOpen(true)}
-                                                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center"
-                                            >
-                                                + Nueva Guía
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
+                        {/* Sidebar Filtros con componente reutilizable */}
+                        <FilterPanel
+                            onClear={limpiarFiltros}
+                            showClear={nivel || musculoObjetivo}
+                        >
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Nivel</label>
+                                <select
+                                    value={nivel}
+                                    onChange={(e) => {
+                                        setNivel(e.target.value);
+                                        setIsFilteringActive(true);
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                                >
+                                    <option value="">Todos los niveles</option>
+                                    {niveles?.map((n) => (
+                                        <option key={n} value={n}>
+                                            {n.charAt(0).toUpperCase() + n.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                        </aside>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Músculo objetivo</label>
+                                <select
+                                    value={musculoObjetivo}
+                                    onChange={(e) => {
+                                        setMusculoObjetivo(e.target.value);
+                                        setIsFilteringActive(true);
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                                >
+                                    <option value="">Todos los músculos</option>
+                                    {musculos?.map((m) => (
+                                        <option key={m} value={m}>
+                                            {m.charAt(0).toUpperCase() + m.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {hasAnyRole(['entrenador', 'superusuario']) && (
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center mt-2"
+                                >
+                                    + Nueva Guía
+                                </button>
+                            )}
+                        </FilterPanel>
 
                         {/* Contenido */}
                         <div className="lg:col-span-9">
-                            {flash?.success && (
-                                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                                    {flash.success}
-                                </div>
-                            )}
-
                             {/* Guías Grid */}
                             <div>
                                 {guias?.data?.length > 0 ? (
@@ -175,13 +141,13 @@ export default function GuiasIndex() {
                                                 <h3 className="font-bold text-lg text-gray-900 hover:text-green-600 cursor-pointer transition-colors mb-1">{guia.titulo}</h3>
                                             </Link>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                                    {guia.nivel.charAt(0).toUpperCase() + guia.nivel.slice(1)}
-                                                </span>
+                                                <StatusBadge status={guia.nivel} variant="info" size="md" />
                                                 {musculoObjetivo && guia.ejercicios_con_musculo !== undefined && (
-                                                    <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                                        {guia.ejercicios_con_musculo} ejercicio{guia.ejercicios_con_musculo !== 1 ? 's' : ''} {musculoObjetivo.charAt(0).toUpperCase() + musculoObjetivo.slice(1)}
-                                                    </span>
+                                                    <StatusBadge
+                                                        status={`${guia.ejercicios_con_musculo} ejercicio${guia.ejercicios_con_musculo !== 1 ? 's' : ''}`}
+                                                        variant="success"
+                                                        size="md"
+                                                    />
                                                 )}
                                             </div>
                                         </div>
@@ -240,31 +206,32 @@ export default function GuiasIndex() {
                                 ))}
                             </div>
                                 ) : (
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                                        <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
-                                        <p className="text-gray-500 text-lg">No hay guías disponibles.</p>
-                                    </div>
+                                    <EmptyState
+                                        icon={<BookOpen size={48} />}
+                                        message="No hay guías disponibles."
+                                        action={
+                                            hasAnyRole(['entrenador', 'superusuario']) && (
+                                                <button
+                                                    onClick={() => setIsModalOpen(true)}
+                                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition"
+                                                >
+                                                    + Crear primera guía
+                                                </button>
+                                            )
+                                        }
+                                    />
                                 )}
                             </div>
 
-                            {/* Paginación */}
-                            <div className="mt-8 flex justify-center items-center gap-3">
-                                {guias?.prev_page_url && (
-                                    <Link href={route('guias.index', {
-                                        page: guias.current_page - 1,
-                                        nivel: nivel || undefined,
-                                        musculo_objetivo: musculoObjetivo || undefined
-                                    })} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition">← Anterior</Link>
-                                )}
-                                <div className="text-sm text-gray-600">Página {guias?.current_page} de {guias?.last_page}</div>
-                                {guias?.next_page_url && (
-                                    <Link href={route('guias.index', {
-                                        page: guias.current_page + 1,
-                                        nivel: nivel || undefined,
-                                        musculo_objetivo: musculoObjetivo || undefined
-                                    })} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition">Siguiente →</Link>
-                                )}
-                            </div>
+                            {/* Paginación con componente reutilizable */}
+                            <Pagination
+                                data={guias}
+                                routeName="guias.index"
+                                routeParams={{
+                                    nivel: nivel || undefined,
+                                    musculo_objetivo: musculoObjetivo || undefined
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { FormActions, BackLink } from '@/Components';
 
 export default function Create() {
     const { data, setData, post, errors, processing } = useForm({
@@ -23,7 +24,7 @@ export default function Create() {
             <div className="py-12">
                 <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white shadow rounded-lg p-6">
-                        <Link href={route('maquinas.index')} className="text-blue-600 mb-6 inline-block">← Volver a Máquinas</Link>
+                        <BackLink href={route('maquinas.index')} text="Volver a Máquinas" />
 
                         <h1 className="text-2xl font-bold mb-6 text-gray-900">Crear Nueva Máquina</h1>
 
@@ -82,10 +83,11 @@ export default function Create() {
                                 )}
                             </div>
 
-                            <div className="flex gap-4">
-                                <button type="submit" disabled={processing} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded">{processing ? 'Guardando...' : 'Crear Máquina'}</button>
-                                <Link href={route('maquinas.index')} className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-center">Cancelar</Link>
-                            </div>
+                            <FormActions
+                                processing={processing}
+                                cancelHref={route('maquinas.index')}
+                                submitText="Crear Máquina"
+                            />
                         </form>
                     </div>
                 </div>

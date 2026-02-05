@@ -1,8 +1,7 @@
 import React from "react";
 import { Head, useForm, usePage, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import PrimaryButton from "@/Components/PrimaryButton";
-import InputError from "@/Components/InputError";
+import { InputError, PrimaryButton } from '@/Components';
 import { Clock } from "lucide-react";
 
 const DIAS_SEMANA = [

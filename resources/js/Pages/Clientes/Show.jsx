@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { BackLink } from '@/Components';
 
 export default function ClientesShow({ cliente, mesActual, anoActual }) {
     const [paginaActual, setPaginaActual] = useState(1);
@@ -42,14 +43,7 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
             <div className="py-12">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                    <div className="mb-6">
-                        <Link
-                            href={route('clientes.index')}
-                            className="text-blue-600 hover:text-blue-900 font-medium"
-                        >
-                            ← Volver a Clientes
-                        </Link>
-                    </div>
+                    <BackLink href={route('clientes.index')} text="Volver a Clientes" />
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

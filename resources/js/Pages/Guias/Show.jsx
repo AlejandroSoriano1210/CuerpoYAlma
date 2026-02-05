@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
+import { BackLink, FlashMessage, StatusBadge } from '@/Components';
 
 export default function Show({ guia, clientes = [], isAssigned = false, isAssignedWeekly = false }) {
     const { hasAnyRole } = usaRoleUser();
-    const { flash } = usePage().props;
     const [mostrarModal, setMostrarModal] = useState(false);
     const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState('');
     const [asignacionSemanal, setAsignacionSemanal] = useState(false);
@@ -104,17 +104,15 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
 
             <div className="py-12">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <Link href={route('guias.index')} className="text-blue-600 mb-6 inline-block">← Volver a Guías</Link>
+                    <BackLink href={route('guias.index')} text="Volver a Guías" />
 
-                    {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                            {flash.success}
-                        </div>
-                    )}
+                    <FlashMessage />
 
                     <div className="bg-white rounded-lg shadow p-6">
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">{guia.titulo}</h1>
-                        <p className="text-sm text-gray-600 mb-4">Nivel: {guia.nivel}</p>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Nivel: <StatusBadge status={guia.nivel} variant="info" />
+                        </p>
 
                         {guia.contenido ? (
                             <div className="prose max-w-none text-gray-800">
