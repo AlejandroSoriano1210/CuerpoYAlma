@@ -3,11 +3,12 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 
-export default function Show({ guia, clientes = [], isAssigned = false }) {
+export default function Show({ guia, clientes = [], isAssigned = false, isAssignedWeekly = false }) {
     const { hasAnyRole } = usaRoleUser();
     const { flash } = usePage().props;
     const [mostrarModal, setMostrarModal] = useState(false);
     const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState('');
+    const [asignacionSemanal, setAsignacionSemanal] = useState(false);
     const [progreso, setProgreso] = useState({});
     const [mostrarCelebracion, setMostrarCelebracion] = useState(false);
     const [cargandoProgreso, setCargandoProgreso] = useState(true);
@@ -54,7 +55,9 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                         // Limpiar el progreso y desasignar la guía después de 1.5 segundos
                         setTimeout(() => {
                             setProgreso({});
-                            router.delete(route('guias.unassign', guia.id));
+                            router.delete(route('guias.unassign', guia.id), {
+                                data: { keep_weekly: data.asignacionSemanal },
+                            });
                         }, 1500);
                     }
                 }
@@ -74,7 +77,9 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
 
     const manejarCompletar = () => {
         if (confirm('¿Marcar esta guía como completada? Se eliminará de tu panel de estadísticas.')) {
-            router.delete(route('guias.unassign', guia.id));
+            router.delete(route('guias.unassign', guia.id), {
+                data: { keep_weekly: isAssignedWeekly },
+            });
         }
     };
 
@@ -86,9 +91,11 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
         }
         router.post(route('guias.assign-to-client', guia.id), {
             client_id: clienteSeleccionadoId,
+            semanal: asignacionSemanal,
         });
         setMostrarModal(false);
         setClienteSeleccionadoId('');
+        setAsignacionSemanal(false);
     };
 
     return (
@@ -174,20 +181,30 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                             {!hasAnyRole(['entrenador', 'superusuario']) && (
                                 <>
                                     {!isAssigned ? (
-                                        <button
-                                            onClick={() => {
-                                                router.post(route('guias.assign', guia.id));
-                                            }}
-                                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                                        >
-                                            Asignar guía a mi dashboard
-                                        </button>
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    router.post(route('guias.assign', guia.id));
+                                                }}
+                                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                                            >
+                                                Asignar guía a mi dashboard
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    router.post(route('guias.assign', guia.id), { semanal: true });
+                                                }}
+                                                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 px-4 rounded"
+                                            >
+                                                Asignar semanalmente
+                                            </button>
+                                        </>
                                     ) : (
                                         <button
                                             onClick={manejarCompletar}
                                             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
                                         >
-                                            ✓ Marcar como completada
+                                            {isAssignedWeekly ? '✓ Completar semana' : '✓ Marcar como completada'}
                                         </button>
                                     )}
                                 </>
@@ -235,6 +252,18 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                     ))}
                                 </select>
                             </div>
+                            <div className="mb-4 flex items-center gap-2">
+                                <input
+                                    id="asignacion-semanal"
+                                    type="checkbox"
+                                    checked={asignacionSemanal}
+                                    onChange={(e) => setAsignacionSemanal(e.target.checked)}
+                                    className="w-4 h-4"
+                                />
+                                <label htmlFor="asignacion-semanal" className="text-sm text-gray-700">
+                                    Asignar semanalmente (reinicio cada lunes)
+                                </label>
+                            </div>
 
                             <div className="flex gap-3">
                                 <button
@@ -248,6 +277,7 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                     onClick={() => {
                                         setMostrarModal(false);
                                         setClienteSeleccionadoId('');
+                                        setAsignacionSemanal(false);
                                     }}
                                     className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
                                 >

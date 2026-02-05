@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guia;
+use App\Models\GuiaAsignacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -121,9 +122,14 @@ class GuiaController extends Controller
 
         // Verificar si el usuario actual tiene asignada esta guía
         $isAssigned = false;
+        $isAssignedWeekly = false;
         if (Auth::check()) {
             $isAssigned = \App\Models\GuiaView::where('user_id', Auth::id())
                 ->where('guia_id', $guia->id)
+                ->exists();
+            $isAssignedWeekly = GuiaAsignacion::where('user_id', Auth::id())
+                ->where('guia_id', $guia->id)
+                ->where('frecuencia', 'semanal')
                 ->exists();
         }
 
@@ -131,6 +137,7 @@ class GuiaController extends Controller
             'guia' => $guia,
             'clientes' => $clientes,
             'isAssigned' => $isAssigned,
+            'isAssignedWeekly' => $isAssignedWeekly,
         ]);
     }
 
@@ -210,6 +217,7 @@ class GuiaController extends Controller
 
         $validated = $request->validate([
             'client_id' => 'required|exists:users,id',
+            'semanal' => 'sometimes|boolean',
         ]);
 
         // Verificar que el usuario sea un cliente
@@ -224,6 +232,8 @@ class GuiaController extends Controller
             'guia_id' => $guia->id,
         ]);
 
+        $this->syncWeeklyAssignment($cliente->id, $guia->id, (bool) ($validated['semanal'] ?? false));
+
         return back()->with('success', "Guía asignada a {$cliente->name} correctamente.");
     }
 
@@ -236,11 +246,17 @@ class GuiaController extends Controller
             return redirect()->route('login')->with('error', 'Debes iniciar sesión para asignar una guía.');
         }
 
+        $validated = request()->validate([
+            'semanal' => 'sometimes|boolean',
+        ]);
+
         // Crear o actualizar el registro en guia_views
         \App\Models\GuiaView::firstOrCreate([
             'user_id' => Auth::id(),
             'guia_id' => $guia->id,
         ]);
+
+        $this->syncWeeklyAssignment(Auth::id(), $guia->id, (bool) ($validated['semanal'] ?? false));
 
         return back()->with('success', 'Guía asignada correctamente. Ya aparecerá en tu dashboard.');
     }
@@ -254,6 +270,8 @@ class GuiaController extends Controller
             return redirect()->route('login')->with('error', 'Debes iniciar sesión.');
         }
 
+        $keepWeekly = request()->boolean('keep_weekly', false);
+
         // Eliminar el progreso de la guía
         \App\Models\GuiaProgreso::where('user_id', Auth::id())
             ->where('guia_id', $guia->id)
@@ -263,6 +281,13 @@ class GuiaController extends Controller
         \App\Models\GuiaView::where('user_id', Auth::id())
             ->where('guia_id', $guia->id)
             ->delete();
+
+        if (!$keepWeekly) {
+            GuiaAsignacion::where('user_id', Auth::id())
+                ->where('guia_id', $guia->id)
+                ->where('frecuencia', 'semanal')
+                ->delete();
+        }
 
         return back()->with('success', 'Guía marcada como completada y eliminada de tu dashboard.');
     }
@@ -323,8 +348,14 @@ class GuiaController extends Controller
 
         // Si se completan todos los ejercicios, desasignar la guía
         $guiaCompletada = false;
+        $asignacionSemanal = false;
         if ($completados === $totalEjercicios && $totalEjercicios > 0) {
             $guiaCompletada = true;
+
+            $asignacionSemanal = GuiaAsignacion::where('user_id', Auth::id())
+                ->where('guia_id', $guia->id)
+                ->where('frecuencia', 'semanal')
+                ->exists();
 
             // Guardar registro de completación
             \App\Models\GuiaCompletada::create([
@@ -344,7 +375,25 @@ class GuiaController extends Controller
             'completados' => $completados,
             'total' => $totalEjercicios,
             'guiaCompletada' => $guiaCompletada,
+            'asignacionSemanal' => $asignacionSemanal,
         ]);
+    }
+
+    private function syncWeeklyAssignment(int $userId, int $guiaId, bool $semanal): void
+    {
+        if ($semanal) {
+            GuiaAsignacion::firstOrCreate([
+                'user_id' => $userId,
+                'guia_id' => $guiaId,
+                'frecuencia' => 'semanal',
+            ]);
+            return;
+        }
+
+        GuiaAsignacion::where('user_id', $userId)
+            ->where('guia_id', $guiaId)
+            ->where('frecuencia', 'semanal')
+            ->delete();
     }
 
     /**

@@ -202,14 +202,24 @@ export default function GuiasIndex() {
                                                         ✓ Asignada
                                                     </span>
                                                 ) : (
-                                                    <button
-                                                        onClick={() => {
-                                                            router.post(route('guias.assign', guia.id));
-                                                        }}
-                                                        className="flex-1 text-center bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-lg transition text-sm"
-                                                    >
-                                                        Asignar
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => {
+                                                                router.post(route('guias.assign', guia.id));
+                                                            }}
+                                                            className="flex-1 text-center bg-green-100 hover:bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-lg transition text-sm"
+                                                        >
+                                                            Asignar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                router.post(route('guias.assign', guia.id), { semanal: true });
+                                                            }}
+                                                            className="flex-1 text-center bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold py-2 px-4 rounded-lg transition text-sm"
+                                                        >
+                                                            Semanal
+                                                        </button>
+                                                    </>
                                                 )
                                             )}
                                             {hasAnyRole(['entrenador', 'superusuario']) && (

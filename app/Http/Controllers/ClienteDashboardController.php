@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HorarioClase;
 use App\Models\GuiaView;
+use App\Models\GuiaAsignacion;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Guia;
@@ -69,47 +70,31 @@ class ClienteDashboardController extends Controller
                 ];
             });
 
-        // Guía actual del cliente
-        $guiaActual = GuiaView::where('user_id', $user->id)
+        // Guias semanales asignadas
+        $guiaSemanalIds = GuiaAsignacion::where('user_id', $user->id)
+            ->where('frecuencia', 'semanal')
+            ->pluck('guia_id')
+            ->toArray();
+
+        $guiasSemanales = GuiaAsignacion::where('user_id', $user->id)
+            ->where('frecuencia', 'semanal')
             ->with(['guia', 'guia.guiaEjercicio.ejercicio'])
+            ->get()
+            ->map(function ($asignacion) use ($user) {
+                return $this->buildGuiaData($user, $asignacion->guia, $asignacion->created_at);
+            })
+            ->values();
+
+        // Guía actual normal del cliente (excluir las semanales)
+        $guiaActualView = GuiaView::where('user_id', $user->id)
+            ->whereNotIn('guia_id', $guiaSemanalIds)
+            ->with(['guia', 'guia.guiaEjercicio.ejercicio'])
+            ->orderBy('created_at', 'asc')
             ->first();
 
-        $guiaData = null;
-        if ($guiaActual) {
-            $guia = $guiaActual->guia;
-            $totalEjercicios = $guia->guiaEjercicio()->count();
-
-            $completadosIds = GuiaProgreso::where('user_id', $user->id)
-                ->where('guia_id', $guia->id)
-                ->where('completado', true)
-                ->pluck('guia_ejercicio_id')
-                ->toArray();
-
-            $siguiente = $guia->guiaEjercicio
-                ->sortBy('orden')
-                ->first(function ($item) use ($completadosIds) {
-                    return !in_array($item->id, $completadosIds, true);
-                });
-
-            $faltan = max(0, $totalEjercicios - count($completadosIds));
-
-            // Contar cuántas veces ha completado esta guía
-            $vecesCompletada = \App\Models\GuiaCompletada::where('user_id', $user->id)
-                ->where('guia_id', $guia->id)
-                ->count();
-
-            $guiaData = [
-                'id' => $guia->id,
-                'titulo' => $guia->titulo,
-                'nivel' => $guia->nivel,
-                'contenido' => $guia->contenido,
-                'ejercicios_count' => $totalEjercicios,
-                'ejercicios_faltan' => $faltan,
-                'siguiente_ejercicio' => $siguiente?->ejercicio?->nombre,
-                'veces_completada' => $vecesCompletada,
-                'asignada_el' => $guiaActual->created_at->format('Y-m-d'),
-            ];
-        }
+        $guiaData = $guiaActualView
+            ? $this->buildGuiaData($user, $guiaActualView->guia, $guiaActualView->created_at)
+            : null;
 
         // Estadísticas del usuario
         // Contar clases asistidas: clases reservadas cuya hora_fin ya pasó
@@ -216,6 +201,7 @@ class ClienteDashboardController extends Controller
             'proximasClases' => $proximasClases,
             'historialClases' => $historialClases,
             'guiaActual' => $guiaData,
+            'guiasSemanales' => $guiasSemanales,
             'guiaRecomendadas' => $recomendacionesGuia,
             'nivelCondicion' => $nivelCondicion,
             'estadisticas' => [
@@ -357,5 +343,40 @@ class ClienteDashboardController extends Controller
                 'ejercicios_count' => $guia->guia_ejercicio_count ?? $guia->guiaEjercicio()->count(),
             ];
         });
+    }
+
+    private function buildGuiaData($user, $guia, $asignadaAt): array
+    {
+        $totalEjercicios = $guia->guiaEjercicio()->count();
+
+        $completadosIds = GuiaProgreso::where('user_id', $user->id)
+            ->where('guia_id', $guia->id)
+            ->where('completado', true)
+            ->pluck('guia_ejercicio_id')
+            ->toArray();
+
+        $siguiente = $guia->guiaEjercicio
+            ->sortBy('orden')
+            ->first(function ($item) use ($completadosIds) {
+                return !in_array($item->id, $completadosIds, true);
+            });
+
+        $faltan = max(0, $totalEjercicios - count($completadosIds));
+
+        $vecesCompletada = \App\Models\GuiaCompletada::where('user_id', $user->id)
+            ->where('guia_id', $guia->id)
+            ->count();
+
+        return [
+            'id' => $guia->id,
+            'titulo' => $guia->titulo,
+            'nivel' => $guia->nivel,
+            'contenido' => $guia->contenido,
+            'ejercicios_count' => $totalEjercicios,
+            'ejercicios_faltan' => $faltan,
+            'siguiente_ejercicio' => $siguiente?->ejercicio?->nombre,
+            'veces_completada' => $vecesCompletada,
+            'asignada_el' => optional($asignadaAt)->format('Y-m-d'),
+        ];
     }
 }
