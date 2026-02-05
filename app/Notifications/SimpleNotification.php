@@ -5,6 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class SimpleNotification extends Notification
 {
@@ -23,6 +24,10 @@ class SimpleNotification extends Notification
 
     public function via($notifiable)
     {
+        if (!empty($notifiable->email)) {
+            return ['database', 'mail'];
+        }
+
         return ['database'];
     }
 
@@ -32,6 +37,19 @@ class SimpleNotification extends Notification
             'message' => $this->message,
             'url' => $this->url,
         ], $this->additionalData);
+    }
+
+    public function toMail($notifiable)
+    {
+        $mail = (new MailMessage())
+            ->subject('Nueva notificacion')
+            ->line($this->message);
+
+        if (!empty($this->url)) {
+            $mail->action('Ver detalles', url($this->url));
+        }
+
+        return $mail;
     }
 
     // optional: include broadcast representation if later needed
