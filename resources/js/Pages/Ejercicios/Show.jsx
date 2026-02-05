@@ -20,6 +20,13 @@ export default function Show({ ejercicio }) {
                     )}
 
                     <div className="bg-white rounded-lg shadow p-6">
+                        {ejercicio.imagen_url && (
+                            <img
+                                src={ejercicio.imagen_url}
+                                alt={`Foto de ${ejercicio.nombre}`}
+                                className="mb-4 h-56 w-full rounded-lg object-cover"
+                            />
+                        )}
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">{ejercicio.nombre}</h1>
                         {ejercicio.musculo_objetivo && <p className="text-sm text-gray-600 mb-4">Músculo objetivo: {ejercicio.musculo_objetivo}</p>}
                         {ejercicio.descripcion ? <p className="text-gray-700">{ejercicio.descripcion}</p> : <p className="text-gray-500">Sin descripción.</p>}

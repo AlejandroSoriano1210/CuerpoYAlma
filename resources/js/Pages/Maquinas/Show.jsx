@@ -22,6 +22,13 @@ export default function Show({ maquina }) {
                     )}
 
                     <div className="bg-white rounded-lg shadow p-6">
+                        {maquina.imagen_url && (
+                            <img
+                                src={maquina.imagen_url}
+                                alt={`Foto de ${maquina.nombre}`}
+                                className="mb-4 h-56 w-full rounded-lg object-cover"
+                            />
+                        )}
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">{maquina.nombre}</h1>
                         <p className="text-sm text-gray-600 mb-2">Ubicación: {maquina.ubicacion}</p>
                         <p className="text-sm text-gray-600 mb-4">Estado: <span className="capitalize">{maquina.estado.replaceAll('_', ' ')}</span></p>

@@ -59,11 +59,11 @@ export default function Edit({ horarios }) {
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Encabezado */}
                     <div className="mb-6">
-                        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
                             <Clock className="text-green-600" size={32} />
                             Horarios del Gimnasio
                         </h1>
-                        <p className="text-gray-600 mt-2">
+                        <p className="text-gray-300 mt-2">
                             Configura los horarios de apertura y cierre para cada día de la semana
                         </p>
                     </div>

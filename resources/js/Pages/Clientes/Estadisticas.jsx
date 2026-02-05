@@ -205,7 +205,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
         <AuthenticatedLayout>
             <Head title="Mis Estadísticas" />
 
-            <div className="py-8 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 min-h-screen">
+            <div className="py-8 min-h-screen">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {/* Encabezado con datos del usuario */}
                     <div className="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
@@ -377,7 +377,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                    {hasMetrics ? '🎯 Empezaste así' : '📊 Tus métricas'}
+                                    {hasMetrics ? 'Empezaste así !!!' : '📊 Tus métricas'}
                                 </h2>
                                 <p className="text-gray-700 text-base">
                                     {hasMetrics

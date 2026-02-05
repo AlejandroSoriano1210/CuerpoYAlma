@@ -81,8 +81,8 @@ export default function PanelIndex({ clases, mes, ano, mesNombre }) {
                     {/* Header */}
                     <div className="mb-8 flex justify-between items-center">
                         <div>
-                            <h1 className="text-4xl font-bold text-gray-900">Mi Panel de Entrenador</h1>
-                            <p className="text-gray-600 mt-2">Gestiona tus clases, listas de espera y reservas</p>
+                            <h1 className="text-4xl font-bold text-white">Mi Panel de Entrenador</h1>
+                            <p className="text-gray-300 mt-2">Gestiona tus clases, listas de espera y reservas</p>
                         </div>
 
                         {/* Selector de Estado */}

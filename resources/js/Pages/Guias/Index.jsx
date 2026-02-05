@@ -12,6 +12,7 @@ export default function GuiasIndex() {
     const [musculoObjetivo, setMusculoObjetivo] = useState(filtrosActivos?.musculo_objetivo || '');
     const [isFilteringActive, setIsFilteringActive] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
     // Actualizar filtros cuando cambian los props
     useEffect(() => {
@@ -59,15 +60,15 @@ export default function GuiasIndex() {
         <AuthenticatedLayout>
             <Head title="Guías" />
 
-            <div className="py-12 bg-gray-50 min-h-screen">
+            <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3 mb-2">
+                        <h1 className="text-4xl font-bold text-white flex items-center gap-3 mb-2">
                             <BookOpen className="text-green-600" size={36} />
                             Guías de Ejercicios
                         </h1>
-                        <p className="text-gray-600">Crea, gestiona y asigna guías de entrenamiento personalizadas</p>
+                        <p className="text-gray-300">Crea, gestiona y asigna guías de entrenamiento personalizadas</p>
                     </div>
 
                     {flash?.success && (
@@ -76,80 +77,96 @@ export default function GuiasIndex() {
                         </div>
                     )}
 
-                    {/* Filtros */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-                        <h2 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
-                            <RotateCcw size={20} className="text-gray-600" />
-                            Filtros
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Nivel</label>
-                                <select
-                                    value={nivel}
-                                    onChange={(e) => {
-                                        setNivel(e.target.value);
-                                        setIsFilteringActive(true);
-                                    }}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-                                >
-                                    <option value="">Todos los niveles</option>
-                                    {niveles?.map((n) => (
-                                        <option key={n} value={n}>
-                                            {n.charAt(0).toUpperCase() + n.slice(1)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        {/* Sidebar Filtros */}
+                        <aside className="lg:col-span-3">
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:sticky lg:top-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                                        <RotateCcw size={20} className="text-gray-600" />
+                                        Filtros
+                                    </h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsFiltersOpen((prev) => !prev)}
+                                        className="lg:hidden text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        {isFiltersOpen ? 'Ocultar' : 'Mostrar'}
+                                    </button>
+                                </div>
+                                <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:block`}>
+                                    <div className="grid grid-cols-1 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Nivel</label>
+                                        <select
+                                            value={nivel}
+                                            onChange={(e) => {
+                                                setNivel(e.target.value);
+                                                setIsFilteringActive(true);
+                                            }}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                                        >
+                                            <option value="">Todos los niveles</option>
+                                            {niveles?.map((n) => (
+                                                <option key={n} value={n}>
+                                                    {n.charAt(0).toUpperCase() + n.slice(1)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Músculo objetivo</label>
-                                <select
-                                    value={musculoObjetivo}
-                                    onChange={(e) => {
-                                        setMusculoObjetivo(e.target.value);
-                                        setIsFilteringActive(true);
-                                    }}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
-                                >
-                                    <option value="">Todos los músculos</option>
-                                    {musculos?.map((m) => (
-                                        <option key={m} value={m}>
-                                            {m.charAt(0).toUpperCase() + m.slice(1)}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Músculo objetivo</label>
+                                        <select
+                                            value={musculoObjetivo}
+                                            onChange={(e) => {
+                                                setMusculoObjetivo(e.target.value);
+                                                setIsFilteringActive(true);
+                                            }}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                                        >
+                                            <option value="">Todos los músculos</option>
+                                            {musculos?.map((m) => (
+                                                <option key={m} value={m}>
+                                                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    </div>
 
-                        <div className="flex gap-2">
-                            <button
-                                onClick={limpiarFiltros}
-                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition"
-                            >
-                                Limpiar Filtros
-                            </button>
-                            {hasAnyRole(['entrenador', 'superusuario']) && (
-                                <button
-                                    onClick={() => setIsModalOpen(true)}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center"
-                                >
-                                    + Nueva Guía
-                                </button>
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            onClick={limpiarFiltros}
+                                            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition"
+                                        >
+                                            Limpiar Filtros
+                                        </button>
+                                        {hasAnyRole(['entrenador', 'superusuario']) && (
+                                            <button
+                                                onClick={() => setIsModalOpen(true)}
+                                                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center"
+                                            >
+                                                + Nueva Guía
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+
+                        {/* Contenido */}
+                        <div className="lg:col-span-9">
+                            {flash?.success && (
+                                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                                    {flash.success}
+                                </div>
                             )}
-                        </div>
-                    </div>
 
-                    {flash?.success && (
-                        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                            {flash.success}
-                        </div>
-                    )}
-
-                    {/* Guías Grid */}
-                    <div>
-                        {guias?.data?.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                            {/* Guías Grid */}
+                            <div>
+                                {guias?.data?.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                                 {guias.data.map((guia) => (
                                     <div key={guia.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition border border-gray-100 p-6 flex flex-col">
                                         {/* Header */}
@@ -197,12 +214,12 @@ export default function GuiasIndex() {
                                             )}
                                             {hasAnyRole(['entrenador', 'superusuario']) && (
                                                 <>
-                                                    <Link href={route('guias.edit', guia.id)} className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 rounded-lg transition text-sm">
-                                                        ✎ Editar
+                                                    <Link href={route('guias.edit', guia.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                                        Editar
                                                     </Link>
                                                     <button
                                                         onClick={() => handleDeleteGuia(guia.id, guia.titulo)}
-                                                        className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-lg transition text-sm"
+                                                        className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm"
                                                     >
                                                         Eliminar
                                                     </button>
@@ -212,31 +229,33 @@ export default function GuiasIndex() {
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                                <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
-                                <p className="text-gray-500 text-lg">No hay guías disponibles.</p>
+                                ) : (
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                                        <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
+                                        <p className="text-gray-500 text-lg">No hay guías disponibles.</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    {/* Paginación */}
-                    <div className="mt-8 flex justify-center items-center gap-3">
-                        {guias?.prev_page_url && (
-                            <Link href={route('guias.index', {
-                                page: guias.current_page - 1,
-                                nivel: nivel || undefined,
-                                musculo_objetivo: musculoObjetivo || undefined
-                            })} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition">← Anterior</Link>
-                        )}
-                        <div className="text-sm text-gray-600">Página {guias?.current_page} de {guias?.last_page}</div>
-                        {guias?.next_page_url && (
-                            <Link href={route('guias.index', {
-                                page: guias.current_page + 1,
-                                nivel: nivel || undefined,
-                                musculo_objetivo: musculoObjetivo || undefined
-                            })} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition">Siguiente →</Link>
-                        )}
+                            {/* Paginación */}
+                            <div className="mt-8 flex justify-center items-center gap-3">
+                                {guias?.prev_page_url && (
+                                    <Link href={route('guias.index', {
+                                        page: guias.current_page - 1,
+                                        nivel: nivel || undefined,
+                                        musculo_objetivo: musculoObjetivo || undefined
+                                    })} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition">← Anterior</Link>
+                                )}
+                                <div className="text-sm text-gray-600">Página {guias?.current_page} de {guias?.last_page}</div>
+                                {guias?.next_page_url && (
+                                    <Link href={route('guias.index', {
+                                        page: guias.current_page + 1,
+                                        nivel: nivel || undefined,
+                                        musculo_objetivo: musculoObjetivo || undefined
+                                    })} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg transition">Siguiente →</Link>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

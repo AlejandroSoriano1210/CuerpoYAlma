@@ -83,8 +83,14 @@ export default function ClasesShow({ horario }) {
                         </Link>
 
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                            {horario.nombre}
+                            {horario.nombre_clase}
                         </h1>
+
+                        {horario.tipo_clase && (
+                            <p className="text-lg text-gray-600 mb-4">
+                                Tipo: <span className="font-bold text-gray-900">{horario.tipo_clase}</span>
+                            </p>
+                        )}
 
                         <div className="mb-6 pb-6 border-b">
                             <p className="text-lg text-gray-600">

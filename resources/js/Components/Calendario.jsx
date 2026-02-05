@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Calendario({ mes, ano, horarios, onSelectDate, selectedDate }) {
+export default function Calendario({ mes, ano, horarios, onSelectDate, selectedDate, mostrarSoloTotal = false }) {
     const daysInMonth = (m, y) => new Date(y, m, 0).getDate();
     let firstDay = new Date(ano, mes - 1, 1).getDay();
     firstDay = (firstDay === 0) ? 6 : firstDay - 1;
@@ -66,15 +66,23 @@ export default function Calendario({ mes, ano, horarios, onSelectDate, selectedD
                             {/* Mostrar resumen de disponibilidad */}
                             {info.total > 0 && (
                                 <div className="mt-1 sm:mt-2 flex flex-col gap-0.5 sm:gap-1">
-                                    {info.disponibles > 0 && (
-                                        <div className="text-xs inline-block bg-green-100 text-green-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-center">
-                                            {info.disponibles} libre{info.disponibles > 1 ? 's' : ''}
+                                    {mostrarSoloTotal ? (
+                                        <div className="text-xs inline-block bg-blue-100 text-blue-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-center">
+                                            {info.total} clase{info.total > 1 ? 's' : ''}
                                         </div>
-                                    )}
-                                    {info.completas > 0 && (
-                                        <div className="text-xs inline-block bg-red-100 text-red-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-center">
-                                            {info.completas} completa{info.completas > 1 ? 's' : ''}
-                                        </div>
+                                    ) : (
+                                        <>
+                                            {info.disponibles > 0 && (
+                                                <div className="text-xs inline-block bg-green-100 text-green-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-center">
+                                                    {info.disponibles} libre{info.disponibles > 1 ? 's' : ''}
+                                                </div>
+                                            )}
+                                            {info.completas > 0 && (
+                                                <div className="text-xs inline-block bg-red-100 text-red-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-center">
+                                                    {info.completas} completa{info.completas > 1 ? 's' : ''}
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             )}

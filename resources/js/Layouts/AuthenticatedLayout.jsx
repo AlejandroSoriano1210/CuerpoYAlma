@@ -13,7 +13,7 @@ export default function AuthenticatedLayout({ header, children }) {
         useState(false);
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100">
+        <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#111827] to-green-200">
             <nav className="bg-gray-900 backdrop-blur-md shadow-lg sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
@@ -95,7 +95,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
                             <NotificationsBell />
 
-                            <div className="relative ms-3">
+                            <div className="relative ms-3 mr-3">
                                 <span className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500">
                                     {user.name}
                                 </span>

@@ -6,13 +6,15 @@ import Calendario from "@/Components/Calendario";
 import { Calendar, RotateCcw } from "lucide-react";
 import { validarRequerido } from "@/Utils/validations";
 
-export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, entrenadores }) {
+export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, entrenadores, tiposClases = [] }) {
     const { hasRole } = usaRoleUser();
     const { auth, flash } = usePage().props;
     const [selectedDate, setSelectedDate] = useState(null);
     const [isReservando, setIsReservando] = useState(null); // Track which class is reserving
     const [isCancelando, setIsCancelando] = useState(null); // Track which reservation is canceling
-    const [diasSemana, setDiasSemana] = useState(filtros?.dias_semana || []);
+    const [tipoClaseSeleccionado, setTipoClaseSeleccionado] = useState(filtros?.tipo_clase || '');
+    const [tiposClasesLocal, setTiposClasesLocal] = useState(tiposClases);
+    const [nuevoTipoClase, setNuevoTipoClase] = useState('');
     const [momento, setMomento] = useState(filtros?.momento || "");
     const [modoCrear, setModoCrear] = useState(false); // Estado para modo crear clase
     const [touched, setTouched] = useState({
@@ -38,7 +40,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         hora_inicio: '',
         hora_fin: '',
         descripcion: '',
-        user_id: null,
+        tipo_clase: '',
+        user_id: '',
         semanal: false,
     });
 
@@ -75,15 +78,15 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
     // Validar entrenador si es superusuario
     let entrenadorError = true;
     if (hasRole('superusuario')) {
-        if (!data.user_id) {
+        if (!data.user_id || data.user_id === '') {
             entrenadorError = 'Debes seleccionar un entrenador';
         } else if (data.user_id && data.hora_inicio && data.hora_fin && data.fecha) {
             const entrenador = entrenadores.find(et => et.id == data.user_id);
             if (entrenador && entrenador.horarios && entrenador.horarios.length > 0) {
-                // Obtener día de la semana de la fecha seleccionada (1=Lunes, 6=Sábado)
+                // Obtener día de la semana de la fecha seleccionada
                 const fechaObj = new Date(data.fecha + 'T00:00:00');
                 const diaDelDia = fechaObj.getDay();
-                const diaSemana = diaDelDia === 0 ? 6 : diaDelDia - 1; // Convertir: 0 (domingo) -> 6, 1 (lunes) -> 0
+                const diaSemana = diaDelDia === 0 ? 7 : diaDelDia;
 
                 const horaInicioMinutos = parseInt(data.hora_inicio.split(':')[0]) * 60 + parseInt(data.hora_inicio.split(':')[1]);
                 const horaFinMinutos = parseInt(data.hora_fin.split(':')[0]) * 60 + parseInt(data.hora_fin.split(':')[1]);
@@ -92,8 +95,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                 const tieneHorarioDia = entrenador.horarios.some(horario => {
                     if (horario.dia_semana !== diaSemana) return false;
 
-                    // Parsear el rango de horarios del entrenador
-                    const rangos = horario.horarios.split(',').map(r => r.trim());
+                    // Parsear el rango de horarios del entrenador desde el campo 'rangos'
+                    const rangos = horario.rangos.split(',').map(r => r.trim());
                     return rangos.some(rango => {
                         const [inicio, fin] = rango.split('-').map(h => {
                             const [horas, minutos] = h.trim().split(':').map(Number);
@@ -110,15 +113,6 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
             }
         }
     }
-    const diasSemanaOptions = [
-        { value: 1, label: "Lunes" },
-        { value: 2, label: "Martes" },
-        { value: 3, label: "Miércoles" },
-        { value: 4, label: "Jueves" },
-        { value: 5, label: "Viernes" },
-        { value: 6, label: "Sábado" },
-    ];
-
     const mesAnterior = mes === 1 ? 12 : mes - 1;
     const anoAnterior = mes === 1 ? ano - 1 : ano;
 
@@ -126,10 +120,25 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
     const anoSiguiente = mes === 12 ? ano + 1 : ano;
 
     useEffect(() => {
-        setDiasSemana(filtros?.dias_semana || []);
+        setTipoClaseSeleccionado(filtros?.tipo_clase || '');
         setMomento(filtros?.momento || "");
         setSelectedDate(null);
     }, [filtros]);
+
+    useEffect(() => {
+        setTiposClasesLocal((prev) => {
+            const merged = [...new Set([...(tiposClases || []), ...(prev || [])])];
+            return merged;
+        });
+    }, [tiposClases]);
+
+    const handleAgregarTipoClase = () => {
+        const limpio = nuevoTipoClase.trim();
+        if (!limpio) return;
+        setTiposClasesLocal((prev) => (prev.includes(limpio) ? prev : [...prev, limpio]));
+        setData('tipo_clase', limpio);
+        setNuevoTipoClase('');
+    };
 
     const handleSelectDateForCreation = (fecha) => {
         setSelectedDate(fecha);
@@ -195,8 +204,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         }
 
         post(route('clases.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (response) => {
+                console.log('Clase creada exitosamente:', response);
                 setModoCrear(false);
                 setSelectedDate(null);
                 reset();
@@ -208,6 +217,16 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                     hora_fin: false,
                     user_id: false,
                 });
+                // Recargar la página para ver la nueva clase
+                router.get(window.location.href);
+            },
+            onError: (errors) => {
+                console.log('Error al crear clase:', errors);
+                // Mostrar el primer error disponible
+                const firstError = Object.values(errors)[0];
+                if (firstError) {
+                    alert('Error: ' + firstError);
+                }
             },
         });
     };
@@ -223,10 +242,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
             ano: overrides.ano ?? ano,
         };
 
-        const dias = overrides.diasSemana ?? diasSemana;
+        const tipo = overrides.tipo_clase ?? tipoClaseSeleccionado;
         const mom = overrides.momento ?? momento;
 
-        if (dias?.length) params.dias_semana = dias;
+        if (tipo) params.tipo_clase = tipo;
         if (mom) params.momento = mom;
 
         return params;
@@ -241,26 +260,20 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
     };
 
     const limpiarFiltros = () => {
-        setDiasSemana([]);
+        setTipoClaseSeleccionado('');
         setMomento("");
         setSelectedDate(null);
-        pushFiltros({ diasSemana: [], momento: '' });
+        pushFiltros({ tipo_clase: '', momento: '' });
     };
 
     const horariosFiltrados = useMemo(() => {
         return horarios.filter((h) => {
-            if (diasSemana?.length) {
-                const fecha = new Date(h.fecha.substring(0, 10));
-                const dow = fecha.getDay() === 0 ? 7 : fecha.getDay(); // ISO 1..7
-                if (!diasSemana.includes(dow)) return false;
-            }
-
             if (momento === 'manana' && h.hora_inicio >= '14:00:00') return false;
             if (momento === 'tarde' && h.hora_inicio < '14:00:00') return false;
 
             return true;
         });
-    }, [horarios, diasSemana, momento]);
+    }, [horarios, momento]);
 
     const horariosParaCalendario = useMemo(() => {
         return horariosFiltrados.filter((h) => {
@@ -366,16 +379,16 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         <AuthenticatedLayout>
             <Head title="Clases" />
 
-            <div className="py-12 bg-gray-50 min-h-screen">
-                <div className="mx-64 px-4 sm:px-6 lg:px-8">
+            <div className="py-12 min-h-screen">
+                <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
 
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 mb-2">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-white flex items-center gap-2 sm:gap-3 mb-2">
                             <Calendar className="text-green-600 flex-shrink-0" size={32} />
                             <span>Calendario de Clases</span>
                         </h1>
-                        <p className="text-sm sm:text-base text-gray-600 mt-2">Explora, reserva y gestiona tus clases de entrenamiento</p>
+                        <p className="text-sm sm:text-base text-gray-300 mt-2">Explora, reserva y gestiona tus clases de entrenamiento</p>
                     </div>
 
                     {/* Navegación de meses */}
@@ -444,26 +457,21 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                             </h2>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Días de la semana</label>
-                                    <div className="space-y-2">
-                                        {diasSemanaOptions.map((d) => (
-                                            <label key={d.value} className="inline-flex items-center gap-2 text-sm text-gray-700 w-full cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                                                    checked={diasSemana.includes(d.value)}
-                                                    onChange={(e) => {
-                                                        const next = e.target.checked
-                                                            ? [...diasSemana, d.value]
-                                                            : diasSemana.filter((v) => v !== d.value);
-                                                        setDiasSemana(next);
-                                                        pushFiltros({ diasSemana: next });
-                                                    }}
-                                                />
-                                                <span className="font-medium">{d.label}</span>
-                                            </label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Tipo de Clase</label>
+                                    <select
+                                        value={tipoClaseSeleccionado}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setTipoClaseSeleccionado(value);
+                                            pushFiltros({ tipo_clase: value });
+                                        }}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                                    >
+                                        <option value="">Todas las clases</option>
+                                        {tiposClases.map((tipo) => (
+                                            <option key={tipo} value={tipo}>{tipo}</option>
                                         ))}
-                                    </div>
+                                    </select>
                                 </div>
 
                                 <div>
@@ -486,7 +494,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                 <button
                                     onClick={limpiarFiltros}
                                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={(!diasSemana || diasSemana.length === 0) && !momento}
+                                    disabled={!tipoClaseSeleccionado && !momento}
                                 >
                                     Limpiar Filtros
                                 </button>
@@ -501,6 +509,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                 horarios={horariosParaCalendario}
                                 onSelectDate={handleSelectDateForCreation}
                                 selectedDate={selectedDate}
+                                mostrarSoloTotal={modoCrear}
                             />
                         </div>
 
@@ -522,11 +531,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 value={data.nombre}
                                                 onChange={(e) => setData('nombre', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, nombre: true })}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
-                                                    touched.nombre && nombreError !== true
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.nombre && nombreError !== true
                                                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                                                         : 'border-gray-300'
-                                                }`}
+                                                    }`}
                                                 placeholder="Yoga, Pilates, Zumba..."
                                             />
                                             {touched.nombre && nombreError !== true && (
@@ -544,17 +552,50 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 value={data.capacidad}
                                                 onChange={(e) => setData('capacidad', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, capacidad: true })}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
-                                                    touched.capacidad && capacidadError !== true
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.capacidad && capacidadError !== true
                                                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                                                         : 'border-gray-300'
-                                                }`}
+                                                    }`}
                                                 min="1"
                                                 max="50"
                                             />
                                             {touched.capacidad && capacidadError !== true && (
                                                 <p className="text-red-500 text-sm mt-1">{capacidadError}</p>
                                             )}
+                                        </div>
+
+                                        {/* Tipo de Clase */}
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Tipo de Clase
+                                            </label>
+                                            <select
+                                                value={data.tipo_clase}
+                                                onChange={(e) => setData('tipo_clase', e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                                            >
+                                                <option value="">Seleccionar tipo o crear nuevo...</option>
+                                                {tiposClasesLocal.map((tipo) => (
+                                                    <option key={tipo} value={tipo}>{tipo}</option>
+                                                ))}
+                                            </select>
+                                            <p className="text-xs text-gray-500 mt-1">O crea un tipo nuevo:</p>
+                                            <div className="flex gap-2 mt-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Yoga, Pilates, Zumba, etc."
+                                                    value={nuevoTipoClase}
+                                                    onChange={(e) => setNuevoTipoClase(e.target.value)}
+                                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleAgregarTipoClase}
+                                                className="mt-3 px-2 py-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+                                            >
+                                                Crear tipo
+                                            </button>
                                         </div>
 
                                         {/* Fecha */}
@@ -567,11 +608,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 value={data.fecha}
                                                 onChange={(e) => setData('fecha', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, fecha: true })}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
-                                                    touched.fecha && fechaError !== true
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.fecha && fechaError !== true
                                                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                                                         : 'border-gray-300'
-                                                }`}
+                                                    }`}
                                             />
                                             {touched.fecha && fechaError !== true && (
                                                 <p className="text-red-500 text-sm mt-1">{fechaError}</p>
@@ -593,11 +633,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 value={data.hora_inicio}
                                                 onChange={(e) => setData('hora_inicio', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, hora_inicio: true })}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
-                                                    touched.hora_inicio && horaInicioError !== true
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.hora_inicio && horaInicioError !== true
                                                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                                                         : 'border-gray-300'
-                                                }`}
+                                                    }`}
                                             />
                                             {touched.hora_inicio && horaInicioError !== true && (
                                                 <p className="text-red-500 text-sm mt-1">{horaInicioError}</p>
@@ -614,11 +653,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 value={data.hora_fin}
                                                 onChange={(e) => setData('hora_fin', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, hora_fin: true })}
-                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${
-                                                    touched.hora_fin && horaFinError !== true
+                                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.hora_fin && horaFinError !== true
                                                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                                                         : 'border-gray-300'
-                                                }`}
+                                                    }`}
                                             />
                                             {touched.hora_fin && horaFinError !== true && (
                                                 <p className="text-red-500 text-sm mt-1">{horaFinError}</p>
@@ -632,11 +670,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                     value={data.user_id}
                                                     onChange={(e) => setData('user_id', e.target.value)}
                                                     onBlur={() => setTouched({ ...touched, user_id: true })}
-                                                    className={`w-full px-3 py-2 border rounded-lg ${
-                                                        touched.user_id && entrenadorError !== true
+                                                    className={`w-full px-3 py-2 border rounded-lg ${touched.user_id && entrenadorError !== true
                                                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                                                             : 'border-gray-300'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <option value="">-- Seleccionar --</option>
                                                     {entrenadores.map((et) => (
@@ -694,9 +731,9 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                             <button
                                                 type="submit"
                                                 disabled={processing}
-                                                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition text-sm"
+                                                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition text-m"
                                             >
-                                                {processing ? 'Guardando...' : 'Crear'}
+                                                {processing ? 'Guardando...' : 'Crear clase'}
                                             </button>
                                             <button
                                                 type="button"
@@ -756,6 +793,11 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                                         </span>
                                                                     )}
                                                                 </div>
+                                                                {clase.tipo_clase && (
+                                                                    <p className={`text-xs ${clasePasada ? 'text-gray-500' : 'text-gray-600'} mb-1`}>
+                                                                        <span className="font-semibold">Tipo:</span> {clase.tipo_clase}
+                                                                    </p>
+                                                                )}
                                                                 <p className={`text-sm ${clasePasada ? 'text-gray-500' : 'text-gray-600'}`}>
                                                                     Entrenador: {clase.entrenador}
                                                                 </p>
@@ -846,7 +888,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                                                     "clases.edit",
                                                                                     clase.id
                                                                                 )}
-                                                                                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-center text-sm"
+                                                                                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-2 rounded text-center text-sm"
                                                                             >
                                                                                 Editar
                                                                             </Link>
@@ -871,7 +913,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                                                         );
                                                                                     }
                                                                                 }}
-                                                                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                                                                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm"
                                                                             >
                                                                                 Eliminar
                                                                             </button>

@@ -9,6 +9,7 @@ export default function MaquinaCreateModal({ isOpen, onClose, onSuccess }) {
         descripcion: '',
         ubicacion: '',
         estado: 'operativa',
+        imagen: null,
     });
 
     const [touched, setTouched] = useState({
@@ -28,6 +29,7 @@ export default function MaquinaCreateModal({ isOpen, onClose, onSuccess }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('maquinas.store'), {
+            forceFormData: true,
             onSuccess: () => {
                 handleClose();
                 onSuccess?.();
@@ -124,6 +126,28 @@ export default function MaquinaCreateModal({ isOpen, onClose, onSuccess }) {
                                 rows="4"
                                 placeholder="Detalles sobre la máquina..."
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Foto (opcional)
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={(e) => setData('imagen', e.target.files?.[0] || null)}
+                                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                                    errors.imagen ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                            />
+                            {errors.imagen && <p className="text-red-500 text-sm mt-1">{errors.imagen}</p>}
+                            {data.imagen && (
+                                <img
+                                    src={URL.createObjectURL(data.imagen)}
+                                    alt="Vista previa"
+                                    className="mt-3 h-40 w-full rounded-lg object-cover"
+                                />
+                            )}
                         </div>
 
                         {/* Buttons */}

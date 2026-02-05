@@ -2,11 +2,10 @@ import { useState } from 'react';
 import Modal from '@/Components/Modal';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
-import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Checkbox from '@/Components/Checkbox';
 import { useForm } from '@inertiajs/react';
-import { validarEmail, validarPassword, validarPasswordConfirmation, validarNombre } from '@/Utils/validations';
+import { validarEmail, validarPassword, validarPasswordConfirmation, validarNombre, validarTelefono } from '@/Utils/validations';
 
 export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode }) {
     const isLogin = mode === 'login';
@@ -14,6 +13,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
     const { data, setData, post, processing, reset, clearErrors } = useForm({
         name: '',
         email: '',
+        telefono: '',
         password: '',
         password_confirmation: '',
         remember: false,
@@ -22,6 +22,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
     const [touched, setTouched] = useState({
         name: false,
         email: false,
+        telefono: false,
         password: false,
         password_confirmation: false,
     });
@@ -29,6 +30,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
     // Validaciones en tiempo real
     const nombreError = validarNombre(data.name);
     const emailError = validarEmail(data.email);
+    const telefonoError = validarTelefono(data.telefono, true);
     const passwordError = validarPassword(data.password, 8);
     const passwordConfirmationError = validarPasswordConfirmation(data.password, data.password_confirmation);
 
@@ -38,6 +40,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
         setTouched({
             name: false,
             email: false,
+            telefono: false,
             password: false,
             password_confirmation: false,
         });
@@ -55,6 +58,11 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
 
         if (emailError !== true) {
             setTouched(prev => ({ ...prev, email: true }));
+            return;
+        }
+
+        if (!isLogin && telefonoError !== true) {
+            setTouched(prev => ({ ...prev, telefono: true }));
             return;
         }
 
@@ -90,6 +98,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
         setTouched({
             name: false,
             email: false,
+            telefono: false,
             password: false,
             password_confirmation: false,
         });
@@ -149,6 +158,30 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                             <p className="text-red-500 text-sm mt-1">{emailError}</p>
                         )}
                     </div>
+
+                    {!isLogin && (
+                        <div className="mb-4">
+                            <InputLabel htmlFor="telefono" value="Teléfono (opcional)" />
+                            <TextInput
+                                id="telefono"
+                                type="tel"
+                                name="telefono"
+                                value={data.telefono}
+                                className={`mt-1 block w-full ${
+                                    touched.telefono && telefonoError !== true
+                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                        : ''
+                                }`}
+                                autoComplete="tel"
+                                onChange={(e) => setData('telefono', e.target.value)}
+                                onBlur={() => setTouched({ ...touched, telefono: true })}
+                                placeholder="600123456"
+                            />
+                            {touched.telefono && telefonoError !== true && (
+                                <p className="text-red-500 text-sm mt-1">{telefonoError}</p>
+                            )}
+                        </div>
+                    )}
 
                     <div className="mb-4">
                         <InputLabel htmlFor="password" value="Contraseña" />

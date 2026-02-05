@@ -3,7 +3,7 @@ import Dropdown from "@/Components/Dropdown";
 import { Head, Link, usePage } from "@inertiajs/react";
 import Footer from "@/Components/Footer";
 import Card from "@/Components/Card";
-import { Dumbbell, Users, BookOpen } from "lucide-react";
+import { Dumbbell, Users, BookOpen, Star } from "lucide-react";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
 import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
@@ -134,7 +134,7 @@ export default function Welcome({ auth }) {
                                     <>
                                         <NotificationsBell />
 
-                                        <div className="relative ms-3">
+                                        <div className="relative ms-3 mr-3">
                                             <span className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500">
                                                 {user.name}
                                             </span>
@@ -156,7 +156,7 @@ export default function Welcome({ auth }) {
                                                 setAuthMode('login');
                                                 setShowAuthModal(true);
                                             }}
-                                            className="px-3 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition font-medium"
+                                            className="mr-3 px-3 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300 transition font-medium"
                                         >
                                             Iniciar sesión
                                         </button>
@@ -282,7 +282,7 @@ export default function Welcome({ auth }) {
                             {auth.user ? (
                                 <Link href={route("guias.index")} className="h-full">
                                     <Card
-                                        icon="📚"
+                                        icon={<BookOpen className="text-green-600" size={40} />}
                                         title="Ejercicios"
                                         containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
                                     >
@@ -298,7 +298,7 @@ export default function Welcome({ auth }) {
                                     className="h-full w-full text-left"
                                 >
                                     <Card
-                                        icon="📚"
+                                        icon={<BookOpen className="text-green-600" size={40} />}
                                         title="Ejercicios"
                                         containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition cursor-pointer"
                                     >
@@ -312,7 +312,7 @@ export default function Welcome({ auth }) {
                             {auth.user ? (
                                 <Link href={route("clases.index")} className="h-full">
                                     <Card
-                                        icon="🏋️"
+                                        icon={<Dumbbell className="text-green-600" size={40} />}
                                         title="Clases"
                                         containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
                                     >
@@ -328,7 +328,7 @@ export default function Welcome({ auth }) {
                                     className="h-full w-full text-left"
                                 >
                                     <Card
-                                        icon="🏋️"
+                                        icon={<Dumbbell className="text-green-600" size={40} />}
                                         title="Clases"
                                         containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition cursor-pointer"
                                     >
@@ -341,7 +341,7 @@ export default function Welcome({ auth }) {
                         <div className="transform transition hover:scale-105">
                             <Link href={route("conocenos")} className="h-full">
                                 <Card
-                                    icon="✨"
+                                    icon={<Star className="text-green-600" size={40} />}
                                     title="Conócenos"
                                     containerClassName="bg-white rounded-2xl shadow-lg p-6 h-full hover:shadow-2xl transition"
                                 >

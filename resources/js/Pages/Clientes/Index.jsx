@@ -68,16 +68,16 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
         <AuthenticatedLayout>
             <Head title="Clientes" />
 
-            <div className="py-12 bg-gray-50 min-h-screen">
+            <div className="py-12 min-h-screen">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3 mb-2">
+                        <h1 className="text-4xl font-bold text-white flex items-center gap-3 mb-2">
                             <Users className="text-green-600" size={36} />
                             Clientes
                         </h1>
-                        <p className="text-gray-600">Gestiona el registro y pagos de los clientes del gimnasio</p>
+                        <p className="text-gray-300">Gestiona el registro y pagos de los clientes del gimnasio</p>
                     </div>
 
                     {flash?.success && (

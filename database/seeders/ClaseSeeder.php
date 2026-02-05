@@ -26,10 +26,13 @@ class ClaseSeeder extends Seeder
         }
 
         $tiposClases = [
-            ['nombre' => 'Yoga', 'capacidad' => 15],
-            ['nombre' => 'CrossFit', 'capacidad' => 20],
-            ['nombre' => 'Spinning', 'capacidad' => 20],
-            ['nombre' => 'HIIT', 'capacidad' => 18],
+            ['nombre' => 'Yoga', 'capacidad' => 15, 'tipo_clase' => 'Cuerpo y Mente'],
+            ['nombre' => 'CrossFit', 'capacidad' => 20, 'tipo_clase' => 'Fuerza'],
+            ['nombre' => 'Spinning', 'capacidad' => 20, 'tipo_clase' => 'Cardio'],
+            ['nombre' => 'HIIT', 'capacidad' => 18, 'tipo_clase' => 'Cardio'],
+            ['nombre' => 'Pilates', 'capacidad' => 14, 'tipo_clase' => 'Cuerpo y Mente'],
+            ['nombre' => 'Boxeo', 'capacidad' => 16, 'tipo_clase' => 'Combate'],
+            ['nombre' => 'Zumba', 'capacidad' => 22, 'tipo_clase' => 'Baile'],
         ];
 
         $hoy = now();
@@ -49,6 +52,7 @@ class ClaseSeeder extends Seeder
                 'user_id' => $entrenadores->random()->id,
                 'nombre' => $tipo['nombre'],
                 'capacidad' => $tipo['capacidad'],
+                'tipo_clase' => $tipo['tipo_clase'],
             ]);
 
             $horariosAInsertar = [];

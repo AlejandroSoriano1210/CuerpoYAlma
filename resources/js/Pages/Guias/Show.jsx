@@ -12,6 +12,7 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
     const [mostrarCelebracion, setMostrarCelebracion] = useState(false);
     const [cargandoProgreso, setCargandoProgreso] = useState(true);
     const [animacionCelebracion, setAnimacionCelebracion] = useState(false);
+    const [imagenActiva, setImagenActiva] = useState(null);
 
     // Cargar progreso al montar el componente
     useEffect(() => {
@@ -131,6 +132,17 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                                                         onChange={(e) => manejarCambioCheckbox(g.id, e.target.checked)}
                                                         disabled={cargandoProgreso}
                                                         className="mt-1 w-5 h-5 cursor-pointer"
+                                                    />
+                                                )}
+                                                {g.ejercicio?.imagen_url && (
+                                                    <img
+                                                        src={g.ejercicio.imagen_url}
+                                                        alt={`Foto de ${g.ejercicio.nombre}`}
+                                                        className="w-24 h-24 rounded-lg object-cover flex-shrink-0 cursor-zoom-in"
+                                                        onClick={() => setImagenActiva({
+                                                            url: g.ejercicio.imagen_url,
+                                                            nombre: g.ejercicio.nombre,
+                                                        })}
                                                     />
                                                 )}
                                                 <div className="flex-1">
@@ -264,6 +276,35 @@ export default function Show({ guia, clientes = [], isAssigned = false }) {
                         >
                             Cerrar
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de imagen */}
+            {imagenActiva && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50"
+                    onClick={() => setImagenActiva(null)}
+                >
+                    <div
+                        className="bg-white rounded-lg shadow-2xl max-w-3xl w-full p-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="text-lg font-semibold text-gray-900">{imagenActiva.nombre}</h3>
+                            <button
+                                type="button"
+                                onClick={() => setImagenActiva(null)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <img
+                            src={imagenActiva.url}
+                            alt={`Foto de ${imagenActiva.nombre}`}
+                            className="w-full max-h-[80vh] object-contain rounded"
+                        />
                     </div>
                 </div>
             )}

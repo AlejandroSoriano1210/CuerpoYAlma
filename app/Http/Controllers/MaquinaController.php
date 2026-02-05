@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Maquina;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class MaquinaController extends Controller
@@ -55,7 +56,12 @@ class MaquinaController extends Controller
             'descripcion' => 'nullable|string',
             'ubicacion' => 'required|string|max:255',
             'estado' => 'required|in:operativa,mantenimiento,fuera_de_servicio',
+            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        if ($request->hasFile('imagen')) {
+            $validated['imagen_path'] = $request->file('imagen')->store('maquinas', 'public');
+        }
 
         $maquina = Maquina::create($validated);
 
@@ -92,7 +98,21 @@ class MaquinaController extends Controller
             'descripcion' => 'nullable|string',
             'ubicacion' => 'required|string|max:255',
             'estado' => 'required|in:operativa,mantenimiento,fuera_de_servicio',
+            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'remove_imagen' => 'nullable|boolean',
         ]);
+
+        if ($request->boolean('remove_imagen') && $maquina->imagen_path) {
+            Storage::disk('public')->delete($maquina->imagen_path);
+            $validated['imagen_path'] = null;
+        }
+
+        if ($request->hasFile('imagen')) {
+            if ($maquina->imagen_path) {
+                Storage::disk('public')->delete($maquina->imagen_path);
+            }
+            $validated['imagen_path'] = $request->file('imagen')->store('maquinas', 'public');
+        }
 
         $maquina->update($validated);
 
@@ -120,6 +140,9 @@ class MaquinaController extends Controller
      */
     public function destroy(Maquina $maquina)
     {
+        if ($maquina->imagen_path) {
+            Storage::disk('public')->delete($maquina->imagen_path);
+        }
         $maquina->delete();
         return redirect()->route('maquinas.index')->with('success', 'Máquina eliminada.');
     }
