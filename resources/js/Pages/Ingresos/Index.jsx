@@ -24,6 +24,20 @@ export default function IngresosIndex({ mes, ano, anos, ivaRate, resumen, pagos,
         return tablaActiva === 'ingresos' ? pagos.length : reportes.length;
     }, [tablaActiva, pagos.length, reportes.length]);
 
+    const irAFactura = (pago) => {
+        if (!pago?.cliente_id) return;
+        router.get(route('clientes.show', pago.cliente_id), {
+            pago_id: pago.id,
+        });
+    };
+
+    const handleFilaKeyDown = (event, pago) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            irAFactura(pago);
+        }
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="Ingresos del Mes" />
@@ -147,9 +161,18 @@ export default function IngresosIndex({ mes, ano, anos, ivaRate, resumen, pagos,
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
                                         {pagos.map((pago) => (
-                                            <tr key={pago.id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-3 text-sm text-gray-900 font-medium">{pago.cliente}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-600">{pago.email}</td>
+                                            <tr
+                                                key={pago.id}
+                                                className="hover:bg-gray-50 cursor-pointer"
+                                                onClick={() => irAFactura(pago)}
+                                                onKeyDown={(event) => handleFilaKeyDown(event, pago)}
+                                                role="button"
+                                                tabIndex={0}
+                                            >
+                                                <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                                                    {pago.cliente || 'Cliente eliminado'}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-600">{pago.email || '-'}</td>
                                                 <td className="px-4 py-3 text-sm text-gray-600">
                                                     {new Date(pago.created_at).toLocaleDateString('es-ES', {
                                                         day: '2-digit',

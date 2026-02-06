@@ -15,7 +15,9 @@ class IngresosController extends Controller
         $ano = (int) $request->query('ano', now()->year);
         $ivaRate = 0.21;
 
-        $pagos = Pago::with('user:id,name,email')
+        $pagos = Pago::with(['user' => function ($query) {
+                $query->withTrashed()->select('id', 'name', 'email');
+            }])
             ->where('mes', $mes)
             ->where('ano', $ano)
             ->orderBy('created_at', 'desc')
@@ -57,6 +59,7 @@ class IngresosController extends Controller
             'pagos' => $pagos->map(function ($pago) {
                 return [
                     'id' => $pago->id,
+                    'cliente_id' => $pago->user_id,
                     'cliente' => $pago->user?->name,
                     'email' => $pago->user?->email,
                     'mes' => $pago->mes,

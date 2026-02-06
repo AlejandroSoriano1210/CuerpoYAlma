@@ -89,8 +89,10 @@ class ClienteController extends Controller
         }
     }
 
-    public function show(Request $request, User $cliente)
+    public function show(Request $request, $clienteId)
     {
+        $cliente = User::withTrashed()->findOrFail($clienteId);
+
         if (!$cliente->hasRole('cliente')) {
             return redirect()->back()->withErrors(['error' => 'Este usuario no es un cliente.']);
         }
