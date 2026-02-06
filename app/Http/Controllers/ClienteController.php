@@ -14,6 +14,7 @@ class ClienteController extends Controller
     public function index(Request $request)
     {
         $search = $request->query('search', '');
+        $estadoFiltro = $request->query('estado', 'activos');
 
         // Obtener mes y año actual
         $mesActual = now()->month;
@@ -28,6 +29,12 @@ class ClienteController extends Controller
                 END as ha_pagado_mes_actual")
             );
 
+        if ($estadoFiltro === 'inactivos') {
+            $query->onlyTrashed();
+        } elseif ($estadoFiltro === 'todos') {
+            $query->withTrashed();
+        }
+
         if (!empty($search)) {
             $operator = DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
             $query->where(function ($q) use ($search, $operator) {
@@ -36,13 +43,17 @@ class ClienteController extends Controller
             });
         }
 
-        $clientes = $query->get();
+        $clientes = $query->get()->map(function ($cliente) {
+            $cliente->esta_inactivo = $cliente->deleted_at !== null;
+            return $cliente;
+        });
 
         return Inertia::render('Clientes/Index', [
             'clientes' => $clientes,
             'search' => $search,
             'mesActual' => $mesActual,
             'anoActual' => $anoActual,
+            'estadoFiltro' => $estadoFiltro,
         ]);
     }
 
@@ -195,6 +206,21 @@ class ClienteController extends Controller
         return redirect()
             ->route('clientes.index')
             ->with('success', 'Cliente eliminado correctamente.');
+    }
+
+    public function restore($clienteId)
+    {
+        $cliente = User::withTrashed()->findOrFail($clienteId);
+
+        if (!$cliente->hasRole('cliente')) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un cliente.']);
+        }
+
+        $cliente->restore();
+
+        return redirect()
+            ->route('clientes.index')
+            ->with('success', 'Cliente reactivado correctamente.');
     }
 
     public function marcarPagos(Request $request)

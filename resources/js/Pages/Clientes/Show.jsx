@@ -6,6 +6,10 @@ import { BackLink } from '@/Components';
 export default function ClientesShow({ cliente, mesActual, anoActual }) {
     const [paginaActual, setPaginaActual] = useState(1);
     const pagosPorPagina = 5;
+    const ivaRate = 0.21;
+    const subtotal = cliente.pagoSeleccionado?.monto ?? 0;
+    const ivaAmount = subtotal * ivaRate;
+    const totalConIva = subtotal + ivaAmount;
 
     const mesesNombres = [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -236,10 +240,10 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
                                                     </td>
                                                     <td className="px-4 py-4 text-right text-gray-900">1</td>
                                                     <td className="px-4 py-4 text-right text-gray-900">
-                                                        ${cliente.pagoSeleccionado.monto.toFixed(2)}
+                                                        &euro;{cliente.pagoSeleccionado.monto.toFixed(2)}
                                                     </td>
                                                     <td className="px-4 py-4 text-right font-bold text-gray-900">
-                                                        ${cliente.pagoSeleccionado.monto.toFixed(2)}
+                                                        &euro;{cliente.pagoSeleccionado.monto.toFixed(2)}
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -253,13 +257,19 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
                                                 <div className="flex justify-between mb-2">
                                                     <span className="text-gray-600">Subtotal:</span>
                                                     <span className="text-gray-900">
-                                                        ${cliente.pagoSeleccionado.monto.toFixed(2)}
+                                                        &euro;{subtotal.toFixed(2)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between mb-2">
+                                                    <span className="text-gray-600">IVA (21%):</span>
+                                                    <span className="text-gray-900">
+                                                        &euro;{ivaAmount.toFixed(2)}
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between pt-2 border-t border-gray-200">
                                                     <span className="text-lg font-bold text-gray-900">Total:</span>
                                                     <span className="text-lg font-bold text-green-600">
-                                                        ${cliente.pagoSeleccionado.monto.toFixed(2)}
+                                                        &euro;{totalConIva.toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>

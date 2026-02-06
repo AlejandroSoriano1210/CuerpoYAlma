@@ -5,10 +5,11 @@ import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import { SearchBar, PageHeader, FlashMessage, EmptyState } from '@/Components';
 import { Users, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 
-export default function ClientesIndex({ clientes, search: initialSearch, mesActual, anoActual }) {
+export default function ClientesIndex({ clientes, search: initialSearch, mesActual, anoActual, estadoFiltro: initialEstadoFiltro }) {
     const { hasRole } = usaRoleUser();
     const [modoSeleccion, setModoSeleccion] = useState(false);
     const [clientesSeleccionados, setClientesSeleccionados] = useState([]);
+    const [estadoFiltro, setEstadoFiltro] = useState(initialEstadoFiltro || 'activos');
 
     const esSuperusuario = hasRole('superusuario');
 
@@ -58,6 +59,28 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
         }
     };
 
+    const handleRestore = (id, name) => {
+        if (confirm(`¿Reactivar la cuenta de ${name}?`)) {
+            router.patch(route('clientes.restore', id), {
+                onSuccess: () => {
+                    // El mensaje flash se muestra automáticamente
+                },
+            });
+        }
+    };
+
+    const handleFiltroEstado = (nuevoEstado) => {
+        setEstadoFiltro(nuevoEstado);
+        const params = {};
+        if (initialSearch) params.search = initialSearch;
+        if (nuevoEstado) params.estado = nuevoEstado;
+
+        router.get(route('clientes.index'), params, {
+            preserveState: true,
+            preserveScroll: false,
+        });
+    };
+
     const mesesNombres = [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
@@ -82,7 +105,52 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
 
                     {/* Barra de búsqueda y acciones */}
                     <div className="mb-6">
-                        <SearchBar initialSearch={initialSearch} routeName="clientes.index" />
+                        <SearchBar
+                            initialSearch={initialSearch}
+                            routeName="clientes.index"
+                            extraParams={{ estado: estadoFiltro }}
+                        />
+                    </div>
+
+                    {/* Filtro de estado */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <div className="flex items-center gap-4 flex-wrap">
+                            <label className="text-sm font-medium text-gray-700">
+                                Estado:
+                            </label>
+                            <div className="flex gap-2 flex-wrap">
+                                <button
+                                    onClick={() => handleFiltroEstado('activos')}
+                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                        estadoFiltro === 'activos'
+                                            ? 'bg-gray-800 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    Activos
+                                </button>
+                                <button
+                                    onClick={() => handleFiltroEstado('inactivos')}
+                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                        estadoFiltro === 'inactivos'
+                                            ? 'bg-red-700 text-white'
+                                            : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                    }`}
+                                >
+                                    Inactivos
+                                </button>
+                                <button
+                                    onClick={() => handleFiltroEstado('todos')}
+                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                        estadoFiltro === 'todos'
+                                            ? 'bg-blue-700 text-white'
+                                            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                    }`}
+                                >
+                                    Todos
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Controles */}
@@ -126,7 +194,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                             modoSeleccion ? (
                                 // Grid view for selection mode
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                                    {clientes.map((cliente) => (
+                                        {clientes.map((cliente) => (
                                         <div
                                             key={cliente.id}
                                             onClick={() => toggleCliente(cliente.id)}
@@ -149,6 +217,11 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                                 <div className="flex-1">
                                                     <h3 className="font-bold text-lg text-gray-900">{cliente.name}</h3>
                                                     <p className="text-sm text-gray-600">{cliente.email}</p>
+                                                    {cliente.esta_inactivo && (
+                                                        <span className="inline-block mt-2 text-xs font-bold bg-red-200 text-red-900 px-2 py-1 rounded-full">
+                                                            INACTIVO
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <input
                                                     type="checkbox"
@@ -189,6 +262,11 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                             <div className="mb-4">
                                                 <h3 className="font-bold text-lg text-gray-900 mb-1">{cliente.name}</h3>
                                                 <p className="text-sm text-gray-600">{cliente.email}</p>
+                                                {cliente.esta_inactivo && (
+                                                    <span className="inline-block mt-2 text-xs font-bold bg-red-200 text-red-900 px-2 py-1 rounded-full">
+                                                        INACTIVO
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-3 mb-4 flex-1">
                                                 <div className="text-sm text-gray-600">
@@ -215,16 +293,27 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-                                                <Link
-                                                    href={route('clientes.show', cliente.id)}
-                                                    className="text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
-                                                    Ver
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(cliente.id, cliente.name)}
-                                                    className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-lg transition text-sm">
-                                                    🗑 Eliminar
-                                                </button>
+                                                {!cliente.esta_inactivo && (
+                                                    <>
+                                                        <Link
+                                                            href={route('clientes.show', cliente.id)}
+                                                            className="text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                                            Ver
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleDelete(cliente.id, cliente.name)}
+                                                            className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                                            🗑 Eliminar
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {cliente.esta_inactivo && (
+                                                    <button
+                                                        onClick={() => handleRestore(cliente.id, cliente.name)}
+                                                        className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                                        Reactivar
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}

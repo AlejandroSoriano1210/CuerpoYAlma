@@ -15,6 +15,7 @@ class EntrenadorController extends Controller
     {
         $search = $request->query('search', '');
         $rolFiltro = $request->query('rol', ''); // Filtro por rol
+        $estadoFiltro = $request->query('estado', 'activos');
 
         // Obtener todos los usuarios con roles de empleados (excluyendo superusuario y cliente)
         // Si hay filtro de rol, usar solo ese rol, sino todos
@@ -22,6 +23,12 @@ class EntrenadorController extends Controller
             $query = User::role($rolFiltro);
         } else {
             $query = User::role(['entrenador', 'tecnico', 'limpieza']);
+        }
+
+        if ($estadoFiltro === 'inactivos') {
+            $query->onlyTrashed();
+        } elseif ($estadoFiltro === 'todos') {
+            $query->withTrashed();
         }
 
         if (!empty($search)) {
@@ -43,6 +50,7 @@ class EntrenadorController extends Controller
                 'updated_at' => $user->updated_at,
                 'rol' => $user->roles->first()->name ?? 'sin rol',
                 'estado_empleado' => $user->estado_empleado ?? 'disponible',
+                'esta_inactivo' => $user->deleted_at !== null,
                 'horario_trabajo' => $user->horarioTrabajo->map(function ($h) {
                     return [
                         'dia_semana' => (int) $h->dia_semana,
@@ -57,6 +65,7 @@ class EntrenadorController extends Controller
             'entrenadores' => $entrenadores,
             'search' => $search,
             'rolFiltro' => $rolFiltro,
+            'estadoFiltro' => $estadoFiltro,
         ]);
     }
 
@@ -315,6 +324,22 @@ class EntrenadorController extends Controller
         return redirect()
             ->route('entrenadores.index')
             ->with('success', 'Empleado eliminado correctamente.');
+    }
+
+    public function restore($entrenadorId)
+    {
+        $entrenador = User::withTrashed()->findOrFail($entrenadorId);
+
+        // Verificar que sea un empleado (no superusuario ni cliente)
+        if (!$entrenador->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
+            return redirect()->back()->withErrors(['error' => 'Este usuario no es un empleado.']);
+        }
+
+        $entrenador->restore();
+
+        return redirect()
+            ->route('entrenadores.index')
+            ->with('success', 'Empleado reactivado correctamente.');
     }
 
     public function clasesEntrenador(Request $request)

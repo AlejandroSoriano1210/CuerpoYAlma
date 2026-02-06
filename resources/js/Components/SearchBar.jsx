@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 
-export default function SearchBar({ initialSearch = '', routeName, preserveScroll = true }) {
+export default function SearchBar({ initialSearch = '', routeName, preserveScroll = true, extraParams = {} }) {
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const debounceTimer = useRef(null);
     const inputRef = useRef(null);
@@ -24,11 +24,13 @@ export default function SearchBar({ initialSearch = '', routeName, preserveScrol
 
         // Establecer un nuevo timer
         debounceTimer.current = setTimeout(() => {
-            if (value.trim() === '') {
-                router.get(route(routeName), {}, { preserveScroll });
-            } else {
-                router.get(route(routeName), { search: value }, { preserveScroll });
+            const params = { ...extraParams };
+
+            if (value.trim() !== '') {
+                params.search = value;
             }
+
+            router.get(route(routeName), params, { preserveScroll });
         }, 500);
     };
 
@@ -37,7 +39,7 @@ export default function SearchBar({ initialSearch = '', routeName, preserveScrol
         if (debounceTimer.current) {
             clearTimeout(debounceTimer.current);
         }
-        router.get(route(routeName), {}, { preserveScroll });
+        router.get(route(routeName), { ...extraParams }, { preserveScroll });
     };
 
     return (

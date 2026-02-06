@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import EntrenadorCreateModal from "@/Components/EntrenadorCreateModal";
@@ -28,16 +28,37 @@ const ESTADO_CONFIG = {
     }
 };
 
-export default function Index({ entrenadores, search: initialSearch, rolFiltro: initialRolFiltro }) {
+export default function Index({ entrenadores, search: initialSearch, rolFiltro: initialRolFiltro, estadoFiltro: initialEstadoFiltro }) {
     const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(entrenadores.length > 0 ? entrenadores[0] : null);
     const [rolFiltro, setRolFiltro] = useState(initialRolFiltro || '');
+    const [estadoFiltro, setEstadoFiltro] = useState(initialEstadoFiltro || 'activos');
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        if (!empleadoSeleccionado || !entrenadores.some(e => e.id === empleadoSeleccionado.id)) {
+            setEmpleadoSeleccionado(entrenadores.length > 0 ? entrenadores[0] : null);
+        }
+    }, [entrenadores, empleadoSeleccionado]);
 
     const handleFiltroRol = (nuevoRol) => {
         setRolFiltro(nuevoRol);
         const params = {};
         if (initialSearch) params.search = initialSearch;
         if (nuevoRol) params.rol = nuevoRol;
+        if (estadoFiltro) params.estado = estadoFiltro;
+
+        router.get(route('entrenadores.index'), params, {
+            preserveState: true,
+            preserveScroll: false,
+        });
+    };
+
+    const handleFiltroEstado = (nuevoEstado) => {
+        setEstadoFiltro(nuevoEstado);
+        const params = {};
+        if (initialSearch) params.search = initialSearch;
+        if (rolFiltro) params.rol = rolFiltro;
+        if (nuevoEstado) params.estado = nuevoEstado;
 
         router.get(route('entrenadores.index'), params, {
             preserveState: true,
@@ -57,6 +78,21 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                 },
                 onError: () => {
                     alert("Error al eliminar el empleado");
+                },
+            });
+        }
+    };
+
+    const restaurar = (id, name) => {
+        if (confirm(`¿Reactivar la cuenta de ${name}?`)) {
+            router.patch(route("entrenadores.restore", id), {
+                onSuccess: () => {
+                    if (empleadoSeleccionado?.id === id) {
+                        setEmpleadoSeleccionado({ ...empleadoSeleccionado, esta_inactivo: false });
+                    }
+                },
+                onError: () => {
+                    alert("Error al reactivar el empleado");
                 },
             });
         }
@@ -91,7 +127,14 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
 
                     {/* Barra de búsqueda */}
                     <div className="mb-6">
-                        <SearchBar initialSearch={initialSearch} routeName="entrenadores.index" />
+                        <SearchBar
+                            initialSearch={initialSearch}
+                            routeName="entrenadores.index"
+                            extraParams={{
+                                ...(rolFiltro ? { rol: rolFiltro } : {}),
+                                ...(estadoFiltro ? { estado: estadoFiltro } : {}),
+                            }}
+                        />
                     </div>
 
                     {/* Filtros y Acciones */}
@@ -117,51 +160,84 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 flex-wrap">
-                            <label className="text-sm font-medium text-gray-700">
-                                Filtrar por rol:
-                            </label>
-                            <div className="flex gap-2 flex-wrap">
-                                <button
-                                    onClick={() => handleFiltroRol('')}
-                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                        rolFiltro === ''
-                                            ? 'bg-gray-800 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    Todos {rolFiltro === '' && `(${entrenadores.length})`}
-                                </button>
-                                <button
-                                    onClick={() => handleFiltroRol('entrenador')}
-                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                        rolFiltro === 'entrenador'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                                    }`}
-                                >
-                                    Entrenadores {rolFiltro === 'entrenador' && `(${entrenadores.length})`}
-                                </button>
-                                <button
-                                    onClick={() => handleFiltroRol('tecnico')}
-                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                        rolFiltro === 'tecnico'
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-green-100 text-green-800 hover:bg-green-200'
-                                    }`}
-                                >
-                                    Técnicos {rolFiltro === 'tecnico' && `(${entrenadores.length})`}
-                                </button>
-                                <button
-                                    onClick={() => handleFiltroRol('limpieza')}
-                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                        rolFiltro === 'limpieza'
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
-                                    }`}
-                                >
-                                    Limpieza {rolFiltro === 'limpieza' && `(${entrenadores.length})`}
-                                </button>
+                        <div className="flex flex-row gap-10 flex-wrap">
+                            <div className="flex items-center gap-4 flex-wrap">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Filtrar por rol:
+                                </label>
+                                <div className="flex gap-2 flex-wrap">
+                                    <button
+                                        onClick={() => handleFiltroRol('')}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === ''
+                                                ? 'bg-gray-800 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        Todos {rolFiltro === '' && `(${entrenadores.length})`}
+                                    </button>
+                                    <button
+                                        onClick={() => handleFiltroRol('entrenador')}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === 'entrenador'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                            }`}
+                                    >
+                                        Entrenadores {rolFiltro === 'entrenador' && `(${entrenadores.length})`}
+                                    </button>
+                                    <button
+                                        onClick={() => handleFiltroRol('tecnico')}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === 'tecnico'
+                                                ? 'bg-green-600 text-white'
+                                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                            }`}
+                                    >
+                                        Técnicos {rolFiltro === 'tecnico' && `(${entrenadores.length})`}
+                                    </button>
+                                    <button
+                                        onClick={() => handleFiltroRol('limpieza')}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === 'limpieza'
+                                                ? 'bg-purple-600 text-white'
+                                                : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+                                            }`}
+                                    >
+                                        Limpieza {rolFiltro === 'limpieza' && `(${entrenadores.length})`}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 flex-wrap">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Estado:
+                                </label>
+                                <div className="flex gap-2 flex-wrap">
+                                    <button
+                                        onClick={() => handleFiltroEstado('activos')}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${estadoFiltro === 'activos'
+                                                ? 'bg-gray-800 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        Activos
+                                    </button>
+                                    <button
+                                        onClick={() => handleFiltroEstado('inactivos')}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${estadoFiltro === 'inactivos'
+                                                ? 'bg-red-700 text-white'
+                                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                            }`}
+                                    >
+                                        Inactivos
+                                    </button>
+                                    <button
+                                        onClick={() => handleFiltroEstado('todos')}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${estadoFiltro === 'todos'
+                                                ? 'bg-blue-700 text-white'
+                                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                            }`}
+                                    >
+                                        Todos
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -212,26 +288,46 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                             </div>
 
                                             <div>
-                                                <p className="text-sm font-medium text-gray-500">Estado</p>
+                                                <p className="text-sm font-medium text-gray-500">Estado del empleado</p>
                                                 <StatusBadge
                                                     status={empleadoSeleccionado.estado_empleado || 'disponible'}
                                                     size="md"
                                                 />
+                                                <div className="mt-2">
+                                                    <StatusBadge
+                                                        status={empleadoSeleccionado.esta_inactivo ? 'inactivo' : 'activo'}
+                                                        variant={empleadoSeleccionado.esta_inactivo ? 'danger' : 'success'}
+                                                        label={empleadoSeleccionado.esta_inactivo ? 'Cuenta inactiva' : 'Cuenta activa'}
+                                                        size="sm"
+                                                    />
+                                                </div>
                                             </div>
 
                                             <div className="pt-4 border-t">
-                                                <Link
-                                                    href={route("entrenadores.show", empleadoSeleccionado.id)}
-                                                    className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mb-2"
-                                                >
-                                                    Ver Detalles
-                                                </Link>
-                                                <Link
-                                                    href={route("entrenadores.edit", empleadoSeleccionado.id)}
-                                                    className="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
-                                                >
-                                                    Editar
-                                                </Link>
+                                                {!empleadoSeleccionado.esta_inactivo && (
+                                                    <>
+                                                        <Link
+                                                            href={route("entrenadores.show", empleadoSeleccionado.id)}
+                                                            className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mb-2"
+                                                        >
+                                                            Ver Detalles
+                                                        </Link>
+                                                        <Link
+                                                            href={route("entrenadores.edit", empleadoSeleccionado.id)}
+                                                            className="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
+                                                        >
+                                                            Editar
+                                                        </Link>
+                                                    </>
+                                                )}
+                                                {empleadoSeleccionado.esta_inactivo && (
+                                                    <button
+                                                        onClick={() => restaurar(empleadoSeleccionado.id, empleadoSeleccionado.name)}
+                                                        className="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
+                                                    >
+                                                        Reactivar
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (
@@ -253,11 +349,10 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                             <div
                                                 key={empleado.id}
                                                 onClick={() => setEmpleadoSeleccionado(empleado)}
-                                                className={`p-4 cursor-pointer transition-colors ${
-                                                    empleadoSeleccionado?.id === empleado.id
+                                                className={`p-4 cursor-pointer transition-colors ${empleadoSeleccionado?.id === empleado.id
                                                         ? 'bg-blue-50 border-l-4 border-blue-600'
                                                         : 'hover:bg-gray-50'
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1 min-w-0">
@@ -281,21 +376,41 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                                                 status={empleado.estado_empleado || 'disponible'}
                                                                 size="sm"
                                                             />
+                                                            <StatusBadge
+                                                                status={empleado.esta_inactivo ? 'inactivo' : 'activo'}
+                                                                variant={empleado.esta_inactivo ? 'danger' : 'success'}
+                                                                label={empleado.esta_inactivo ? 'Cuenta inactiva' : 'Cuenta activa'}
+                                                                size="sm"
+                                                            />
                                                         </div>
                                                     </div>
 
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            eliminar(empleado.id, empleado.name);
-                                                        }}
-                                                        className="ml-4 text-red-600 hover:text-red-900"
-                                                        title="Eliminar"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                        </svg>
-                                                    </button>
+                                                    {!empleado.esta_inactivo && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                eliminar(empleado.id, empleado.name);
+                                                            }}
+                                                            className="ml-4 text-red-600 hover:text-red-900"
+                                                            title="Eliminar"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                    {empleado.esta_inactivo && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                restaurar(empleado.id, empleado.name);
+                                                            }}
+                                                            className="ml-4 text-green-600 hover:text-green-800 text-sm font-semibold"
+                                                            title="Reactivar"
+                                                        >
+                                                            Reactivar
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}

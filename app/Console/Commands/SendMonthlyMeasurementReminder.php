@@ -13,14 +13,14 @@ class SendMonthlyMeasurementReminder extends Command
      *
      * @var string
      */
-    protected $signature = 'measurements:send-reminder';
+    protected $signature = 'medidas:recordatorio-mensual';
 
     /**
      * The description of the console command.
      *
      * @var string
      */
-    protected $description = 'Send monthly reminder notification to all clients to update their body measurements';
+    protected $description = 'Enviar notificación mensual de recordatorio a todos los clientes para actualizar sus medidas corporales';
 
     /**
      * Execute the console command.

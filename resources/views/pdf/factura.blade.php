@@ -195,22 +195,33 @@
                 <tr>
                     <td>Membresía Mensual - {{ $mesNombre }} {{ $pago->ano }}</td>
                     <td class="text-right">1</td>
-                    <td class="text-right">${{ number_format($pago->monto ?? 10, 2) }}</td>
-                    <td class="text-right"><strong>${{ number_format($pago->monto ?? 10, 2) }}</strong></td>
+                    <td class="text-right">&euro;{{ number_format($pago->monto ?? 10, 2) }}</td>
+                    <td class="text-right"><strong>&euro;{{ number_format($pago->monto ?? 10, 2) }}</strong></td>
                 </tr>
             </tbody>
         </table>
     </div>
 
+    @php
+        $subtotal = $pago->monto ?? 10;
+        $ivaRate = 0.21;
+        $ivaAmount = $subtotal * $ivaRate;
+        $total = $subtotal + $ivaAmount;
+    @endphp
+
     <div class="total-section">
         <div class="total-box">
             <div class="total-row">
                 <span>Subtotal:</span>
-                <span>${{ number_format($pago->monto ?? 10, 2) }}</span>
+                <span>&euro;{{ number_format($subtotal, 2) }}</span>
+            </div>
+            <div class="total-row">
+                <span>IVA (21%):</span>
+                <span>&euro;{{ number_format($ivaAmount, 2) }}</span>
             </div>
             <div class="total-row final">
                 <span>Total:</span>
-                <span class="amount">${{ number_format($pago->monto ?? 10, 2) }}</span>
+                <span class="amount">&euro;{{ number_format($total, 2) }}</span>
             </div>
         </div>
     </div>

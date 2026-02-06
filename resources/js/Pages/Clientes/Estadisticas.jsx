@@ -543,7 +543,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     <div className="text-center">
                                         <div className="text-5xl mb-3">🌟</div>
                                         <p className="text-indigo-100 text-sm font-bold mb-2">Nivel actual</p>
-                                        <p className="text-2xl font-extrabold text-white mt-2">
+                                        <p className="text-xl font-extrabold text-white mt-2">
                                             {nivelCondicion}
                                         </p>
                                     </div>

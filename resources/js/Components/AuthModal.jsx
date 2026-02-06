@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '@/Components/Modal';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
+import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Checkbox from '@/Components/Checkbox';
 import { useForm } from '@inertiajs/react';
@@ -10,7 +11,7 @@ import { validarEmail, validarPassword, validarPasswordConfirmation, validarNomb
 export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode }) {
     const isLogin = mode === 'login';
 
-    const { data, setData, post, processing, reset, clearErrors } = useForm({
+    const { data, setData, post, processing, reset, clearErrors, errors } = useForm({
         name: '',
         email: '',
         telefono: '',
@@ -105,6 +106,8 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
         onSwitchMode();
     };
 
+    const serverError = errors?.email || errors?.password;
+
     return (
         <Modal show={show} onClose={handleClose} maxWidth="md" closeable={true}>
             <div className="p-6">
@@ -134,6 +137,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                             {touched.name && nombreError !== true && (
                                 <p className="text-red-500 text-sm mt-1">{nombreError}</p>
                             )}
+                            <InputError message={errors?.name} className="mt-1" />
                         </div>
                     )}
 
@@ -157,6 +161,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                         {touched.email && emailError !== true && (
                             <p className="text-red-500 text-sm mt-1">{emailError}</p>
                         )}
+                        <InputError message={errors?.email} className="mt-1" />
                     </div>
 
                     {!isLogin && (
@@ -180,6 +185,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                             {touched.telefono && telefonoError !== true && (
                                 <p className="text-red-500 text-sm mt-1">{telefonoError}</p>
                             )}
+                            <InputError message={errors?.telefono} className="mt-1" />
                         </div>
                     )}
 
@@ -202,6 +208,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                         {touched.password && passwordError !== true && (
                             <p className="text-red-500 text-sm mt-1">{passwordError}</p>
                         )}
+                        <InputError message={errors?.password} className="mt-1" />
                     </div>
 
                     {!isLogin && (
@@ -224,6 +231,7 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                             {touched.password_confirmation && passwordConfirmationError !== true && (
                                 <p className="text-red-500 text-sm mt-1">{passwordConfirmationError}</p>
                             )}
+                            <InputError message={errors?.password_confirmation} className="mt-1" />
                         </div>
                     )}
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\EntrenadorPanelController;
 use App\Http\Controllers\GimnasioHorarioController;
 use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
+use App\Http\Controllers\IngresosController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservaClaseController;
 use App\Http\Controllers\GuiaController;
@@ -151,6 +152,7 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
     Route::get('/entrenadores/{entrenador}/editar', [EntrenadorController::class, 'edit'])->name('entrenadores.edit');
     Route::patch('/entrenadores/{entrenador}', [EntrenadorController::class, 'update'])->name('entrenadores.update');
     Route::delete('/entrenadores/{entrenador}', [EntrenadorController::class, 'destroy'])->name('entrenadores.destroy');
+    Route::patch('/entrenadores/{entrenador}/restaurar', [EntrenadorController::class, 'restore'])->name('entrenadores.restore');
 
     Route::get('/entrenador/horario-trabajo', [HorarioTrabajoController::class, 'index']);
     Route::post('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'store']);
@@ -163,10 +165,13 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
     Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
     Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+    Route::patch('/clientes/{cliente}/restaurar', [ClienteController::class, 'restore'])->name('clientes.restore');
     Route::post('/clientes/marcar-pagos', [ClienteController::class, 'marcarPagos'])->name('clientes.marcarPagos');
     Route::get('/clientes/{cliente}/factura/{pago}/descargar', [ClienteController::class, 'descargarFactura'])->name('clientes.descargarFactura');
     Route::get('/clientes/{cliente}/estadisticas', [ClienteController::class, 'estadisticas'])->name('clientes.estadisticas');
     Route::post('/clientes/{cliente}/mediciones', [ClienteController::class, 'agregarMedicion'])->name('clientes.mediciones.store');
+
+    Route::get('/ingresos', [IngresosController::class, 'index'])->name('ingresos.index');
 });
 
 require __DIR__ . '/auth.php';
