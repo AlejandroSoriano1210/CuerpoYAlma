@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
 
 const DIAS_SEMANA_DEFAULT = [
     { id: 0, nombre: 'Lunes' },
@@ -131,7 +132,7 @@ export default function ScheduleEditor({
 
             {exceedsMaxHours && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
-                    ⚠️ El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de {maxHours} horas.
+                    <AlertTriangle className="w-4 h-4 inline" /> El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de {maxHours} horas.
                 </div>
             )}
 
@@ -212,7 +213,7 @@ export default function ScheduleEditor({
                                             }
                                             className="text-red-600 hover:text-red-900 font-medium text-sm px-3 py-2"
                                         >
-                                            ✕
+                                            <X className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ))}

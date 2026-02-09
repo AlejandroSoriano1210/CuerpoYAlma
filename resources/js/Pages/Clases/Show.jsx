@@ -3,6 +3,7 @@ import { Head, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BackLink, InfoGrid, ReservationStatus } from '@/Components';
 import { formatDate } from '@/Utils/formatDate';
+import { CalendarDays, Clock, Users } from 'lucide-react';
 
 export default function ClasesShow({ horario }) {
     const { auth } = usePage().props;
@@ -81,19 +82,19 @@ export default function ClasesShow({ horario }) {
     const infoItems = [
         {
             label: 'Fecha',
-            icon: '📅',
+            icon: <CalendarDays className="w-5 h-5" />,
             value: formatDate(horario.fecha, 'long'),
             bgColor: 'bg-blue-50',
         },
         {
             label: 'Horario',
-            icon: '⏰',
+            icon: <Clock className="w-5 h-5" />,
             value: `${horario.hora_inicio} - ${horario.hora_fin}`,
             bgColor: 'bg-green-50',
         },
         {
             label: 'Inscritos',
-            icon: '👥',
+            icon: <Users className="w-5 h-5" />,
             value: `${horario.inscritos} / ${horario.capacidad}`,
             bgColor: horario.completa ? 'bg-red-50' : 'bg-green-50',
         },

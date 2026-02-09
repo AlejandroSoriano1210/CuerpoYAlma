@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from './Modal';
+import { AlertTriangle, Zap, Info } from 'lucide-react';
 
 /**
  * ConfirmDialog - Modal de confirmación estilizado
@@ -27,17 +28,17 @@ export default function ConfirmDialog({
 }) {
     const variantConfig = {
         danger: {
-            icon: '⚠️',
+            icon: <AlertTriangle className="w-6 h-6 text-red-600" />,
             buttonClass: 'bg-red-600 hover:bg-red-700',
             iconBg: 'bg-red-100',
         },
         warning: {
-            icon: '⚡',
+            icon: <Zap className="w-6 h-6 text-amber-600" />,
             buttonClass: 'bg-amber-600 hover:bg-amber-700',
             iconBg: 'bg-amber-100',
         },
         info: {
-            icon: 'ℹ️',
+            icon: <Info className="w-6 h-6 text-blue-600" />,
             buttonClass: 'bg-blue-600 hover:bg-blue-700',
             iconBg: 'bg-blue-100',
         },

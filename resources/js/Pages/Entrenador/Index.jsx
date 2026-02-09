@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Head, Link, usePage, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Check, X, Plane, CalendarDays, Clock } from 'lucide-react';
 
 export default function PanelIndex({ clases, mes, ano, mesNombre }) {
     const { auth } = usePage().props;
@@ -32,21 +33,21 @@ export default function PanelIndex({ clases, mes, ano, mesNombre }) {
             color: 'green',
             bgColor: 'bg-green-100',
             textColor: 'text-green-800',
-            icon: '✓'
+            icon: <Check className="w-4 h-4" />
         },
         baja: {
             label: 'De Baja',
             color: 'red',
             bgColor: 'bg-red-100',
             textColor: 'text-red-800',
-            icon: '✕'
+            icon: <X className="w-4 h-4" />
         },
         vacaciones: {
             label: 'De Vacaciones',
             color: 'blue',
             bgColor: 'bg-blue-100',
             textColor: 'text-blue-800',
-            icon: '✈'
+            icon: <Plane className="w-4 h-4" />
         }
     };
 
@@ -197,7 +198,7 @@ export default function PanelIndex({ clases, mes, ano, mesNombre }) {
                                                         )}
                                                     </div>
                                                     <p className={`text-sm ${clasePasada ? 'text-gray-500' : 'text-gray-600'}`}>
-                                                        📅 {new Date(clase.fecha).toLocaleDateString('es-ES', {
+                                                        <CalendarDays className="w-4 h-4 inline" /> {new Date(clase.fecha).toLocaleDateString('es-ES', {
                                                             weekday: 'long',
                                                             year: 'numeric',
                                                             month: 'long',
@@ -205,7 +206,7 @@ export default function PanelIndex({ clases, mes, ano, mesNombre }) {
                                                         })}
                                                     </p>
                                                     <p className={`text-sm ${clasePasada ? 'text-gray-500' : 'text-gray-600'}`}>
-                                                        ⏰ {clase.hora_inicio} - {clase.hora_fin}
+                                                        <Clock className="w-4 h-4 inline" /> {clase.hora_inicio} - {clase.hora_fin}
                                                     </p>
                                                 </div>
 

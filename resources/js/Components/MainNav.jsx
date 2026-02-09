@@ -3,7 +3,7 @@ import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import NotificationsBell from "@/Components/NotificationsBell";
 import { Link, usePage } from "@inertiajs/react";
-import { Settings } from "lucide-react";
+import { Settings, Bell } from "lucide-react";
 import { useState } from "react";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
 
@@ -159,7 +159,18 @@ export default function MainNav({ onAuthModal }) {
                     <div className="hidden sm:ms-6 sm:flex sm:items-center">
                         {user ? (
                             <>
-                                <NotificationsBell />
+                                {hasRole("superusuario") ? (
+                                    <div className="ms-4">
+                                        <Link
+                                            href={route("notificaciones-programadas.index")}
+                                            className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none relative"
+                                        >
+                                            <Bell className="h-5 w-5" />
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <NotificationsBell />
+                                )}
 
                                 {hasRole("superusuario") && (
                                     <div className="ms-3">
@@ -315,6 +326,14 @@ export default function MainNav({ onAuthModal }) {
                             active={route().current("ingresos.index")}
                         >
                             Ingresos
+                        </ResponsiveNavLink>
+                    )}
+                    {hasRole("superusuario") && (
+                        <ResponsiveNavLink
+                            href={route("notificaciones-programadas.index")}
+                            active={route().current("notificaciones-programadas.index")}
+                        >
+                            Notificaciones
                         </ResponsiveNavLink>
                     )}
                     {hasRole("cliente") && (

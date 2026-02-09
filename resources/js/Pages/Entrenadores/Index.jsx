@@ -3,7 +3,7 @@ import { Head, Link, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import EntrenadorCreateModal from "@/Components/EntrenadorCreateModal";
 import { SearchBar, PageHeader, FlashMessage, EmptyState, StatusBadge } from '@/Components';
-import { Users, RotateCcw } from "lucide-react";
+import { Users, RotateCcw, Check, X, Plane, Clock } from "lucide-react";
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -12,19 +12,19 @@ const ESTADO_CONFIG = {
         label: 'Disponible',
         bgColor: 'bg-green-100',
         textColor: 'text-green-800',
-        icon: '✓'
+        icon: <Check className="w-4 h-4" />
     },
     baja: {
         label: 'De Baja',
         bgColor: 'bg-red-100',
         textColor: 'text-red-800',
-        icon: '✕'
+        icon: <X className="w-4 h-4" />
     },
     vacaciones: {
         label: 'De Vacaciones',
         bgColor: 'bg-blue-100',
         textColor: 'text-blue-800',
-        icon: '✈'
+        icon: <Plane className="w-4 h-4" />
     }
 };
 
@@ -149,7 +149,7 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                     href={route("gimnasio-horario.edit")}
                                     className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2"
                                 >
-                                    🕐 Horario del Gimnasio
+                                    <Clock className="w-4 h-4 inline" /> Horario del Gimnasio
                                 </Link>
                                 <button
                                     onClick={() => setIsModalOpen(true)}

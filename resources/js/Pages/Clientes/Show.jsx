@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BackLink } from '@/Components';
+import { CalendarDays, Clock, Check } from 'lucide-react';
 
 export default function ClientesShow({ cliente, mesActual, anoActual }) {
     const [paginaActual, setPaginaActual] = useState(1);
@@ -119,13 +120,13 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
 
                                             <div className="grid grid-cols-2 gap-3 text-sm">
                                                 <div>
-                                                    <span className="text-gray-600">📅 Fecha:</span>
+                                                    <span className="text-gray-600"><CalendarDays className="w-3.5 h-3.5 inline" /> Fecha:</span>
                                                     <p className="font-medium text-gray-900">
                                                         {new Date(clase.fecha).toLocaleDateString('es-ES')}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <span className="text-gray-600">⏰ Horario:</span>
+                                                    <span className="text-gray-600"><Clock className="w-3.5 h-3.5 inline" /> Horario:</span>
                                                     <p className="font-medium text-gray-900">
                                                         {clase.hora_inicio} - {clase.hora_fin}
                                                     </p>
@@ -340,7 +341,7 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                                                                ✓ Pagado
+                                                                <Check className="w-3.5 h-3.5 inline" /> Pagado
                                                             </span>
                                                         </td>
                                                     </tr>

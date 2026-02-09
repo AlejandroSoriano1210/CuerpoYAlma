@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import { SearchBar, PageHeader, FlashMessage, EmptyState } from '@/Components';
-import { Users, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
+import { Users, CreditCard, CheckCircle, AlertCircle, Check, X, RefreshCw, Trash2 } from 'lucide-react';
 
 export default function ClientesIndex({ clientes, search: initialSearch, mesActual, anoActual, estadoFiltro: initialEstadoFiltro }) {
     const { hasRole } = usaRoleUser();
@@ -172,7 +172,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                             : 'bg-green-600 hover:bg-green-700 text-white'
                                             }`}
                                     >
-                                        ✓ Marcar Pagos ({clientesSeleccionados.length})
+                                        <Check className="w-4 h-4 inline" /> Marcar Pagos ({clientesSeleccionados.length})
                                     </button>
                                 )}
                                 <button
@@ -182,7 +182,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                         : 'bg-blue-600 hover:bg-blue-700 text-white'
                                         }`}
                                 >
-                                    {modoSeleccion ? '✕ Cancelar' : '🔄 Registrar Pagos'}
+                                    {modoSeleccion ? <><X className="w-4 h-4 inline" /> Cancelar</> : <><RefreshCw className="w-4 h-4 inline" /> Registrar Pagos</>}
                                 </button>
                             </div>
                         </div>
@@ -277,7 +277,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                                         <div className="bg-green-100 border-l-4 border-green-500 px-4 py-3 rounded flex items-center gap-2">
                                                             <CheckCircle size={20} className="text-green-600 flex-shrink-0" />
                                                             <div>
-                                                                <p className="font-bold text-green-900">✓ Pagado</p>
+                                                                <p className="font-bold text-green-900"><Check className="w-4 h-4 inline" /> Pagado</p>
                                                                 <p className="text-sm text-green-700">{mesesNombres[mesActual - 1]} {anoActual}</p>
                                                             </div>
                                                         </div>
@@ -285,7 +285,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                                         <div className="bg-red-100 border-l-4 border-red-500 px-4 py-3 rounded flex items-center gap-2">
                                                             <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
                                                             <div>
-                                                                <p className="font-bold text-red-900">✗ Pendiente</p>
+                                                                <p className="font-bold text-red-900"><X className="w-4 h-4 inline" /> Pendiente</p>
                                                                 <p className="text-sm text-red-700">{mesesNombres[mesActual - 1]} {anoActual}</p>
                                                             </div>
                                                         </div>
@@ -303,7 +303,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
                                                         <button
                                                             onClick={() => handleDelete(cliente.id, cliente.name)}
                                                             className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-lg transition text-sm">
-                                                            🗑 Eliminar
+                                                            <Trash2 className="w-4 h-4 inline" /> Eliminar
                                                         </button>
                                                     </>
                                                 )}

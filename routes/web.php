@@ -9,6 +9,7 @@ use App\Http\Controllers\GimnasioHorarioController;
 use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
 use App\Http\Controllers\IngresosController;
+use App\Http\Controllers\NotificacionProgramadaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservaClaseController;
 use App\Http\Controllers\GuiaController;
@@ -172,6 +173,13 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
     Route::post('/clientes/{cliente}/mediciones', [ClienteController::class, 'agregarMedicion'])->name('clientes.mediciones.store');
 
     Route::get('/ingresos', [IngresosController::class, 'index'])->name('ingresos.index');
+
+    // Notificaciones programadas (solo superusuario)
+    Route::get('/notificaciones-programadas', [NotificacionProgramadaController::class, 'index'])->name('notificaciones-programadas.index');
+    Route::post('/notificaciones-programadas', [NotificacionProgramadaController::class, 'store'])->name('notificaciones-programadas.store');
+    Route::patch('/notificaciones-programadas/{notificacion}/toggle', [NotificacionProgramadaController::class, 'toggleActiva'])->name('notificaciones-programadas.toggle');
+    Route::post('/notificaciones-programadas/{notificacion}/enviar', [NotificacionProgramadaController::class, 'enviarAhora'])->name('notificaciones-programadas.enviar');
+    Route::delete('/notificaciones-programadas/{notificacion}', [NotificacionProgramadaController::class, 'destroy'])->name('notificaciones-programadas.destroy');
 });
 
 require __DIR__ . '/auth.php';

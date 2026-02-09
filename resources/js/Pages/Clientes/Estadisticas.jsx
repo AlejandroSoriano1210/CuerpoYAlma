@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Card from '@/Components/Card';
 import { validarTelefono } from '@/Utils/validations';
+import { X, Check, Pencil, BarChart3, Weight, Ruler, Calculator, Lock, Target, Hourglass, ClipboardCheck, Star, CalendarDays, Dumbbell, MapPin, Clock, TrendingUp, Save, FileText, BookOpen, AlertTriangle } from 'lucide-react';
 
 export default function Dashboard({ user, metricas, proximasClases, historialClases, guiaActual, guiasSemanales = [], guiaRecomendadas = [], nivelCondicion = 'Sin datos', estadisticas, clasesPorMes }) {
     const { flash } = usePage().props;
@@ -230,11 +231,11 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     onClick={() => setShowProfileForm((prev) => !prev)}
                                     className="inline-flex items-center gap-2 rounded-xl bg-white text-blue-600 px-6 py-3 font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-200"
                                 >
-                                    {showProfileForm ? '✕ Cerrar edición' : 'Editar datos'}
+                                    {showProfileForm ? <><X className="w-4 h-4" /> Cerrar edición</> : <><Pencil className="w-4 h-4" /> Editar datos</>}
                                 </button>
                                 {flash?.profile_success && (
                                     <span className="text-green-700 bg-green-50 border border-green-300 rounded-lg px-4 py-2 text-sm font-semibold shadow-md">
-                                        ✓ {flash.profile_success}
+                                        <Check className="w-4 h-4 inline" /> {flash.profile_success}
                                     </span>
                                 )}
                             </div>
@@ -242,7 +243,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                         {showProfileForm && (
                             <div className="mt-6 border-t border-white/30 pt-6">
-                                <h2 className="text-2xl font-bold text-white mb-6">✏️ Editar datos personales</h2>
+                                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2"><Pencil className="w-6 h-6" /> Editar datos personales</h2>
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
@@ -377,7 +378,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                    {hasMetrics ? 'Empezaste así !!!' : '📊 Tus métricas'}
+                                    {hasMetrics ? 'Empezaste así !!!' : <span className="flex items-center gap-2"><BarChart3 className="w-7 h-7" /> Tus métricas</span>}
                                 </h2>
                                 <p className="text-gray-700 text-base">
                                     {hasMetrics
@@ -387,7 +388,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                             </div>
                             {flash?.success && (
                                 <span className="text-green-700 bg-green-100 border-2 border-green-300 rounded-xl px-4 py-2 text-sm font-bold shadow-md">
-                                    ✓ {flash.success}
+                                    <Check className="w-4 h-4 inline" /> {flash.success}
                                 </span>
                             )}
                         </div>
@@ -468,28 +469,28 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">⚖️ Peso (kg)</label>
+                                    <label className="flex text-sm font-bold text-gray-700 mb-2 items-center gap-1"><Weight className="w-4 h-4" /> Peso (kg)</label>
                                     <div className="text-3xl font-bold text-blue-600">{data.peso_kg}</div>
                                 </div>
 
                                 <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">📏 Altura (cm)</label>
+                                    <label className="flex text-sm font-bold text-gray-700 mb-2 items-center gap-1"><Ruler className="w-4 h-4" /> Altura (cm)</label>
                                     <div className="text-3xl font-bold text-blue-600">{data.altura_cm}</div>
                                 </div>
 
                                 <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">📊 Grasa corporal (%)</label>
+                                    <label className="flex text-sm font-bold text-gray-700 mb-2 items-center gap-1"><BarChart3 className="w-4 h-4" /> Grasa corporal (%)</label>
                                     <div className="text-3xl font-bold text-blue-600">{data.grasa_corporal_pct}</div>
                                 </div>
 
                                 <div className="bg-white/70 rounded-xl p-4 border-2 border-blue-200">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">🧮 IMC</label>
+                                    <label className="flex text-sm font-bold text-gray-700 mb-2 items-center gap-1"><Calculator className="w-4 h-4" /> IMC</label>
                                     <div className="text-3xl font-bold text-blue-600">{imcCalculado || ''}</div>
                                     <p className="text-xs text-gray-500 mt-1">Calculado automáticamente</p>
                                 </div>
 
                                 <div className="md:col-span-4 flex justify-center pt-2">
-                                    <p className="text-sm text-blue-700 font-bold bg-blue-100 px-4 py-2 rounded-xl">🔒 Estos datos no pueden ser modificados</p>
+                                    <p className="text-sm text-blue-700 font-bold bg-blue-100 px-4 py-2 rounded-xl flex items-center gap-2 justify-center"><Lock className="w-4 h-4" /> Estos datos no pueden ser modificados</p>
                                 </div>
                             </div>
                         )}
@@ -501,7 +502,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                                 <Card containerClassName="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
                                     <div className="text-center">
-                                        <div className="text-5xl mb-3">📊</div>
+                                        <div className="mb-3 flex justify-center"><BarChart3 className="w-12 h-12 text-white" /></div>
                                         <p className="text-blue-100 text-sm font-bold mb-2">Clases asistidas</p>
                                         <p className="text-5xl font-extrabold text-white">
                                             {estadisticasDinamicas.total_clases_tomadas}
@@ -511,7 +512,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                                 <Card containerClassName="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
                                     <div className="text-center">
-                                        <div className="text-5xl mb-3">🎯</div>
+                                        <div className="mb-3 flex justify-center"><Target className="w-12 h-12 text-white" /></div>
                                         <p className="text-green-100 text-sm font-bold mb-2">Próximas Clases</p>
                                         <p className="text-5xl font-extrabold text-white">
                                             {estadisticasDinamicas.total_clases_reservadas}
@@ -521,7 +522,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                                 <Card containerClassName="bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
                                     <div className="text-center">
-                                        <div className="text-5xl mb-3">⏳</div>
+                                        <div className="mb-3 flex justify-center"><Hourglass className="w-12 h-12 text-white" /></div>
                                         <p className="text-orange-100 text-sm font-bold mb-2">En Lista de Espera</p>
                                         <p className="text-5xl font-extrabold text-white">
                                             {estadisticasDinamicas.en_lista_espera}
@@ -531,7 +532,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                                 <Card containerClassName="bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
                                     <div className="text-center">
-                                        <div className="text-5xl mb-3">📋</div>
+                                        <div className="mb-3 flex justify-center"><ClipboardCheck className="w-12 h-12 text-white" /></div>
                                         <p className="text-purple-100 text-sm font-bold mb-2">Guías Completadas</p>
                                         <p className="text-5xl font-extrabold text-white">
                                             {estadisticasDinamicas.total_guias_completadas}
@@ -541,7 +542,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                                 <Card containerClassName="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200">
                                     <div className="text-center">
-                                        <div className="text-5xl mb-3">🌟</div>
+                                        <div className="mb-3 flex justify-center"><Star className="w-12 h-12 text-white" /></div>
                                         <p className="text-indigo-100 text-sm font-bold mb-2">Nivel actual</p>
                                         <p className="text-xl font-extrabold text-white mt-2">
                                             {nivelCondicion}
@@ -552,7 +553,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                             {/* Próximas Clases */}
                             <Card
-                                title="📅 Próximas Clases"
+                                title={<span className="flex items-center gap-2"><CalendarDays className="w-5 h-5" /> Próximas Clases</span>}
                                 containerClassName="p-4 bg-white rounded-2xl shadow-xl"
                             >
                                 {proximasClasesFiltradas.length > 0 ? (
@@ -568,14 +569,14 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                                             {clase.nombre}
                                                         </h3>
                                                         <p className="text-gray-600 font-medium text-base mt-1">
-                                                            🏋️ {clase.entrenador}
+                                                            <Dumbbell className="w-4 h-4 inline" /> {clase.entrenador}
                                                         </p>
                                                         <div className="flex items-center gap-4 mt-3">
                                                             <span className="text-sm text-gray-700 font-medium bg-gray-100 px-3 py-1 rounded-lg">
-                                                                📍 {clase.fecha}
+                                                                <MapPin className="w-3.5 h-3.5 inline" /> {clase.fecha}
                                                             </span>
                                                             <span className="text-sm text-gray-700 font-medium bg-gray-100 px-3 py-1 rounded-lg">
-                                                                🕐 {clase.hora_inicio} - {clase.hora_fin}
+                                                                <Clock className="w-3.5 h-3.5 inline" /> {clase.hora_inicio} - {clase.hora_fin}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -630,7 +631,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     </div>
                                 ) : (
                                     <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl">
-                                        <div className="text-6xl mb-4">📅</div>
+                                        <div className="mb-4 flex justify-center"><CalendarDays className="w-16 h-16 text-gray-400" /></div>
                                         <p className="text-gray-700 font-semibold text-lg mb-3">No tienes clases próximas reservadas</p>
                                         <Link
                                             href="/clases"
@@ -644,7 +645,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                             {/* Gráfico de Clases por Mes */}
                             <Card
-                                title="📈 Progreso"
+                                title={<span className="flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Progreso</span>}
                                 containerClassName="bg-white p-5 rounded-2xl shadow-xl"
                                 headerAction={
                                     <div className="flex flex-wrap items-center gap-3">
@@ -665,7 +666,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                             onClick={() => setShowMeasurementForm(!showMeasurementForm)}
                                             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3 text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
                                         >
-                                            {showMeasurementForm ? '✕ Cancelar' : '📊 Registrar Medición'}
+                                            {showMeasurementForm ? <><X className="w-4 h-4" /> Cancelar</> : <><BarChart3 className="w-4 h-4" /> Registrar Medición</>}
                                         </button>
                                     </div>
                                 }
@@ -673,7 +674,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                 {showMeasurementForm && (
                                     <div className="mb-6 p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-300 rounded-2xl shadow-lg">
                                         <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                            📊 Registro de Medición Corporal
+                                            <BarChart3 className="w-5 h-5" /> Registro de Medición Corporal
                                         </h3>
                                         <p className="text-gray-700 text-sm mb-5 bg-white/60 rounded-lg p-3 border border-green-200">
                                             {ultimaMedicion
@@ -700,7 +701,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                             });
                                         }} className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div>
-                                                <label className="block text-sm font-bold text-gray-700 mb-2">⚖️ Peso (kg)</label>
+                                                <label className="flex text-sm font-bold text-gray-700 mb-2 items-center gap-1"><Weight className="w-4 h-4" /> Peso (kg)</label>
                                                 <input
                                                     type="number"
                                                     step="0.1"
@@ -715,7 +716,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-bold text-gray-700 mb-2">📏 Altura (cm)</label>
+                                                <label className="flex text-sm font-bold text-gray-700 mb-2 items-center gap-1"><Ruler className="w-4 h-4" /> Altura (cm)</label>
                                                 <input
                                                     type="number"
                                                     step="0.5"
@@ -730,7 +731,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-bold text-gray-700 mb-2">📊 Grasa corporal (%)</label>
+                                                <label className="flex text-sm font-bold text-gray-700 mb-2 items-center gap-1"><BarChart3 className="w-4 h-4" /> Grasa corporal (%)</label>
                                                 <input
                                                     type="number"
                                                     step="0.1"
@@ -750,7 +751,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                                     disabled={processing}
                                                     className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 shadow-lg hover:shadow-xl transition-all"
                                                 >
-                                                    💾 Guardar
+                                                    <Save className="w-4 h-4" /> Guardar
                                                 </button>
                                             </div>
                                         </form>
@@ -798,7 +799,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                             {/* Historial de Clases */}
                             <Card
-                                title="📝 Historial de Clases"
+                                title={<span className="flex items-center gap-2"><FileText className="w-5 h-5" /> Historial de Clases</span>}
                                 containerClassName="bg-white p-5 rounded-2xl shadow-xl"
                             >
                                 {historialClasesFiltrado.length > 0 ? (
@@ -842,7 +843,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     </div>
                                 ) : (
                                     <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl">
-                                        <div className="text-6xl mb-4">📝</div>
+                                        <div className="mb-4 flex justify-center"><FileText className="w-16 h-16 text-gray-400" /></div>
                                         <p className="text-gray-700 font-semibold text-lg">No hay clases en el historial</p>
                                     </div>
                                 )}
@@ -851,7 +852,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
 
                         {/* Guía Actual / Recomendaciones */}
                         <div>
-                            <Card title="📚 Guía" containerClassName="p-5 bg-white rounded-2xl shadow-xl">
+                            <Card title={<span className="flex items-center gap-2"><BookOpen className="w-5 h-5" /> Guía</span>} containerClassName="p-5 bg-white rounded-2xl shadow-xl">
                                 <p className="text-gray-700 text-sm mb-4 font-medium">Nivel actual: <span className="font-bold text-purple-700 bg-purple-100 px-3 py-1 rounded-lg">{nivelCondicion}</span></p>
 
                                 {guiasSemanales.length > 0 && (
@@ -952,7 +953,7 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     guiasSemanales.length === 0 && (
                                         <div className="space-y-4">
                                             <div className="text-gray-700 text-sm bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
-                                                <p className="font-bold text-yellow-800 mb-2">⚠️ No tienes una guía asignada.</p>
+                                                <p className="font-bold text-yellow-800 mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> No tienes una guía asignada.</p>
                                                 <p className="text-gray-600">Te recomendamos estas opciones según tu nivel:</p>
                                             </div>
 

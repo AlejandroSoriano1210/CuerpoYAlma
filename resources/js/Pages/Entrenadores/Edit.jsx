@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Head, useForm, Link, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { AlertTriangle, X } from 'lucide-react';
 
 const DIAS_SEMANA = [
     { id: 0, nombre: "Lunes" },
@@ -243,7 +244,7 @@ export default function Edit({ entrenador, horarioTrabajo }) {
                                 </div>
                                 {totalHoras > 40 && (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
-                                        ⚠️ El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de 40 horas.
+                                        <AlertTriangle className="w-4 h-4 inline" /> El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de 40 horas.
                                     </div>
                                 )}
                                 {errors.horarios && (
@@ -343,7 +344,7 @@ export default function Edit({ entrenador, horarioTrabajo }) {
                                                                     }
                                                                     className="text-red-600 hover:text-red-900 font-medium text-sm px-3 py-2"
                                                                 >
-                                                                    ✕
+                                                                    <X className="w-4 h-4" />
                                                                 </button>
                                                             </div>
                                                         )
