@@ -53,7 +53,7 @@ export default function Conocenos() {
                                             Clientes
                                         </NavLink>
                                     )}
-                                    {hasRole("entrenador") && (
+                                    {hasAnyRole(["entrenador", "jefe_entrenadores"]) && (
                                         <NavLink
                                             href={route("panel.clases.index")}
                                             active={route().current(
@@ -103,7 +103,7 @@ export default function Conocenos() {
                                             Guías
                                         </button>
                                     )}
-                                    {hasAnyRole(["entrenador", "superusuario"]) && (
+                                    {hasAnyRole(["entrenador", "jefe_entrenadores", "superusuario"]) && (
                                         <NavLink
                                             href={route("ejercicios.index")}
                                             active={route().current(

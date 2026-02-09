@@ -131,7 +131,7 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
                                     {(guia.guia_ejercicio ?? guia.guiaEjercicio ?? []).map((g) => (
                                         <div key={g.id} className={`bg-gray-50 p-4 rounded border transition-all ${progreso[g.id] ? 'bg-green-50 border-green-300' : ''}`}>
                                             <div className="flex items-start gap-3">
-                                                {isAssigned && !hasAnyRole(['entrenador', 'superusuario']) && (
+                                                {isAssigned && !hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario']) && (
                                                     <input
                                                         type="checkbox"
                                                         checked={progreso[g.id] ?? false}
@@ -177,7 +177,7 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
                                 </svg>
                                 Descargar PDF
                             </a>
-                            {!hasAnyRole(['entrenador', 'superusuario']) && (
+                            {!hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario']) && (
                                 <>
                                     {!isAssigned ? (
                                         <>
@@ -208,7 +208,7 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
                                     )}
                                 </>
                             )}
-                            {hasAnyRole(['entrenador', 'superusuario']) && (
+                            {hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario']) && (
                                 <>
                                     <button
                                         onClick={() => setMostrarModal(true)}

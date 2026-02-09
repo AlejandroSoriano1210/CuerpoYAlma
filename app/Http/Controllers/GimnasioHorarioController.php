@@ -13,6 +13,10 @@ class GimnasioHorarioController extends Controller
      */
     public function edit()
     {
+        if (!auth()->user() || !auth()->user()->hasRole('superusuario')) {
+            abort(403, 'No tienes permiso.');
+        }
+
         // Obtener horarios agrupados por día
         $horarios = GimnasioHorario::all();
 
@@ -39,6 +43,10 @@ class GimnasioHorarioController extends Controller
      */
     public function update(Request $request)
     {
+        if (!auth()->user() || !auth()->user()->hasRole('superusuario')) {
+            abort(403, 'No tienes permiso.');
+        }
+
         $validated = $request->validate([
             'horarios' => 'required|array',
             'horarios.*' => 'required|array',

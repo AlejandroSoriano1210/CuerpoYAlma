@@ -46,8 +46,11 @@ class RoleSeeder extends Seeder
         $roles = [
             'superusuario',
             'entrenador',
+            'jefe_entrenadores',
             'tecnico',
+            'jefe_tecnicos',
             'limpieza',
+            'jefe_limpieza',
             'cliente',
         ];
 
@@ -58,13 +61,28 @@ class RoleSeeder extends Seeder
         // --- Asignar permisos a roles ---
         $superusuario = Role::findByName('superusuario');
         $entrenador = Role::findByName('entrenador');
+        $jefeEntrenadores = Role::findByName('jefe_entrenadores');
         $tecnico = Role::findByName('tecnico');
+        $jefeTecnicos = Role::findByName('jefe_tecnicos');
         $limpieza = Role::findByName('limpieza');
+        $jefeLimpieza = Role::findByName('jefe_limpieza');
         $cliente = Role::findByName('cliente');
 
         $superusuario->syncPermissions(Permission::all());
 
         $entrenador->syncPermissions([
+            'crear clase',
+            'editar clase',
+            'eliminar clase',
+            'crear horario clase',
+            'editar horario clase',
+            'eliminar horario clase',
+        ]);
+
+        $jefeEntrenadores->syncPermissions([
+            'crear entrenador',
+            'editar entrenador',
+            'eliminar entrenador',
             'crear clase',
             'editar clase',
             'eliminar clase',
@@ -80,8 +98,23 @@ class RoleSeeder extends Seeder
             'eliminar máquina',
         ]);
 
+        $jefeTecnicos->syncPermissions([
+            'crear entrenador',
+            'editar entrenador',
+            'eliminar entrenador',
+            'crear máquina',
+            'editar máquina',
+            'eliminar máquina',
+        ]);
+
         // Limpieza: sin permisos especiales por ahora
         $limpieza->syncPermissions([]);
+
+        $jefeLimpieza->syncPermissions([
+            'crear entrenador',
+            'editar entrenador',
+            'eliminar entrenador',
+        ]);
 
         $cliente->syncPermissions(['ver guia']);
 
@@ -98,6 +131,36 @@ class RoleSeeder extends Seeder
         $super->assignRole('superusuario');
 
         $this->command->info('✅ Superusuario creado: super@demo.com / password');
+
+        // --- Crear jefes iniciales ---
+        $jefeEntrenadoresUser = User::firstOrCreate(
+            ['email' => 'jefe.entrenadores@demo.com'],
+            [
+                'name' => 'Jefe Entrenadores',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $jefeEntrenadoresUser->assignRole('jefe_entrenadores');
+
+        $jefeTecnicosUser = User::firstOrCreate(
+            ['email' => 'jefe.tecnicos@demo.com'],
+            [
+                'name' => 'Jefe Tecnicos',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $jefeTecnicosUser->assignRole('jefe_tecnicos');
+
+        $jefeLimpiezaUser = User::firstOrCreate(
+            ['email' => 'jefe.limpieza@demo.com'],
+            [
+                'name' => 'Jefe Limpieza',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $jefeLimpiezaUser->assignRole('jefe_limpieza');
+
+        $this->command->info('✅ Jefes creados: jefe.entrenadores@demo.com, jefe.tecnicos@demo.com, jefe.limpieza@demo.com / password');
         $this->command->info('✅ Roles y permisos configurados correctamente.');
     }
 }

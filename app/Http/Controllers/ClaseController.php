@@ -102,7 +102,7 @@ class ClaseController extends Controller
                 'momento' => $momentoValido,
             ],
             'tiposClases' => Clase::whereNotNull('tipo_clase')->distinct()->pluck('tipo_clase')->values(),
-            'entrenadores' => User::role('entrenador')
+            'entrenadores' => User::role(['entrenador', 'jefe_entrenadores'])
                 ->with('horarioTrabajo')
                 ->get()
                 ->map(function ($entrenador) {
@@ -195,7 +195,7 @@ class ClaseController extends Controller
         // Si es superusuario puede asignar el entrenador; si no, es el propio auth user
         if (auth()->user()->hasRole('superusuario') && !empty($validated['user_id'])) {
             $entrenador = User::find($validated['user_id']);
-            if (!$entrenador || !$entrenador->hasRole('entrenador')) {
+            if (!$entrenador || !$entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
                 return back()->with('error', 'Selecciona un entrenador válido.');
             }
             $userId = $validated['user_id'];

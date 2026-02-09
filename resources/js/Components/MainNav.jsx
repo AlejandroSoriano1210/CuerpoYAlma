@@ -89,7 +89,7 @@ export default function MainNav({ onAuthModal }) {
                         </div>
 
                         <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                            {hasRole("superusuario") && (
+                            {hasAnyRole(["superusuario", "jefe_entrenadores", "jefe_tecnicos", "jefe_limpieza"]) && (
                                 <NavLink
                                     href={route("entrenadores.index")}
                                     active={route().current("entrenadores.index")}
@@ -113,7 +113,7 @@ export default function MainNav({ onAuthModal }) {
                                     Ingresos
                                 </NavLink>
                             )}
-                            {hasRole("entrenador") && (
+                            {hasAnyRole(["entrenador", "jefe_entrenadores"]) && (
                                 <NavLink
                                     href={route("panel.clases.index")}
                                     active={route().current("panel.clases.index")}
@@ -139,7 +139,7 @@ export default function MainNav({ onAuthModal }) {
                                         "Guías",
                                         "guias.index"
                                     )}
-                                    {hasAnyRole(["entrenador", "superusuario"]) && (
+                                    {hasAnyRole(["entrenador", "jefe_entrenadores", "superusuario"]) && (
                                         <NavLink
                                             href={route("ejercicios.index")}
                                             active={route().current("ejercicios.index")}
@@ -304,12 +304,12 @@ export default function MainNav({ onAuthModal }) {
                     >
                         Inicio
                     </ResponsiveNavLink>
-                    {hasRole("superusuario") && (
+                    {hasAnyRole(["superusuario", "jefe_entrenadores", "jefe_tecnicos", "jefe_limpieza"]) && (
                         <ResponsiveNavLink
                             href={route("entrenadores.index")}
                             active={route().current("entrenadores.index")}
                         >
-                            Entrenadores
+                            Empleados
                         </ResponsiveNavLink>
                     )}
                     {hasRole("superusuario") && (
@@ -344,7 +344,7 @@ export default function MainNav({ onAuthModal }) {
                             Estadísticas
                         </ResponsiveNavLink>
                     )}
-                    {hasRole("entrenador") && (
+                    {hasAnyRole(["entrenador", "jefe_entrenadores"]) && (
                         <ResponsiveNavLink
                             href={route("panel.clases.index")}
                             active={route().current("panel.clases.index")}
@@ -360,7 +360,7 @@ export default function MainNav({ onAuthModal }) {
                         "Guías",
                         "guias.index"
                     )}
-                    {hasAnyRole(["entrenador", "superusuario"]) && (
+                    {hasAnyRole(["entrenador", "jefe_entrenadores", "superusuario"]) && (
                         <ResponsiveNavLink
                             href={route("ejercicios.index")}
                             active={route().current("ejercicios.index")}

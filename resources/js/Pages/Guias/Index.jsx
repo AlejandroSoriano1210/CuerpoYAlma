@@ -117,7 +117,7 @@ export default function GuiasIndex() {
                                 </select>
                             </div>
 
-                            {hasAnyRole(['entrenador', 'superusuario']) && (
+                            {hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario']) && (
                                 <button
                                     onClick={() => setIsModalOpen(true)}
                                     className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition text-center mt-2"
@@ -162,7 +162,7 @@ export default function GuiasIndex() {
                                             <Link href={route('guias.show', guia.id)} className="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
                                                 Ver
                                             </Link>
-                                            {!hasAnyRole(['entrenador', 'superusuario']) && (
+                                            {!hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario']) && (
                                                 assignedGuiaIds.includes(guia.id) ? (
                                                     <span className="flex-1 text-center bg-purple-100 text-purple-800 font-semibold py-2 px-4 rounded-lg text-sm">
                                                         <Check className="w-4 h-4 inline" /> Asignada
@@ -188,7 +188,7 @@ export default function GuiasIndex() {
                                                     </>
                                                 )
                                             )}
-                                            {hasAnyRole(['entrenador', 'superusuario']) && (
+                                            {hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario']) && (
                                                 <>
                                                     <Link href={route('guias.edit', guia.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
                                                         Editar
@@ -210,7 +210,7 @@ export default function GuiasIndex() {
                                         icon={<BookOpen size={48} />}
                                         message="No hay guías disponibles."
                                         action={
-                                            hasAnyRole(['entrenador', 'superusuario']) && (
+                                            hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario']) && (
                                                 <button
                                                     onClick={() => setIsModalOpen(true)}
                                                     className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition"

@@ -194,7 +194,7 @@ class NotificacionProgramadaController extends Controller
         return match ($notificacion->destinatarios) {
             'todos' => User::all(),
             'clientes' => User::role('cliente')->get(),
-            'empleados' => User::role(['entrenador', 'tecnico', 'limpieza'])->get(),
+            'empleados' => User::role(['entrenador', 'jefe_entrenadores', 'tecnico', 'jefe_tecnicos', 'limpieza', 'jefe_limpieza'])->get(),
             'entrenadores' => User::role('entrenador')->get(),
             'tecnicos' => User::role('tecnico')->get(),
             'limpieza' => User::role('limpieza')->get(),

@@ -7,7 +7,7 @@ import { Calendar, RotateCcw, X, CalendarDays, AlertTriangle, Clock, Users } fro
 import { validarRequerido } from "@/Utils/validations";
 
 export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, entrenadores, tiposClases = [] }) {
-    const { hasRole } = usaRoleUser();
+    const { hasRole, hasAnyRole } = usaRoleUser();
     const { auth, flash } = usePage().props;
     const [selectedDate, setSelectedDate] = useState(null);
     const [isReservando, setIsReservando] = useState(null); // Track which class is reserving
@@ -75,9 +75,9 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         }
     }
 
-    // Validar entrenador si es superusuario
+    // Validar entrenador si es superusuario o jefe de entrenadores
     let entrenadorError = true;
-    if (hasRole('superusuario')) {
+    if (hasAnyRole(['superusuario', 'jefe_entrenadores'])) {
         if (!data.user_id || data.user_id === '') {
             entrenadorError = 'Debes seleccionar un entrenador';
         } else if (data.user_id && data.hora_inicio && data.hora_fin && data.fecha) {
@@ -197,8 +197,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
             return;
         }
 
-        // Validar entrenador si es superusuario
-        if (hasRole('superusuario') && entrenadorError !== true) {
+        // Validar entrenador si es superusuario o jefe de entrenadores
+        if (hasAnyRole(['superusuario', 'jefe_entrenadores']) && entrenadorError !== true) {
             setTouched(prev => ({ ...prev, user_id: true }));
             return;
         }
@@ -291,7 +291,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         : [];
 
     const canEdit = (clase) => {
-        return auth.user.id === clase.entrenador_id || hasRole("superusuario");
+        return auth.user.id === clase.entrenador_id || hasAnyRole(["superusuario", "jefe_entrenadores"]);
     };
 
     const yaInscrito = (clase) => {
@@ -450,7 +450,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
                         {/* Filtros a la izquierda */}
-                        <div className="md:col-span-1 lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                        <div className="md:col-span-1 lg:col-span-1 h-fit bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
                             <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <RotateCcw size={20} className="text-gray-600 flex-shrink-0" />
                                 Filtros
@@ -502,7 +502,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                         </div>
 
                         {/* Calendario en el centro */}
-                        <div className="md:col-span-1 lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 overflow-x-auto">
+                        <div className="md:col-span-1 lg:col-span-3 h-fit bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 overflow-x-auto">
                             <Calendario
                                 mes={mes}
                                 ano={ano}
@@ -514,7 +514,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                         </div>
 
                         {/* Panel lateral con clases del día o formulario a la derecha */}
-                        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div className="lg:col-span-1 w-fit bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                             {modoCrear ? (
                                 // Formulario de creación de clase
                                 <>
@@ -663,7 +663,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                             )}
                                         </div>
 
-                                        {entrenadores && entrenadores.length > 0 && hasRole('superusuario') && (
+                                        {entrenadores && entrenadores.length > 0 && hasAnyRole(['superusuario', 'jefe_entrenadores']) && (
                                             <div className="mb-6">
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Asignar Entrenador</label>
                                                 <select

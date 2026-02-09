@@ -8,7 +8,7 @@ import AuthModal from "@/Components/AuthModal";
 import MainNav from "@/Components/MainNav";
 
 export default function Welcome({ auth }) {
-    const { hasRole } = usaRoleUser();
+    const { hasRole, hasAnyRole } = usaRoleUser();
     const [showAuthModal, setShowAuthModal] = React.useState(false);
     const [authMode, setAuthMode] = React.useState('login');
 
@@ -65,7 +65,7 @@ export default function Welcome({ auth }) {
                             </div>
                         )}
 
-                        {auth.user && hasRole("entrenador") && (
+                        {auth.user && hasAnyRole(["entrenador", "jefe_entrenadores"]) && (
                             <div className="mt-8">
                                 <Link
                                     href={route("panel.clases.index")}

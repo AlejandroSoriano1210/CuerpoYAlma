@@ -4,6 +4,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import EntrenadorCreateModal from "@/Components/EntrenadorCreateModal";
 import { SearchBar, PageHeader, FlashMessage, EmptyState, StatusBadge } from '@/Components';
 import { Users, RotateCcw, Check, X, Plane, Clock } from "lucide-react";
+import { usaRoleUser } from "@/Hooks/usaRoleUser";
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -28,7 +29,26 @@ const ESTADO_CONFIG = {
     }
 };
 
-export default function Index({ entrenadores, search: initialSearch, rolFiltro: initialRolFiltro, estadoFiltro: initialEstadoFiltro }) {
+const ROLE_LABELS = {
+    entrenador: 'Entrenadores',
+    jefe_entrenadores: 'Jefes de Entrenadores',
+    tecnico: 'Técnicos',
+    jefe_tecnicos: 'Jefes de Técnicos',
+    limpieza: 'Limpieza',
+    jefe_limpieza: 'Jefes de Limpieza',
+};
+
+const ROLE_COLORS = {
+    entrenador: { bg: 'bg-blue-100', text: 'text-blue-800' },
+    jefe_entrenadores: { bg: 'bg-blue-200', text: 'text-blue-900' },
+    tecnico: { bg: 'bg-green-100', text: 'text-green-800' },
+    jefe_tecnicos: { bg: 'bg-green-200', text: 'text-green-900' },
+    limpieza: { bg: 'bg-purple-100', text: 'text-purple-800' },
+    jefe_limpieza: { bg: 'bg-purple-200', text: 'text-purple-900' },
+};
+
+export default function Index({ entrenadores, search: initialSearch, rolFiltro: initialRolFiltro, estadoFiltro: initialEstadoFiltro, rolesDisponibles = [] }) {
+    const { hasRole } = usaRoleUser();
     const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(entrenadores.length > 0 ? entrenadores[0] : null);
     const [rolFiltro, setRolFiltro] = useState(initialRolFiltro || '');
     const [estadoFiltro, setEstadoFiltro] = useState(initialEstadoFiltro || 'activos');
@@ -145,12 +165,14 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                 Filtros
                             </h2>
                             <div className="flex gap-3">
-                                <Link
-                                    href={route("gimnasio-horario.edit")}
-                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2"
-                                >
-                                    <Clock className="w-4 h-4 inline" /> Horario del Gimnasio
-                                </Link>
+                                {hasRole('superusuario') && (
+                                    <Link
+                                        href={route("gimnasio-horario.edit")}
+                                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2"
+                                    >
+                                        <Clock className="w-4 h-4 inline" /> Horario del Gimnasio
+                                    </Link>
+                                )}
                                 <button
                                     onClick={() => setIsModalOpen(true)}
                                     className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
@@ -175,33 +197,18 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                     >
                                         Todos {rolFiltro === '' && `(${entrenadores.length})`}
                                     </button>
-                                    <button
-                                        onClick={() => handleFiltroRol('entrenador')}
-                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === 'entrenador'
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                                            }`}
-                                    >
-                                        Entrenadores {rolFiltro === 'entrenador' && `(${entrenadores.length})`}
-                                    </button>
-                                    <button
-                                        onClick={() => handleFiltroRol('tecnico')}
-                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === 'tecnico'
-                                                ? 'bg-green-600 text-white'
-                                                : 'bg-green-100 text-green-800 hover:bg-green-200'
-                                            }`}
-                                    >
-                                        Técnicos {rolFiltro === 'tecnico' && `(${entrenadores.length})`}
-                                    </button>
-                                    <button
-                                        onClick={() => handleFiltroRol('limpieza')}
-                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === 'limpieza'
-                                                ? 'bg-purple-600 text-white'
-                                                : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
-                                            }`}
-                                    >
-                                        Limpieza {rolFiltro === 'limpieza' && `(${entrenadores.length})`}
-                                    </button>
+                                    {rolesDisponibles.map((rol) => (
+                                        <button
+                                            key={rol}
+                                            onClick={() => handleFiltroRol(rol)}
+                                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${rolFiltro === rol
+                                                    ? 'bg-gray-800 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                        >
+                                            {ROLE_LABELS[rol] || rol} {rolFiltro === rol && `(${entrenadores.length})`}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
@@ -278,11 +285,7 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                                 <p className="text-sm font-medium text-gray-500">Rol</p>
                                                 <StatusBadge
                                                     status={empleadoSeleccionado.rol}
-                                                    customColors={{
-                                                        entrenador: { bg: 'bg-blue-100', text: 'text-blue-800' },
-                                                        tecnico: { bg: 'bg-green-100', text: 'text-green-800' },
-                                                        limpieza: { bg: 'bg-purple-100', text: 'text-purple-800' },
-                                                    }}
+                                                    customColors={ROLE_COLORS}
                                                     size="md"
                                                 />
                                             </div>
@@ -365,11 +368,7 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                                         <div className="mt-1 flex items-center gap-2">
                                                             <StatusBadge
                                                                 status={empleado.rol}
-                                                                customColors={{
-                                                                    entrenador: { bg: 'bg-blue-100', text: 'text-blue-800' },
-                                                                    tecnico: { bg: 'bg-green-100', text: 'text-green-800' },
-                                                                    limpieza: { bg: 'bg-purple-100', text: 'text-purple-800' },
-                                                                }}
+                                                                customColors={ROLE_COLORS}
                                                                 size="sm"
                                                             />
                                                             <StatusBadge
@@ -478,6 +477,7 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={() => router.reload()}
+                rolesDisponibles={rolesDisponibles}
             />
         </AuthenticatedLayout>
     );

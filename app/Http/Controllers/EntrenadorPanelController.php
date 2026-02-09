@@ -206,7 +206,7 @@ class EntrenadorPanelController extends Controller
         $user = auth()->user();
 
         // Verificar que el usuario sea un empleado
-        if (!$user->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
+        if (!$user->hasAnyRole(['entrenador', 'jefe_entrenadores', 'tecnico', 'jefe_tecnicos', 'limpieza', 'jefe_limpieza'])) {
             return back()->withErrors(['error' => 'Solo los empleados pueden cambiar su estado.']);
         }
 

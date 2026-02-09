@@ -29,7 +29,16 @@ const calcularTotalHoras = (horarios) => {
     return total;
 };
 
-export default function EntrenadorCreateModal({ isOpen, onClose, onSuccess }) {
+const ROLE_LABELS = {
+    entrenador: 'Entrenador',
+    jefe_entrenadores: 'Jefe de entrenadores',
+    tecnico: 'Técnico',
+    jefe_tecnicos: 'Jefe de técnicos',
+    limpieza: 'Limpieza',
+    jefe_limpieza: 'Jefe de limpieza',
+};
+
+export default function EntrenadorCreateModal({ isOpen, onClose, onSuccess, rolesDisponibles = [] }) {
     const [horariosPorDia, setHorariosPorDia] = useState({
         0: [],
         1: [],
@@ -54,7 +63,7 @@ export default function EntrenadorCreateModal({ isOpen, onClose, onSuccess }) {
         telefono: '',
         password: '',
         password_confirmation: '',
-        rol: 'entrenador',
+        rol: rolesDisponibles[0] || 'entrenador',
         horarios: [],
     });
 
@@ -258,9 +267,11 @@ export default function EntrenadorCreateModal({ isOpen, onClose, onSuccess }) {
                                     onChange={(e) => setData('rol', e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                                 >
-                                    <option value="entrenador">Entrenador</option>
-                                    <option value="tecnico">Técnico</option>
-                                    <option value="limpieza">Limpieza</option>
+                                    {rolesDisponibles.map((rol) => (
+                                        <option key={rol} value={rol}>
+                                            {ROLE_LABELS[rol] || rol}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 

@@ -24,10 +24,10 @@ class HorarioClaseController extends Controller
      */
     public function create()
     {
-        // Si es superusuario, pasar lista de entrenadores para asignación
+        // Si es superusuario o jefe de entrenadores, pasar lista de entrenadores para asignación
         $entrenadores = null;
-        if (auth()->user()->hasRole('superusuario')) {
-            $entrenadores = \App\Models\User::role('entrenador')
+        if (auth()->user()->hasAnyRole(['superusuario', 'jefe_entrenadores'])) {
+            $entrenadores = \App\Models\User::role(['entrenador', 'jefe_entrenadores'])
                 ->with('horarioTrabajo')
                 ->get()
                 ->map(function ($entrenador) {
@@ -79,10 +79,10 @@ class HorarioClaseController extends Controller
             'semanal' => 'nullable|boolean',
         ]);
 
-        // Si es superusuario puede asignar el entrenador; si no, es el propio auth user
-        if (auth()->user()->hasRole('superusuario') && !empty($validated['user_id'])) {
+        // Si es superusuario o jefe de entrenadores puede asignar el entrenador; si no, es el propio auth user
+        if (auth()->user()->hasAnyRole(['superusuario', 'jefe_entrenadores']) && !empty($validated['user_id'])) {
             $entrenador = \App\Models\User::find($validated['user_id']);
-            if (!$entrenador || !$entrenador->hasRole('entrenador')) {
+            if (!$entrenador || !$entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
                 return redirect()->back()->with('error', 'Selecciona un entrenador válido.');
             }
             $userId = $validated['user_id'];
@@ -293,12 +293,48 @@ class HorarioClaseController extends Controller
     public function edit(HorarioClase $horarioClase)
     {
         // Verificar permisos
-        if ($horarioClase->user_id !== auth()->id() && !auth()->user()->hasRole('superusuario')) {
+        if (
+            $horarioClase->user_id !== auth()->id()
+            && !auth()->user()->hasAnyRole(['superusuario', 'jefe_entrenadores'])
+        ) {
             return redirect()->back()->withErrors(['error' => 'No tienes permiso para editar esta clase.']);
+        }
+
+        $canChangeTrainer = auth()->user()->hasAnyRole(['superusuario', 'jefe_entrenadores']);
+        $entrenadores = null;
+
+        if ($canChangeTrainer) {
+            $entrenadores = \App\Models\User::role(['entrenador', 'jefe_entrenadores'])
+                ->with('horarioTrabajo')
+                ->get()
+                ->map(function ($entrenador) {
+                    return [
+                        'id' => $entrenador->id,
+                        'name' => $entrenador->name,
+                        'horarios' => $entrenador->horarioTrabajo
+                            ->groupBy('dia_semana')
+                            ->map(function ($horariosDelDia, $dia) {
+                                $diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                                $nombreDia = is_numeric($dia) ? $diasSemana[(int)$dia] : $dia;
+
+                                $horarios = $horariosDelDia->map(function ($h) {
+                                    return substr($h->hora_inicio, 0, 5) . ' - ' . substr($h->hora_fin, 0, 5);
+                                })->join(' / ');
+
+                                return [
+                                    'dia' => $nombreDia,
+                                    'horarios' => $horarios,
+                                ];
+                            })
+                            ->values(),
+                    ];
+                });
         }
 
         return Inertia::render('Clases/Edit', [
             'horario' => $horarioClase,
+            'entrenadores' => $entrenadores,
+            'canChangeTrainer' => $canChangeTrainer,
         ]);
     }
 
@@ -306,7 +342,10 @@ class HorarioClaseController extends Controller
     public function update(Request $request, HorarioClase $horarioClase)
     {
         // Verificar permisos
-        if ($horarioClase->user_id !== auth()->id() && !auth()->user()->hasRole('superusuario')) {
+        if (
+            $horarioClase->user_id !== auth()->id()
+            && !auth()->user()->hasAnyRole(['superusuario', 'jefe_entrenadores'])
+        ) {
             return redirect()->back()->withErrors(['error' => 'No tienes permiso.']);
         }
 
@@ -319,6 +358,23 @@ class HorarioClaseController extends Controller
             'descripcion' => 'nullable|string',
         ]);
 
+        $canChangeTrainer = auth()->user()->hasAnyRole(['superusuario', 'jefe_entrenadores']);
+        $targetUserId = $horarioClase->user_id;
+
+        if ($canChangeTrainer && $request->filled('user_id')) {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+            ]);
+
+            $entrenador = \App\Models\User::find($request->input('user_id'));
+            if (!$entrenador || !$entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
+                return redirect()->back()->with('error', 'Selecciona un entrenador válido.');
+            }
+
+            $targetUserId = $entrenador->id;
+            $validated['user_id'] = $targetUserId;
+        }
+
         // Validar que la clase esté dentro del horario de trabajo del entrenador
         $fecha = Carbon::parse($validated['fecha']);
         // El frontend usa: 0=Lunes, 1=Martes, ..., 5=Sábado
@@ -326,7 +382,7 @@ class HorarioClaseController extends Controller
         // Convertir: restar 1 para alinear (1=Lunes en Carbon → 0=Lunes en frontend)
         $diaSemana = (string)(($fecha->dayOfWeek() - 1 + 7) % 7); // Shift para que 1 (Lunes) sea 0
 
-        $horarioTrabajo = \App\Models\HorarioTrabajo::where('user_id', $horarioClase->user_id)
+        $horarioTrabajo = \App\Models\HorarioTrabajo::where('user_id', $targetUserId)
             ->where('dia_semana', $diaSemana)
             ->first();
 
@@ -353,11 +409,12 @@ class HorarioClaseController extends Controller
             $horarioClase->clase()->update([
                 'nombre' => $validated['nombre'],
                 'capacidad' => $validated['capacidad'],
+                'user_id' => $targetUserId,
             ]);
         } else {
             // Crear nueva Clase si no existía
             $clase = \App\Models\Clase::create([
-                'user_id' => $horarioClase->user_id,
+                'user_id' => $targetUserId,
                 'nombre' => $validated['nombre'],
                 'capacidad' => $validated['capacidad'],
             ]);

@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/clases', [ClaseController::class, 'index'])->name('clases.index');
-    Route::middleware('role:superusuario|entrenador')->group(function () {
+    Route::middleware('role:superusuario|entrenador|jefe_entrenadores')->group(function () {
         Route::get('/clases/crear', [HorarioClaseController::class, 'create'])->name('clases.create');
         Route::post('/clases', [HorarioClaseController::class, 'store'])->name('clases.store');
         Route::get('/clases/{horarioClase}/editar', [HorarioClaseController::class, 'edit'])->name('clases.edit');
@@ -77,7 +77,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/lista-espera/{listaEspera}/cancelar', [ReservaClaseController::class, 'cancelarListaEspera']);
 
     // Promover de lista de espera (solo entrenadores)
-    Route::middleware('role:entrenador|superusuario')->group(function () {
+    Route::middleware('role:entrenador|jefe_entrenadores|superusuario')->group(function () {
         Route::patch('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera'])->name('lista-espera.promover');
         Route::post('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera']);
     });
@@ -85,7 +85,7 @@ Route::middleware('auth')->group(function () {
     // Guias de ejercicios
     Route::get('/guias', [GuiaController::class, 'index'])->name('guias.index');
 
-    Route::middleware('role:superusuario|entrenador')->group(function () {
+    Route::middleware('role:superusuario|entrenador|jefe_entrenadores')->group(function () {
         Route::get('/guias/crear', [GuiaController::class, 'create'])->name('guias.create');
         Route::post('/guias', [GuiaController::class, 'store'])->name('guias.store');
         Route::get('/guias/{guia}/editar', [GuiaController::class, 'edit'])->name('guias.edit');
@@ -101,7 +101,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/guias/{guia}/save-progress', [GuiaController::class, 'saveProgress'])->name('guias.save-progress');
     Route::get('/guias/{guia}/get-progress', [GuiaController::class, 'getProgress'])->name('guias.get-progress');
 
-    Route::middleware('role:superusuario|entrenador')->group(function () {
+    Route::middleware('role:superusuario|entrenador|jefe_entrenadores')->group(function () {
         // CRUD de ejercicios (solo para entrenadores y superusuario)
         Route::get('/ejercicios', [EjercicioController::class, 'index'])->name('ejercicios.index');
         Route::get('/ejercicios/crear', [EjercicioController::class, 'create'])->name('ejercicios.create');
@@ -111,7 +111,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/ejercicios/{ejercicio}', [EjercicioController::class, 'destroy'])->name('ejercicios.destroy');
     });
 
-    Route::middleware('role:superusuario|tecnico')->group(function () {
+    Route::middleware('role:superusuario|tecnico|jefe_tecnicos')->group(function () {
         // CRUD de máquinas (solo para técnicos y superusuario)
         Route::get('/maquinas/crear', [MaquinaController::class, 'create'])->name('maquinas.create');
         Route::post('/maquinas', [MaquinaController::class, 'store'])->name('maquinas.store');
@@ -129,23 +129,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
 });
 
-Route::middleware(['auth', 'role:entrenador|superusuario'])->group(function () {
+Route::middleware(['auth', 'role:entrenador|jefe_entrenadores|superusuario'])->group(function () {
     Route::get('/panel/clases', [EntrenadorPanelController::class, 'index'])->name('panel.clases.index');
     Route::get('/panel/clases/{horarioClase}', [EntrenadorPanelController::class, 'show'])->name('panel.clases.show');
     Route::patch('/panel/clases/{horarioClase}/promover/{listaEspera}', [EntrenadorPanelController::class, 'promover'])->name('panel.promover');
     Route::delete('/panel/clases/{horarioClase}/lista/{listaEspera}', [EntrenadorPanelController::class, 'removerDelista'])->name('panel.remover-lista');
 });
 
-Route::middleware(['auth', 'role:entrenador|tecnico|limpieza'])->group(function () {
+Route::middleware(['auth', 'role:entrenador|tecnico|limpieza|jefe_entrenadores|jefe_tecnicos|jefe_limpieza'])->group(function () {
     Route::post('/panel/cambiar-estado', [EntrenadorPanelController::class, 'cambiarEstado'])->name('panel.cambiarEstado');
 });
 
-Route::middleware(['auth', 'role:entrenador'])->group(function () {
+Route::middleware(['auth', 'role:entrenador|jefe_entrenadores'])->group(function () {
     Route::get('/entrenadores/clases', [EntrenadorController::class, 'clasesEntrenador']);
     Route::get('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'show']);
 });
 
-Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:superusuario|jefe_entrenadores|jefe_tecnicos|jefe_limpieza'])->group(function () {
     Route::get('/entrenadores', [EntrenadorController::class, 'index'])->name('entrenadores.index');
     Route::get('/entrenadores/crear', [EntrenadorController::class, 'create'])->name('entrenadores.create');
     Route::post('/entrenadores', [EntrenadorController::class, 'store'])->name('entrenadores.store');

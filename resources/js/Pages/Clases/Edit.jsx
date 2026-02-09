@@ -3,7 +3,7 @@ import { Head, useForm, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BackLink, FormField, FlashMessage } from '@/Components';
 
-export default function Edit({ horario }) {
+export default function Edit({ horario, entrenadores = [], canChangeTrainer = false }) {
     const { data, setData, patch, errors, processing } = useForm({
         nombre: horario.nombre,
         capacidad: horario.capacidad,
@@ -11,6 +11,7 @@ export default function Edit({ horario }) {
         hora_inicio: horario.hora_inicio,
         hora_fin: horario.hora_fin,
         descripcion: horario.descripcion || '',
+        user_id: horario.user_id || '',
     });
 
     const handleSubmit = (e) => {
@@ -78,6 +79,32 @@ export default function Edit({ horario }) {
                                 onChange={(e) => setData('hora_fin', e.target.value)}
                                 error={errors.hora_fin}
                             />
+
+                            {canChangeTrainer && (
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Entrenador
+                                    </label>
+                                    <select
+                                        value={data.user_id}
+                                        onChange={(e) => setData('user_id', e.target.value)}
+                                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            errors.user_id
+                                                ? 'border-red-500'
+                                                : 'border-gray-300'
+                                        }`}
+                                    >
+                                        {entrenadores.map((entrenador) => (
+                                            <option key={entrenador.id} value={entrenador.id}>
+                                                {entrenador.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.user_id && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.user_id}</p>
+                                    )}
+                                </div>
+                            )}
 
                             <FormField
                                 label="Descripción (opcional)"

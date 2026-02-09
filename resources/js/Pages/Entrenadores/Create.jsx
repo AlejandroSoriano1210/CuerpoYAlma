@@ -4,7 +4,16 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { FlashMessage, FormActions, ScheduleEditor } from '@/Components';
 import { calcularTotalHoras } from '@/Components/ScheduleEditor';
 
-export default function Create() {
+const ROLE_LABELS = {
+    entrenador: 'Entrenador',
+    jefe_entrenadores: 'Jefe de entrenadores',
+    tecnico: 'Técnico',
+    jefe_tecnicos: 'Jefe de técnicos',
+    limpieza: 'Limpieza',
+    jefe_limpieza: 'Jefe de limpieza',
+};
+
+export default function Create({ rolesDisponibles = [] }) {
     const [totalHoras, setTotalHoras] = useState(0);
 
     const { data, setData, post, errors, processing } = useForm({
@@ -13,7 +22,7 @@ export default function Create() {
         telefono: '',
         password: '',
         password_confirmation: '',
-        rol: 'entrenador',
+        rol: rolesDisponibles[0] || 'entrenador',
         horarios: [],
     });
 
@@ -114,9 +123,11 @@ export default function Create() {
                                                 : 'border-gray-300'
                                         }`}
                                     >
-                                        <option value="entrenador">Entrenador</option>
-                                        <option value="tecnico">Técnico</option>
-                                        <option value="limpieza">Limpieza</option>
+                                        {rolesDisponibles.map((rol) => (
+                                            <option key={rol} value={rol}>
+                                                {ROLE_LABELS[rol] || rol}
+                                            </option>
+                                        ))}
                                     </select>
                                     {errors.rol && (
                                         <p className="text-red-500 text-sm mt-1">

@@ -10,6 +10,34 @@ use Inertia\Inertia;
 
 class EntrenadorController extends Controller
 {
+    private function allowedRolesForUser(User $user): array
+    {
+        if ($user->hasRole('superusuario')) {
+            return ['entrenador', 'jefe_entrenadores', 'tecnico', 'jefe_tecnicos', 'limpieza', 'jefe_limpieza'];
+        }
+
+        if ($user->hasRole('jefe_entrenadores')) {
+            return ['entrenador', 'jefe_entrenadores'];
+        }
+
+        if ($user->hasRole('jefe_tecnicos')) {
+            return ['tecnico', 'jefe_tecnicos'];
+        }
+
+        if ($user->hasRole('jefe_limpieza')) {
+            return ['limpieza', 'jefe_limpieza'];
+        }
+
+        return [];
+    }
+
+    private function canManageEmpleado(User $actor, User $empleado): bool
+    {
+        $allowedRoles = $this->allowedRolesForUser($actor);
+
+        return !empty($allowedRoles) && $empleado->hasAnyRole($allowedRoles);
+    }
+
     // Listar empleados (entrenadores, técnicos, limpieza)
     public function index(Request $request)
     {
@@ -17,12 +45,17 @@ class EntrenadorController extends Controller
         $rolFiltro = $request->query('rol', ''); // Filtro por rol
         $estadoFiltro = $request->query('estado', 'activos');
 
+        $allowedRoles = $this->allowedRolesForUser($request->user());
+        if (empty($allowedRoles)) {
+            abort(403, 'No tienes permiso para ver empleados.');
+        }
+
         // Obtener todos los usuarios con roles de empleados (excluyendo superusuario y cliente)
         // Si hay filtro de rol, usar solo ese rol, sino todos
-        if (!empty($rolFiltro) && in_array($rolFiltro, ['entrenador', 'tecnico', 'limpieza'])) {
+        if (!empty($rolFiltro) && in_array($rolFiltro, $allowedRoles, true)) {
             $query = User::role($rolFiltro);
         } else {
-            $query = User::role(['entrenador', 'tecnico', 'limpieza']);
+            $query = User::role($allowedRoles);
         }
 
         if ($estadoFiltro === 'inactivos') {
@@ -66,23 +99,36 @@ class EntrenadorController extends Controller
             'search' => $search,
             'rolFiltro' => $rolFiltro,
             'estadoFiltro' => $estadoFiltro,
+            'rolesDisponibles' => $allowedRoles,
         ]);
     }
 
     // Mostrar formulario crear
     public function create()
     {
-        return Inertia::render('Entrenadores/Create');
+        $allowedRoles = $this->allowedRolesForUser(request()->user());
+        if (empty($allowedRoles)) {
+            abort(403, 'No tienes permiso para crear empleados.');
+        }
+
+        return Inertia::render('Entrenadores/Create', [
+            'rolesDisponibles' => $allowedRoles,
+        ]);
     }
 
     public function store(Request $request)
     {
+        $allowedRoles = $this->allowedRolesForUser($request->user());
+        if (empty($allowedRoles)) {
+            abort(403, 'No tienes permiso para crear empleados.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'telefono' => 'nullable|string|max:20',
             'password' => 'required|min:8|confirmed',
-            'rol' => 'required|in:entrenador,tecnico,limpieza',
+            'rol' => 'required|in:' . implode(',', $allowedRoles),
             'horarios' => 'nullable|array',
             'horarios.*.dia_semana' => 'required|integer|between:0,5',
             'horarios.*.hora_inicio' => 'required|date_format:H:i',
@@ -139,9 +185,8 @@ class EntrenadorController extends Controller
 
     public function show(User $entrenador)
     {
-        // Verificar que sea un empleado (no superusuario ni cliente)
-        if (!$entrenador->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
-            return redirect()->back()->withErrors(['error' => 'Este usuario no es un empleado.']);
+        if (!$this->canManageEmpleado(request()->user(), $entrenador)) {
+            return redirect()->back()->withErrors(['error' => 'No tienes permiso para ver este empleado.']);
         }
 
         $entrenador->load('horarioTrabajo', 'roles');
@@ -170,7 +215,7 @@ class EntrenadorController extends Controller
         ];
 
         // Si es entrenador, cargar las clases que imparte
-        if ($entrenador->hasRole('entrenador')) {
+        if ($entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
             $entrenador->load(['horariosClases' => function ($query) {
                 $query->orderBy('fecha', 'asc')->orderBy('hora_inicio', 'asc');
             }]);
@@ -194,7 +239,7 @@ class EntrenadorController extends Controller
         }
 
         // Si es técnico, cargar las máquinas en mantenimiento o fuera de servicio
-        if ($entrenador->hasRole('tecnico')) {
+        if ($entrenador->hasAnyRole(['tecnico', 'jefe_tecnicos'])) {
             $maquinasMantenimiento = \App\Models\Maquina::whereIn('estado', ['mantenimiento', 'fuera_de_servicio'])
                 ->get()
                 ->map(function ($maquina) {
@@ -238,7 +283,13 @@ class EntrenadorController extends Controller
 
     public function edit(User $entrenador)
     {
+        if (!$this->canManageEmpleado(request()->user(), $entrenador)) {
+            return redirect()->back()->withErrors(['error' => 'No tienes permiso para editar este empleado.']);
+        }
+
         $entrenador->load('horarioTrabajo', 'roles');
+
+        $allowedRoles = $this->allowedRolesForUser(request()->user());
 
         return Inertia::render('Entrenadores/Edit', [
             'entrenador' => [
@@ -253,16 +304,26 @@ class EntrenadorController extends Controller
                 'hora_inicio' => substr($h->hora_inicio, 0, 5),
                 'hora_fin' => substr($h->hora_fin, 0, 5),
             ]),
+            'rolesDisponibles' => $allowedRoles,
         ]);
     }
 
     public function update(Request $request, User $entrenador)
     {
+        if (!$this->canManageEmpleado($request->user(), $entrenador)) {
+            return redirect()->back()->withErrors(['error' => 'No tienes permiso para editar este empleado.']);
+        }
+
+        $allowedRoles = $this->allowedRolesForUser($request->user());
+        if (empty($allowedRoles)) {
+            abort(403, 'No tienes permiso para editar empleados.');
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', "unique:users,email,{$entrenador->id}"],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'rol' => ['required', 'in:entrenador,tecnico,limpieza'],
+            'rol' => ['required', 'in:' . implode(',', $allowedRoles)],
             'horarios' => ['nullable', 'array'],
             'horarios.*.dia_semana' => ['required', 'integer', 'between:0,6'],
             'horarios.*.hora_inicio' => ['required', 'date_format:H:i'],
@@ -314,9 +375,8 @@ class EntrenadorController extends Controller
 
     public function destroy(User $entrenador)
     {
-        // Verificar que sea un empleado (no superusuario ni cliente)
-        if (!$entrenador->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
-            return redirect()->back()->withErrors(['error' => 'Este usuario no es un empleado.']);
+        if (!$this->canManageEmpleado(request()->user(), $entrenador)) {
+            return redirect()->back()->withErrors(['error' => 'No tienes permiso para eliminar este empleado.']);
         }
 
         $entrenador->delete();
@@ -330,9 +390,8 @@ class EntrenadorController extends Controller
     {
         $entrenador = User::withTrashed()->findOrFail($entrenadorId);
 
-        // Verificar que sea un empleado (no superusuario ni cliente)
-        if (!$entrenador->hasAnyRole(['entrenador', 'tecnico', 'limpieza'])) {
-            return redirect()->back()->withErrors(['error' => 'Este usuario no es un empleado.']);
+        if (!$this->canManageEmpleado(request()->user(), $entrenador)) {
+            return redirect()->back()->withErrors(['error' => 'No tienes permiso para reactivar este empleado.']);
         }
 
         $entrenador->restore();

@@ -224,7 +224,7 @@ class GuiaController extends Controller
     public function assignToClient(Request $request, Guia $guia)
     {
         // Validar que el usuario sea entrenador o superusuario
-        if (!Auth::user()->hasAnyRole(['entrenador', 'superusuario'])) {
+        if (!Auth::user()->hasAnyRole(['entrenador', 'jefe_entrenadores', 'superusuario'])) {
             return back()->with('error', 'No tienes permiso para asignar guías.');
         }
 

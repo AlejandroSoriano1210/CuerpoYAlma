@@ -92,7 +92,7 @@ export default function Index() {
                         description="Gestiona y visualiza el estado de todas las máquinas"
                         icon={<Dumbbell size={36} />}
                         actions={
-                            hasAnyRole(['superusuario', 'tecnico']) && (
+                            hasAnyRole(['superusuario', 'tecnico', 'jefe_tecnicos']) && (
                                 <button
                                     onClick={() => setIsModalOpen(true)}
                                     className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition"
@@ -175,7 +175,7 @@ export default function Index() {
                                                 </div>
 
                                                 <div className="flex flex-col gap-2 w-full sm:w-auto">
-                                                    {hasAnyRole(['superusuario', 'tecnico']) && (
+                                                    {hasAnyRole(['superusuario', 'tecnico', 'jefe_tecnicos']) && (
                                                         <>
                                                             <Link
                                                                 href={route('maquinas.edit', m.id)}
@@ -216,7 +216,7 @@ export default function Index() {
                                         icon={<Dumbbell size={48} />}
                                         message="No hay máquinas registradas"
                                         action={
-                                            hasAnyRole(['superusuario', 'tecnico']) && (
+                                            hasAnyRole(['superusuario', 'tecnico', 'jefe_tecnicos']) && (
                                                 <button
                                                     onClick={() => setIsModalOpen(true)}
                                                     className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition"

@@ -13,7 +13,7 @@ class HorarioTrabajoController extends Controller
     // Listar entrenadores
     public function index()
     {
-        $entrenadores = User::role('entrenador')->get();
+        $entrenadores = User::role(['entrenador', 'jefe_entrenadores'])->get();
 
         return Inertia::render('Entrenadores/Index', [
             'entrenadores' => $entrenadores,
@@ -85,7 +85,7 @@ class HorarioTrabajoController extends Controller
 
     public function show(User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
+        if (!$entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
             return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
         }
 
@@ -135,7 +135,7 @@ class HorarioTrabajoController extends Controller
 
     public function edit(User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
+        if (!$entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
             return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
         }
 
@@ -146,7 +146,7 @@ class HorarioTrabajoController extends Controller
 
     public function update(Request $request, User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
+        if (!$entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
             return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
         }
 
@@ -164,7 +164,7 @@ class HorarioTrabajoController extends Controller
 
     public function destroy(User $entrenador)
     {
-        if (!$entrenador->hasRole('entrenador')) {
+        if (!$entrenador->hasAnyRole(['entrenador', 'jefe_entrenadores'])) {
             return redirect()->back()->withErrors(['error' => 'Este usuario no es un entrenador.']);
         }
 

@@ -14,14 +14,18 @@ const DIAS_SEMANA = [
     "Sábado",
 ];
 
+const ROLE_COLORS = {
+    entrenador: 'bg-blue-100 text-blue-800',
+    jefe_entrenadores: 'bg-blue-200 text-blue-900',
+    tecnico: 'bg-green-100 text-green-800',
+    jefe_tecnicos: 'bg-green-200 text-green-900',
+    limpieza: 'bg-purple-100 text-purple-800',
+    jefe_limpieza: 'bg-purple-200 text-purple-900',
+};
+
 export default function Show({ entrenador }) {
     const getRoleBadge = (rol) => {
-        const colors = {
-            entrenador: 'bg-blue-100 text-blue-800',
-            tecnico: 'bg-green-100 text-green-800',
-            limpieza: 'bg-purple-100 text-purple-800',
-        };
-        return colors[rol] || 'bg-gray-100 text-gray-800';
+        return ROLE_COLORS[rol] || 'bg-gray-100 text-gray-800';
     };
 
     return (
@@ -81,8 +85,11 @@ export default function Show({ entrenador }) {
                                         status={entrenador.rol}
                                         customColors={{
                                             entrenador: { bg: 'bg-blue-100', text: 'text-blue-800' },
+                                            jefe_entrenadores: { bg: 'bg-blue-200', text: 'text-blue-900' },
                                             tecnico: { bg: 'bg-green-100', text: 'text-green-800' },
+                                            jefe_tecnicos: { bg: 'bg-green-200', text: 'text-green-900' },
                                             limpieza: { bg: 'bg-purple-100', text: 'text-purple-800' },
+                                            jefe_limpieza: { bg: 'bg-purple-200', text: 'text-purple-900' },
                                         }}
                                         size="md"
                                     />
@@ -180,7 +187,7 @@ export default function Show({ entrenador }) {
                         </div>
 
                         {/* Clases que Imparte (solo para entrenadores) */}
-                        {entrenador.rol === 'entrenador' && (
+                        {['entrenador', 'jefe_entrenadores'].includes(entrenador.rol) && (
                             <div className="mb-8">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg font-semibold text-gray-700">
@@ -269,7 +276,7 @@ export default function Show({ entrenador }) {
                         )}
 
                         {/* Máquinas en Mantenimiento (solo para técnicos) */}
-                        {entrenador.rol === 'tecnico' && (
+                        {['tecnico', 'jefe_tecnicos'].includes(entrenador.rol) && (
                             <div className="mb-8">
                                 <h2 className="text-lg font-semibold text-gray-700 mb-4">
                                     Máquinas en Mantenimiento/Fuera de Servicio (
@@ -325,7 +332,7 @@ export default function Show({ entrenador }) {
                         )}
 
                         {/* Historial de Reportes de Reparación (solo para técnicos) */}
-                        {entrenador.rol === 'tecnico' && (
+                        {['tecnico', 'jefe_tecnicos'].includes(entrenador.rol) && (
                             <div className="mb-8">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">

@@ -43,7 +43,16 @@ const calcularTotalHoras = (horarios) => {
     return total;
 };
 
-export default function Edit({ entrenador, horarioTrabajo }) {
+const ROLE_LABELS = {
+    entrenador: 'Entrenador',
+    jefe_entrenadores: 'Jefe de entrenadores',
+    tecnico: 'Técnico',
+    jefe_tecnicos: 'Jefe de técnicos',
+    limpieza: 'Limpieza',
+    jefe_limpieza: 'Jefe de limpieza',
+};
+
+export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = [] }) {
     const { flash } = usePage().props;
 
     const [horariosPorDia, setHorariosPorDia] = useState(
@@ -55,7 +64,7 @@ export default function Edit({ entrenador, horarioTrabajo }) {
         name: entrenador.name,
         email: entrenador.email,
         telefono: entrenador.telefono || '',
-        rol: entrenador.rol || 'entrenador',
+        rol: entrenador.rol || rolesDisponibles[0] || 'entrenador',
         horarios: horarioTrabajo,
     });
 
@@ -192,9 +201,11 @@ export default function Edit({ entrenador, horarioTrabajo }) {
                                             : "border-gray-300"
                                     }`}
                                 >
-                                    <option value="entrenador">Entrenador</option>
-                                    <option value="tecnico">Técnico</option>
-                                    <option value="limpieza">Limpieza</option>
+                                    {rolesDisponibles.map((rol) => (
+                                        <option key={rol} value={rol}>
+                                            {ROLE_LABELS[rol] || rol}
+                                        </option>
+                                    ))}
                                 </select>
                                 {errors.rol && (
                                     <p className="text-red-500 text-sm mt-1">
