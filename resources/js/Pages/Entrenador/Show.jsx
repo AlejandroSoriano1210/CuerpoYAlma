@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Head, Link, usePage, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Check, X, Users, MailX } from 'lucide-react';
 
 export default function PanelShow({ horario, inscritos, listaEspera, estadisticas }) {
     const { auth } = usePage().props;
@@ -92,7 +93,7 @@ export default function PanelShow({ horario, inscritos, listaEspera, estadistica
                                 <p className={`text-lg font-bold ${
                                     estadisticas.espacios_disponibles > 0 ? 'text-green-600' : 'text-red-600'
                                 }`}>
-                                    {estadisticas.espacios_disponibles > 0 ? '✓ Disponible' : '✕ Completa'}
+                                    {estadisticas.espacios_disponibles > 0 ? <><Check className="w-4 h-4 inline" /> Disponible</> : <><X className="w-4 h-4 inline" /> Completa</>}
                                 </p>
                             </div>
                         </div>
@@ -133,7 +134,7 @@ export default function PanelShow({ horario, inscritos, listaEspera, estadistica
                     <div className="bg-white rounded-lg shadow mb-6 overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
                             <h2 className="text-xl font-bold text-gray-900">
-                                👥 Inscritos ({inscritos.length}/{horario.capacidad})
+                                <Users className="w-5 h-5 inline" /> Inscritos ({inscritos.length}/{horario.capacidad})
                             </h2>
                         </div>
 
@@ -154,7 +155,7 @@ export default function PanelShow({ horario, inscritos, listaEspera, estadistica
                                             </div>
                                             <div className="text-right">
                                                 <span className="inline-block bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded">
-                                                    ✓ Confirmado
+                                                    <Check className="w-3.5 h-3.5 inline" /> Confirmado
                                                 </span>
                                             </div>
                                         </div>
@@ -221,7 +222,7 @@ export default function PanelShow({ horario, inscritos, listaEspera, estadistica
                             </div>
                         ) : (
                             <div className="p-12 text-center text-gray-500">
-                                📭 No hay usuarios en lista de espera
+                                <MailX className="w-5 h-5 inline" /> No hay usuarios en lista de espera
                             </div>
                         )}
                     </div>

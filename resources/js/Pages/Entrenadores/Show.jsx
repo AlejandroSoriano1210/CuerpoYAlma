@@ -1,6 +1,7 @@
 import React from "react";
 import { Head, Link } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { CalendarDays, Clock, Users, MapPin } from 'lucide-react';
 import { BackLink, FlashMessage, StatusBadge } from '@/Components';
 import { Wrench, DollarSign } from 'lucide-react';
 
@@ -209,7 +210,7 @@ export default function Show({ entrenador }) {
                                                             {clase.nombre}
                                                         </h3>
                                                         <p className="text-sm text-gray-600">
-                                                            📅{" "}
+                                                            <CalendarDays className="w-4 h-4 inline" />{" "}
                                                             {new Date(
                                                                 clase.fecha
                                                             ).toLocaleDateString(
@@ -239,7 +240,7 @@ export default function Show({ entrenador }) {
                                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                                     <div>
                                                         <span className="text-gray-600">
-                                                            ⏰ Horario:
+                                                            <Clock className="w-4 h-4 inline" /> Horario:
                                                         </span>
                                                         <p className="font-medium text-gray-900">
                                                             {clase.hora_inicio} -{" "}
@@ -248,7 +249,7 @@ export default function Show({ entrenador }) {
                                                     </div>
                                                     <div>
                                                         <span className="text-gray-600">
-                                                            👥 Capacidad:
+                                                            <Users className="w-4 h-4 inline" /> Capacidad:
                                                         </span>
                                                         <p className="font-medium text-gray-900">
                                                             {clase.capacidad}{" "}
@@ -293,7 +294,7 @@ export default function Show({ entrenador }) {
                                                             {maquina.nombre}
                                                         </h3>
                                                         <p className="text-sm text-gray-600">
-                                                            📍 {maquina.ubicacion}
+                                                            <MapPin className="w-4 h-4 inline" /> {maquina.ubicacion}
                                                         </p>
                                                     </div>
                                                     <span

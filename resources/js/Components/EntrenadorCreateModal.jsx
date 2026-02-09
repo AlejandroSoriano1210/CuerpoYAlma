@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import { validarEmail, validarPassword, validarPasswordConfirmation, validarNombre, validarTelefono } from '@/Utils/validations';
 
 const DIAS_SEMANA = [
@@ -355,12 +355,12 @@ export default function EntrenadorCreateModal({ isOpen, onClose, onSuccess }) {
                             </div>
                             {totalHoras < 20 && (
                                 <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded mb-4 text-sm">
-                                    ⚠️ El empleado debe tener mínimo 20 horas asignadas. Actualmente tiene {totalHoras.toFixed(2)} horas.
+                                    <AlertTriangle className="w-4 h-4 inline" /> El empleado debe tener mínimo 20 horas asignadas. Actualmente tiene {totalHoras.toFixed(2)} horas.
                                 </div>
                             )}
                             {totalHoras > 40 && (
                                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
-                                    ⚠️ El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de 40 horas.
+                                    <AlertTriangle className="w-4 h-4 inline" /> El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de 40 horas.
                                 </div>
                             )}
 
@@ -442,7 +442,7 @@ export default function EntrenadorCreateModal({ isOpen, onClose, onSuccess }) {
                                                             }
                                                             className="text-red-600 hover:text-red-700 font-medium text-sm px-3 py-2"
                                                         >
-                                                            ✕
+                                                            <X className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 ))}

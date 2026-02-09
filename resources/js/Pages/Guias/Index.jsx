@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import GuiaCreateModal from '@/Components/GuiaCreateModal';
 import { PageHeader, FlashMessage, Pagination, EmptyState, StatusBadge, FilterPanel } from '@/Components';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Check } from 'lucide-react';
 
 export default function GuiasIndex() {
     const { hasAnyRole } = usaRoleUser();
@@ -165,7 +165,7 @@ export default function GuiasIndex() {
                                             {!hasAnyRole(['entrenador', 'superusuario']) && (
                                                 assignedGuiaIds.includes(guia.id) ? (
                                                     <span className="flex-1 text-center bg-purple-100 text-purple-800 font-semibold py-2 px-4 rounded-lg text-sm">
-                                                        ✓ Asignada
+                                                        <Check className="w-4 h-4 inline" /> Asignada
                                                     </span>
                                                 ) : (
                                                     <>

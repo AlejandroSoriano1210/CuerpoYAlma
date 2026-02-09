@@ -3,7 +3,7 @@ import { Head, Link, usePage, router, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
 import Calendario from "@/Components/Calendario";
-import { Calendar, RotateCcw } from "lucide-react";
+import { Calendar, RotateCcw, X, CalendarDays, AlertTriangle, Clock, Users } from "lucide-react";
 import { validarRequerido } from "@/Utils/validations";
 
 export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, entrenadores, tiposClases = [] }) {
@@ -430,7 +430,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                         : 'bg-green-600 hover:bg-green-700'
                                         } text-white font-bold py-2 px-4 sm:px-6 rounded-lg transition text-sm sm:text-base`}
                                 >
-                                    {modoCrear ? '✕ Cancelar' : '+ Nueva Clase'}
+                                    {modoCrear ? <><X className="w-4 h-4 inline" /> Cancelar</> : '+ Nueva Clase'}
                                 </button>
                             </div>
                         )}
@@ -688,7 +688,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 {entrenadorSeleccionado && entrenadorSeleccionado.horarios.length > 0 && (
                                                     <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                                         <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                                                            📅 Horario de {entrenadorSeleccionado.name}
+                                                            <CalendarDays className="w-4 h-4 inline" /> Horario de {entrenadorSeleccionado.name}
                                                         </h3>
                                                         <div className="space-y-2">
                                                             {entrenadorSeleccionado.horarios.map((horario, idx) => (
@@ -704,7 +704,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 {entrenadorSeleccionado && entrenadorSeleccionado.horarios.length === 0 && (
                                                     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                                                         <p className="text-sm text-yellow-800">
-                                                            ⚠️ Este entrenador no tiene horario de trabajo asignado
+                                                            <AlertTriangle className="w-4 h-4 inline" /> Este entrenador no tiene horario de trabajo asignado
                                                         </p>
                                                     </div>
                                                 )}
@@ -805,9 +805,9 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                         </div>
 
                                                         <div className={`text-sm mb-3 ${clasePasada ? 'text-gray-500' : 'text-gray-600'}`}>
-                                                            <p>⏰ {clase.hora_inicio.substring(0, 5)} - {clase.hora_fin.substring(0, 5)}</p>
+                                                            <p><Clock className="w-3.5 h-3.5 inline" /> {clase.hora_inicio.substring(0, 5)} - {clase.hora_fin.substring(0, 5)}</p>
                                                             <p>
-                                                                👥 {clase.inscritos}/{clase.capacidad}{" "}
+                                                                <Users className="w-3.5 h-3.5 inline" /> {clase.inscritos}/{clase.capacidad}{" "}
                                                                 inscritos
                                                             </p>
                                                         </div>

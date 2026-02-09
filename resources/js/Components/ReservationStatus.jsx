@@ -1,5 +1,6 @@
 import React from 'react';
 import ActionButton from './ActionButton';
+import { Check } from 'lucide-react';
 
 /**
  * ReservationStatus - Componente para mostrar el estado de reserva y acciones
@@ -28,7 +29,7 @@ export default function ReservationStatus({
         return (
             <div className="space-y-2">
                 <div className="w-full bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded text-lg font-bold text-center">
-                    ✓ Ya estás inscrito en esta clase
+                    <Check className="w-5 h-5 inline" /> Ya estás inscrito en esta clase
                 </div>
                 {onCancelar && (
                     <ActionButton

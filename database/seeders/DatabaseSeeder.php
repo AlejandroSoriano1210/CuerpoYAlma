@@ -47,6 +47,9 @@ class DatabaseSeeder extends Seeder
         // Crear guías con ejercicios
         $this->call(GuiaSeeder::class);
 
+        // Crear notificaciones programadas
+        $this->call(NotificacionProgramadaSeeder::class);
+
         $this->command->info('✅ Base de datos poblada exitosamente.');
     }
 }

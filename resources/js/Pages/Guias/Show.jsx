@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import { BackLink, FlashMessage, StatusBadge } from '@/Components';
+import { Check, X } from 'lucide-react';
 
 export default function Show({ guia, clientes = [], isAssigned = false, isAssignedWeekly = false }) {
     const { hasAnyRole } = usaRoleUser();
@@ -202,7 +203,7 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
                                             onClick={manejarCompletar}
                                             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
                                         >
-                                            {isAssignedWeekly ? '✓ Completar semana' : '✓ Marcar como completada'}
+                                            {isAssignedWeekly ? <><Check className="w-4 h-4 inline" /> Completar semana</> : <><Check className="w-4 h-4 inline" /> Marcar como completada</>}
                                         </button>
                                     )}
                                 </>
@@ -325,7 +326,7 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
                                 onClick={() => setImagenActiva(null)}
                                 className="text-gray-500 hover:text-gray-700"
                             >
-                                ✕
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
                         <img
