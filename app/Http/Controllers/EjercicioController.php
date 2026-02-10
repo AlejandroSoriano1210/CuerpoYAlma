@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Ejercicio;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class EjercicioController extends Controller
@@ -36,13 +35,8 @@ class EjercicioController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'musculo_objetivo' => 'required|string|max:255',
-            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'musculo_objetivo' => 'nullable|string|max:255',
         ]);
-
-        if ($request->hasFile('imagen')) {
-            $validated['imagen_path'] = $request->file('imagen')->store('ejercicios', 'public');
-        }
 
         $ejercicio = Ejercicio::create($validated);
 
@@ -77,22 +71,8 @@ class EjercicioController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'musculo_objetivo' => 'required|string|max:255',
-            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'remove_imagen' => 'nullable|boolean',
+            'musculo_objetivo' => 'nullable|string|max:255',
         ]);
-
-        if ($request->boolean('remove_imagen') && $ejercicio->imagen_path) {
-            Storage::disk('public')->delete($ejercicio->imagen_path);
-            $validated['imagen_path'] = null;
-        }
-
-        if ($request->hasFile('imagen')) {
-            if ($ejercicio->imagen_path) {
-                Storage::disk('public')->delete($ejercicio->imagen_path);
-            }
-            $validated['imagen_path'] = $request->file('imagen')->store('ejercicios', 'public');
-        }
 
         $ejercicio->update($validated);
 
@@ -104,9 +84,6 @@ class EjercicioController extends Controller
      */
     public function destroy(Ejercicio $ejercicio)
     {
-        if ($ejercicio->imagen_path) {
-            Storage::disk('public')->delete($ejercicio->imagen_path);
-        }
         $ejercicio->delete();
         return redirect()->route('ejercicios.index')->with('success', 'Ejercicio eliminado.');
     }

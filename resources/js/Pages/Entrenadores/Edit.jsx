@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Head, useForm, Link, usePage } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { AlertTriangle, X } from 'lucide-react';
 
 const DIAS_SEMANA = [
     { id: 0, nombre: "Lunes" },
@@ -26,45 +25,16 @@ const agruparPorDia = (horarios) => {
     return estructura;
 };
 
-const calcularTotalHoras = (horarios) => {
-    let total = 0;
-    Object.values(horarios).forEach((bloques) => {
-        bloques.forEach((bloque) => {
-            if (bloque.hora_inicio && bloque.hora_fin) {
-                const inicio = bloque.hora_inicio.split(':');
-                const fin = bloque.hora_fin.split(':');
-                const inicioMinutos = parseInt(inicio[0]) * 60 + parseInt(inicio[1]);
-                const finMinutos = parseInt(fin[0]) * 60 + parseInt(fin[1]);
-                const diferencia = Math.max(0, finMinutos - inicioMinutos);
-                total += diferencia / 60;
-            }
-        });
-    });
-    return total;
-};
-
-const ROLE_LABELS = {
-    entrenador: 'Entrenador',
-    jefe_entrenadores: 'Jefe de entrenadores',
-    tecnico: 'Técnico',
-    jefe_tecnicos: 'Jefe de técnicos',
-    limpieza: 'Limpieza',
-    jefe_limpieza: 'Jefe de limpieza',
-};
-
-export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = [] }) {
+export default function Edit({ entrenador, horarioTrabajo }) {
     const { flash } = usePage().props;
 
     const [horariosPorDia, setHorariosPorDia] = useState(
         agruparPorDia(horarioTrabajo)
     );
-    const [totalHoras, setTotalHoras] = useState(calcularTotalHoras(agruparPorDia(horarioTrabajo)));
 
     const { data, setData, patch, errors, processing } = useForm({
         name: entrenador.name,
         email: entrenador.email,
-        telefono: entrenador.telefono || '',
-        rol: entrenador.rol || rolesDisponibles[0] || 'entrenador',
         horarios: horarioTrabajo,
     });
 
@@ -91,7 +61,6 @@ export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = []
         });
         setHorariosPorDia(nuevos);
         actualizarFormulario(nuevos);
-        setTotalHoras(calcularTotalHoras(nuevos));
     };
 
     const handleRemoveBloque = (dia, id) => {
@@ -99,7 +68,6 @@ export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = []
         nuevos[dia] = nuevos[dia].filter((b) => b.id !== id);
         setHorariosPorDia(nuevos);
         actualizarFormulario(nuevos);
-        setTotalHoras(calcularTotalHoras(nuevos));
     };
 
     const handleActualizarBloque = (dia, id, field, value) => {
@@ -109,7 +77,6 @@ export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = []
         );
         setHorariosPorDia(nuevos);
         actualizarFormulario(nuevos);
-        setTotalHoras(calcularTotalHoras(nuevos));
     };
 
     const handleSubmit = (e) => {
@@ -125,7 +92,7 @@ export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = []
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white shadow rounded-lg p-6">
                         <h1 className="text-2xl font-bold mb-6 text-gray-900">
-                            Editar Empleado
+                            Editar Entrenador
                         </h1>
 
                         {flash?.success && (
@@ -185,84 +152,11 @@ export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = []
                                 )}
                             </div>
 
-                            {/* Rol */}
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Rol
-                                </label>
-                                <select
-                                    value={data.rol}
-                                    onChange={(e) =>
-                                        setData("rol", e.target.value)
-                                    }
-                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                        errors.rol
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
-                                >
-                                    {rolesDisponibles.map((rol) => (
-                                        <option key={rol} value={rol}>
-                                            {ROLE_LABELS[rol] || rol}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.rol && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.rol}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Teléfono */}
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Teléfono (opcional)
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={data.telefono}
-                                    onChange={(e) =>
-                                        setData("telefono", e.target.value)
-                                    }
-                                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                        errors.telefono
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
-                                    placeholder="600123456"
-                                />
-                                {errors.telefono && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.telefono}
-                                    </p>
-                                )}
-                            </div>
-
                             {/* --- Horarios --- */}
                             <div className="mb-3 p-4 rounded-lg">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg font-semibold text-gray-900">
-                                        Horario de Trabajo
-                                    </h2>
-                                    <div className={`text-sm font-semibold px-3 py-1 rounded ${
-                                        totalHoras > 40
-                                            ? 'bg-red-100 text-red-800'
-                                            : 'bg-green-100 text-green-800'
-                                    }`}>
-                                        {totalHoras.toFixed(2)} / 40 horas
-                                    </div>
-                                </div>
-                                {totalHoras > 40 && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
-                                        <AlertTriangle className="w-4 h-4 inline" /> El total de horas ({totalHoras.toFixed(2)}) supera el máximo permitido de 40 horas.
-                                    </div>
-                                )}
-                                {errors.horarios && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 text-sm">
-                                        {errors.horarios}
-                                    </div>
-                                )}
+                                <h2 className="text-lg font-semibold mb-4 text-gray-900">
+                                    Horario de Trabajo
+                                </h2>
 
                                 <div className="space-y-4">
                                     {DIAS_SEMANA.map((dia) => (
@@ -355,7 +249,7 @@ export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = []
                                                                     }
                                                                     className="text-red-600 hover:text-red-900 font-medium text-sm px-3 py-2"
                                                                 >
-                                                                    <X className="w-4 h-4" />
+                                                                    ✕
                                                                 </button>
                                                             </div>
                                                         )
@@ -375,7 +269,7 @@ export default function Edit({ entrenador, horarioTrabajo, rolesDisponibles = []
                             <div className="flex gap-4">
                                 <button
                                     type="submit"
-                                    disabled={processing || totalHoras > 40}
+                                    disabled={processing}
                                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
                                 >
                                     {processing

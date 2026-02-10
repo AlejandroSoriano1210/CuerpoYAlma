@@ -14,7 +14,6 @@ class Clase extends Model
         'user_id',
         'nombre',
         'capacidad',
-        'tipo_clase',
     ];
 
     public function horarios()
