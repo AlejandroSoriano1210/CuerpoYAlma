@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('guia_id')->constrained('guias')->onDelete('cascade');
             $table->foreignId('ejercicio_id')->constrained('ejercicios')->onDelete('cascade');
+            $table->integer('series')->default(3);
+            $table->integer('repeticiones')->default(10);
+            $table->text('instrucciones')->nullable();
+            $table->integer('orden')->nullable();
             $table->timestamps();
         });
     }

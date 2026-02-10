@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
@@ -8,7 +8,7 @@ import { PageHeader, FlashMessage, Pagination, EmptyState, StatusBadge, FilterPa
 import { Dumbbell } from 'lucide-react';
 
 export default function Index() {
-    const { maquinas, flash } = usePage().props;
+    const { maquinas, flash, filtros } = usePage().props;
     const { hasRole, hasAnyRole } = usaRoleUser();
     const [loadingEstado, setLoadingEstado] = useState({ id: null, estado: null });
     const [estado, setEstado] = useState(filtros?.estado || '');

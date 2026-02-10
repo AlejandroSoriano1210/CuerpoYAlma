@@ -12,6 +12,7 @@ export default function ClasesShow({ horario }) {
 
     // preferimos usar el flag 'reservado' enviado por el controlador (considera reservas pendientes)
     const yaInscrito = horario.reservado === true;
+    const enListaEspera = horario.en_lista_espera === true;
 
     // Determinar el status para ReservationStatus
     const getReservationStatus = () => {

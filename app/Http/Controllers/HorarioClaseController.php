@@ -71,11 +71,12 @@ class HorarioClaseController extends Controller
             'clase_id' => 'nullable|exists:clases,id',
             'nombre' => 'required|string|max:255',
             'capacidad' => 'required|integer|min:1|max:50',
-            'fecha' => 'required|date|after:today',
+            'fecha' => 'required|date|after_or_equal:today',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
             'descripcion' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
+            'semanal' => 'nullable|boolean',
         ]);
 
         // Si es superusuario o jefe de entrenadores puede asignar el entrenador; si no, es el propio auth user
@@ -222,7 +223,7 @@ class HorarioClaseController extends Controller
      */
     public function show(HorarioClase $horarioClase)
     {
-        $horarioClase->load(['entrenador', 'clientes']);
+        $horarioClase->load(['entrenador', 'clientes', 'listaEspera']);
 
         if (!$horarioClase->entrenador) {
             return redirect()->route('clases.index')
@@ -235,6 +236,10 @@ class HorarioClaseController extends Controller
         // comprobar si el usuario tiene reserva (no cancelada) para poder cancelar desde la vista
         $reservado = false;
         $reservaId = null;
+        $enListaEspera = false;
+        $listaEsperaId = null;
+        $posicionListaEspera = null;
+
         if (auth()->check()) {
             $miReserva = \App\Models\HorarioClaseUser::where('horario_clase_id', $horarioClase->id)
                 ->where('user_id', auth()->id())
@@ -245,7 +250,19 @@ class HorarioClaseController extends Controller
                 $reservado = true;
                 $reservaId = $miReserva->id;
             }
+
+            // Comprobar si está en lista de espera
+            $miListaEspera = \App\Models\ListaEsperaClase::where('horario_clase_id', $horarioClase->id)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if ($miListaEspera) {
+                $enListaEspera = true;
+                $listaEsperaId = $miListaEspera->id;
+                $posicionListaEspera = $miListaEspera->posicion;
+            }
         }
+
         return Inertia::render('Clases/Show', [
             'horario' => [
                 'id' => $horarioClase->id,
@@ -261,6 +278,10 @@ class HorarioClaseController extends Controller
                 'clientes' => $horarioClase->clientes()->wherePivot('estado', '!=', 'cancelado')->get(['id', 'name', 'email']),
                 'reservado' => $reservado,
                 'reserva_id' => $reservaId,
+                'en_lista_espera' => $enListaEspera,
+                'lista_espera_id' => $listaEsperaId,
+                'posicion_lista_espera' => $posicionListaEspera,
+                'lista_espera_count' => $horarioClase->listaEspera->count(),
             ],
         ]);
     }

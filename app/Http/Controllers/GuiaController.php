@@ -13,7 +13,7 @@ class GuiaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $query = Guia::query();
 
@@ -159,9 +159,13 @@ class GuiaController extends Controller
      */
     public function edit(Guia $guia)
     {
+        $guia->load(['guiaEjercicio.ejercicio']);
+        $ejercicios = \App\Models\Ejercicio::orderBy('nombre')->get();
+
         return Inertia::render('Guias/Edit', [
             'guia' => $guia,
             'niveles' => ['principiante', 'intermedio', 'avanzado'],
+            'ejercicios' => $ejercicios,
         ]);
     }
 
@@ -174,9 +178,32 @@ class GuiaController extends Controller
             'titulo' => 'required|string|max:255',
             'contenido' => 'nullable|string',
             'nivel' => 'required|in:principiante,intermedio,avanzado',
+            'ejercicios' => 'sometimes|array',
+            'ejercicios.*.ejercicio_id' => 'required_with:ejercicios|exists:ejercicios,id',
+            'ejercicios.*.series' => 'nullable|integer|min:1',
+            'ejercicios.*.repeticiones' => 'nullable|integer|min:1',
+            'ejercicios.*.instrucciones' => 'nullable|string',
         ]);
 
         $guia->update($validated);
+
+        // Actualizar ejercicios si vienen
+        if (isset($validated['ejercicios'])) {
+            // Eliminar ejercicios anteriores
+            $guia->guiaEjercicio()->delete();
+
+            // Agregar los nuevos ejercicios
+            $orden = 1;
+            foreach ($validated['ejercicios'] as $item) {
+                $guia->guiaEjercicio()->create([
+                    'ejercicio_id' => $item['ejercicio_id'],
+                    'series' => $item['series'] ?? null,
+                    'repeticiones' => $item['repeticiones'] ?? null,
+                    'instrucciones' => $item['instrucciones'] ?? null,
+                    'orden' => $orden++,
+                ]);
+            }
+        }
 
         return redirect()->route('guias.show', $guia)->with('success', 'Guía actualizada correctamente.');
     }

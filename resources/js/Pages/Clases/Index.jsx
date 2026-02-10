@@ -298,6 +298,10 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         return clase.reservado === true;
     };
 
+    const enListaEspera = (clase) => {
+        return clase.en_lista_espera === true;
+    };
+
     const handleReserva = (clase) => {
         if (confirm('¿Deseas reservar un lugar en esta clase?')) {
             setIsReservando(clase.id);
@@ -339,6 +343,32 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                     onError: () => {
                         setIsCancelando(null);
                         alert('Error al cancelar la reserva');
+                    },
+                }
+            );
+        }
+    };
+
+    const handleCancelarListaEspera = (clase) => {
+        if (!clase.lista_espera_id) {
+            alert('No estás en la lista de espera.');
+            return;
+        }
+
+        if (confirm('¿Deseas cancelar tu lugar en la lista de espera?')) {
+            setIsCancelando(clase.lista_espera_id);
+
+            router.patch(
+                route('lista-espera.cancelar', clase.lista_espera_id),
+                {},
+                {
+                    onSuccess: () => {
+                        setIsCancelando(null);
+                        router.reload();
+                    },
+                    onError: () => {
+                        setIsCancelando(null);
+                        alert('Error al cancelar');
                     },
                 }
             );

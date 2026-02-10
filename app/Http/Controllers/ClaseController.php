@@ -8,6 +8,7 @@ use App\Models\HorarioTrabajo;
 use App\Models\GimnasioHorario;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,7 +17,7 @@ class ClaseController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $mes = (int) $request->input('mes', now()->month);
         $ano = (int) $request->input('ano', now()->year);

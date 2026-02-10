@@ -11,7 +11,7 @@ use Inertia\Inertia;
 
 class ClienteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $search = $request->query('search', '');
         $estadoFiltro = $request->query('estado', 'activos');

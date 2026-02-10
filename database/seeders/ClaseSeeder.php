@@ -2,7 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Clase;
+use App\Models\GimnasioHorario;
+use App\Models\HorarioClase;
+use App\Models\HorarioTrabajo;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class ClaseSeeder extends Seeder

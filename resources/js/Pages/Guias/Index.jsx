@@ -1,5 +1,5 @@
-import React from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import GuiaCreateModal from '@/Components/GuiaCreateModal';

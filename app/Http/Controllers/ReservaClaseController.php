@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HorarioClase;
 use App\Models\HorarioClaseUser;
+use App\Models\ListaEsperaClase;
 use Illuminate\Http\Request;
 
 class ReservaClaseController extends Controller
@@ -30,14 +31,7 @@ class ReservaClaseController extends Controller
         // Contar solo reservas no canceladas
         $inscritos = $horarioClase->clientes()->wherePivot('estado', '!=', 'cancelado')->count();
 
-        if ($inscritos >= $horarioClase->capacidad) {
-            if ($request->header('X-Inertia')) {
-                return redirect()->back()->with('error', 'La clase está completa.');
-            }
-
-            return response()->json(['error' => 'La clase está completa.'], 422);
-        }
-
+        // Verificar si el usuario ya está en la clase o en la lista de espera
         if ($horarioClase->clientes()->where('user_id', auth()->id())->wherePivot('estado', '!=', 'cancelado')->exists()) {
             if ($request->header('X-Inertia')) {
                 return redirect()->back()->with('error', 'Ya estás inscrito en esta clase.');
@@ -46,6 +40,28 @@ class ReservaClaseController extends Controller
             return response()->json(['error' => 'Ya estás inscrito en esta clase.'], 422);
         }
 
+        if (ListaEsperaClase::where('horario_clase_id', $horarioClase->id)
+            ->where('user_id', auth()->id())->exists()) {
+            if ($request->header('X-Inertia')) {
+                return redirect()->back()->with('error', 'Ya estás en la lista de espera de esta clase.');
+            }
+
+            return response()->json(['error' => 'Ya estás en la lista de espera de esta clase.'], 422);
+        }
+
+        // Si la clase está completa, agregar a lista de espera
+        if ($inscritos >= $horarioClase->capacidad) {
+            ListaEsperaClase::agregarALista($horarioClase->id, auth()->id());
+
+            $mensaje = 'La clase está completa. ¡Te hemos añadido a la lista de espera!';
+            if ($request->header('X-Inertia')) {
+                return redirect()->back()->with('success', $mensaje);
+            }
+
+            return response()->json(['success' => true, 'mensaje' => $mensaje], 201);
+        }
+
+        // Si hay espacios, crear reserva directamente
         HorarioClaseUser::create([
             'horario_clase_id' => $validated['horario_clase_id'],
             'user_id' => auth()->id(),
@@ -80,22 +96,9 @@ class ReservaClaseController extends Controller
 
         $reserva->update(['estado' => 'cancelado']);
 
+        // Si la clase estaba completa, promover de la lista de espera
         if ($wasFull) {
-            // notificar a todos los usuarios con rol 'cliente' que NO tienen ninguna reserva no cancelada en esta clase
-            $targets = \App\Models\User::role('cliente')
-                ->where('id', '!=', $reserva->user_id)
-                ->whereDoesntHave('clasesReservadas', function ($q) use ($horario) {
-                    $q->where('horario_clases.id', $horario->id)
-                      // use explicit pivot table column instead of wherePivot inside whereDoesntHave
-                      ->where('horario_clase_user.estado', '!=', 'cancelado');
-                })->get();
-
-            if ($targets->count()) {
-                \Illuminate\Support\Facades\Notification::send($targets, new \App\Notifications\SimpleNotification(
-                    "Se ha liberado un lugar en la clase '{$horario->nombre}' el {$horario->fecha->format('d/m/Y')}.",
-                    route('clases.show', $horario->id)
-                ));
-            }
+            $this->procesarPromocionesDeLista($horario);
         }
 
         if ($request->header('X-Inertia')) {
