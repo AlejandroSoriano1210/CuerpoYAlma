@@ -2,30 +2,31 @@ import React from 'react';
 import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Edit({ horario }) {
+export default function Create({ entrenadores }) {
     const { flash } = usePage().props;
-    const { data, setData, patch, errors, processing } = useForm({
-        nombre: horario.nombre,
-        capacidad: horario.capacidad,
-        fecha: horario.fecha,
-        hora_inicio: horario.hora_inicio,
-        hora_fin: horario.hora_fin,
-        descripcion: horario.descripcion || '',
+    const { data, setData, post, errors, processing } = useForm({
+        nombre: '',
+        capacidad: 10,
+        fecha: '',
+        hora_inicio: '',
+        hora_fin: '',
+        descripcion: '',
+        user_id: entrenadores?.[0]?.id ?? null,
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        patch(route('clases.update', horario.id));
+        post(route('clases.store'));
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title={`Editar: ${horario.nombre}`} />
+            <Head title="Crear Clase" />
 
             <div className="py-12">
                 <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white shadow rounded-lg p-6">
-                        <h1 className="text-2xl font-bold mb-6 text-gray-900">Editar Clase</h1>
+                        <h1 className="text-2xl font-bold mb-6 text-gray-900">Crear Nueva Clase</h1>
 
                         {flash?.success && (
                             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -46,6 +47,7 @@ export default function Edit({ horario }) {
                                     className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                         errors.nombre ? 'border-red-500' : 'border-gray-300'
                                     }`}
+                                    placeholder="Clase con Juan, Yoga Matutino, etc."
                                 />
                                 {errors.nombre && (
                                     <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
@@ -126,7 +128,7 @@ export default function Edit({ horario }) {
                                 )}
                             </div>
 
-                            {/* Descripción */}
+                            {/* Descripción (opcional) */}
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Descripción (opcional)
@@ -140,6 +142,20 @@ export default function Edit({ horario }) {
                                 />
                             </div>
 
+                            {/* Si es superusuario: elegir entrenador asignado */}
+                            {entrenadores && entrenadores.length > 0 && (
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Asignar Entrenador</label>
+                                    <select value={data.user_id} onChange={(e) => setData('user_id', e.target.value)} className={`w-full px-3 py-2 border rounded-lg ${errors.user_id ? 'border-red-500' : 'border-gray-300'}`}>
+                                        <option value="">-- Seleccionar --</option>
+                                        {entrenadores.map((et) => (
+                                            <option key={et.id} value={et.id}>{et.name}</option>
+                                        ))}
+                                    </select>
+                                    {errors.user_id && <p className="text-red-500 text-sm mt-1">{errors.user_id}</p>}
+                                </div>
+                            )}
+
                             {/* Botones */}
                             <div className="flex gap-4">
                                 <button
@@ -147,7 +163,7 @@ export default function Edit({ horario }) {
                                     disabled={processing}
                                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
                                 >
-                                    {processing ? 'Guardando...' : 'Guardar Cambios'}
+                                    {processing ? 'Guardando...' : 'Crear Clase'}
                                 </button>
                                 <Link
                                     href={route('clases.index')}

@@ -28,9 +28,4 @@ class GuiaEjercicio extends Model
     {
         return $this->belongsTo(Ejercicio::class);
     }
-
-    public function progreso()
-    {
-        return $this->hasMany(GuiaProgreso::class);
-    }
 }

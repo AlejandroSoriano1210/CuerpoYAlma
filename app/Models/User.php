@@ -6,18 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles, SoftDeletes;
-
-    // Estados disponibles para empleados
-    const ESTADO_DISPONIBLE = 'disponible';
-    const ESTADO_BAJA = 'baja';
-    const ESTADO_VACACIONES = 'vacaciones';
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -29,13 +23,6 @@ class User extends Authenticatable
         'email',
         'password',
         'telefono',
-        'peso_kg',
-        'altura_cm',
-        'grasa_corporal_pct',
-        'imc',
-        'ultimo_pago_mes',
-        'ultimo_pago_ano',
-        'estado_empleado',
     ];
 
     /**
@@ -81,39 +68,5 @@ class User extends Authenticatable
     public function horarioTrabajo()
     {
         return $this->hasMany(HorarioTrabajo::class, 'user_id');
-    }
-
-    public function measurements()
-    {
-        return $this->hasMany(UserMeasurement::class);
-    }
-
-    public function pagos()
-    {
-        return $this->hasMany(Pago::class);
-    }
-
-    public function guiaProgreso()
-    {
-        return $this->hasMany(GuiaProgreso::class);
-    }
-
-    /**
-     * Obtener la última medición del cliente
-     */
-    public function ultimaMedicion()
-    {
-        return $this->measurements()->latest('fecha_medicion')->first();
-    }
-
-    /**
-     * Obtener las mediciones de los últimos 30 días para gráficos
-     */
-    public function medicionesUltimos30Dias()
-    {
-        return $this->measurements()
-            ->where('fecha_medicion', '>=', now()->subDays(30))
-            ->orderBy('fecha_medicion', 'asc')
-            ->get();
     }
 }
