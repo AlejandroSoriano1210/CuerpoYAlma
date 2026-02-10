@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
 import { useState } from "react";
 
 export default function NotificationsIndex({ notifications: initialNotifications, unread }) {

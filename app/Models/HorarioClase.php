@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
+use App\Models\ClaseAsistida;
+use App\Models\HorarioClaseUser;
 
 class HorarioClase extends Model
 {
@@ -47,34 +49,52 @@ class HorarioClase extends Model
     }
 
     /**
-     * Elimina clases cuya fecha asignada ya pasó.
+     * Elimina clases cuya fecha y hora de fin ya pasaron.
      * Devuelve el número de filas eliminadas.
      */
     public static function eliminarClasesExpiradas(): int
     {
         $instance = new self;
         $table = $instance->getTable();
-        $candidates = ['fecha', 'dia', 'fecha_hora', 'fecha_inicio', 'start_at', 'scheduled_at'];
-        $colFound = null;
 
-        foreach ($candidates as $col) {
-            if (Schema::hasColumn($table, $col)) {
-                $colFound = $col;
-                break;
-            }
-        }
-
-        if (!$colFound) {
-            Log::warning("HorarioClase::eliminarClasesExpiradas - no se encontró columna de fecha en la tabla {$table}");
+        // Verificar que existan las columnas necesarias
+        if (!Schema::hasColumn($table, 'fecha') || !Schema::hasColumn($table, 'hora_fin')) {
+            Log::warning("HorarioClase::eliminarClasesExpiradas - no se encontraron las columnas 'fecha' u 'hora_fin' en la tabla {$table}");
             return 0;
         }
 
-        $today = Carbon::today()->toDateString();
-        $query = self::whereDate($colFound, '<', $today);
-        $count = $query->count();
+                // Eliminar clases donde: fecha < hoy OR (fecha = hoy AND hora_fin <= hora actual)
+                // Usamos la hora del servidor de BD para evitar discrepancias y conversiones implícitas.
+        $query = self::where(function ($q) {
+            $q->whereRaw('fecha < current_date')
+                ->orWhereRaw('fecha = current_date AND hora_fin <= current_time');
+        });
+
+        $expiradas = $query->get(['id', 'fecha', 'hora_inicio', 'hora_fin']);
+        $count = $expiradas->count();
 
         if ($count > 0) {
-            $query->delete();
+            foreach ($expiradas as $clase) {
+                $reservas = HorarioClaseUser::where('horario_clase_id', $clase->id)
+                    ->where('estado', '!=', 'cancelado')
+                    ->get(['user_id']);
+
+                foreach ($reservas as $reserva) {
+                    ClaseAsistida::firstOrCreate(
+                        [
+                            'user_id' => $reserva->user_id,
+                            'horario_clase_id' => $clase->id,
+                        ],
+                        [
+                            'fecha' => $clase->fecha,
+                            'hora_inicio' => $clase->hora_inicio,
+                            'hora_fin' => $clase->hora_fin,
+                        ]
+                    );
+                }
+            }
+
+            self::whereIn('id', $expiradas->pluck('id'))->delete();
         }
 
         return $count;

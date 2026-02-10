@@ -1,9 +1,15 @@
 <?php
 
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ClienteDashboardController;
+use App\Http\Controllers\ClaseController;
 use App\Http\Controllers\EntrenadorController;
+use App\Http\Controllers\EntrenadorPanelController;
+use App\Http\Controllers\GimnasioHorarioController;
 use App\Http\Controllers\HorarioClaseController;
 use App\Http\Controllers\HorarioTrabajoController;
+use App\Http\Controllers\IngresosController;
+use App\Http\Controllers\NotificacionProgramadaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservaClaseController;
 use App\Http\Controllers\GuiaController;
@@ -22,6 +28,10 @@ Route::get('/', function () {
     ]);
 })->name('welcome');
 
+Route::get('/conocenos', function () {
+    return Inertia::render('Conocenos');
+})->name('conocenos');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/editar', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -29,15 +39,27 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Estadísticas Cliente (solo para clientes)
+Route::middleware(['auth', 'role:cliente'])->group(function () {
+    Route::get('/estadisticas', [ClienteDashboardController::class, 'index'])->name('estadisticas');
+    Route::post('/estadisticas/medidas', [ClienteDashboardController::class, 'updateMetrics'])->name('estadisticas.medidas');
+    Route::patch('/estadisticas/perfil', [ClienteDashboardController::class, 'updateProfile'])->name('estadisticas.perfil');
+    Route::post('/mediciones', [ClienteController::class, 'agregarMedicion'])->name('mediciones.store');
+});
+
 // Notifications
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/delete-read', [\App\Http\Controllers\NotificationController::class, 'deleteRead'])->name('notifications.deleteRead');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
+    Route::post('/notifications/{id}/aceptar-lista-espera', [\App\Http\Controllers\NotificationController::class, 'aceptarListaEspera'])->name('notifications.aceptarListaEspera');
+    Route::post('/notifications/{id}/rechazar-lista-espera', [\App\Http\Controllers\NotificationController::class, 'rechazarListaEspera'])->name('notifications.rechazarListaEspera');
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/clases', [HorarioClaseController::class, 'index'])->name('clases.index');
-    Route::middleware('role:superusuario|entrenador')->group(function () {
+    Route::get('/clases', [ClaseController::class, 'index'])->name('clases.index');
+    Route::middleware('role:superusuario|entrenador|jefe_entrenadores')->group(function () {
         Route::get('/clases/crear', [HorarioClaseController::class, 'create'])->name('clases.create');
         Route::post('/clases', [HorarioClaseController::class, 'store'])->name('clases.store');
         Route::get('/clases/{horarioClase}/editar', [HorarioClaseController::class, 'edit'])->name('clases.edit');
@@ -50,16 +72,34 @@ Route::middleware('auth')->group(function () {
     // Allow POST for legacy tests/clients that use form POST to cancel
     Route::post('/reservas/{reserva}/cancelar', [ReservaClaseController::class, 'cancelar']);
 
+    // Lista de espera
+    Route::patch('/lista-espera/{listaEspera}/cancelar', [ReservaClaseController::class, 'cancelarListaEspera'])->name('lista-espera.cancelar');
+    Route::post('/lista-espera/{listaEspera}/cancelar', [ReservaClaseController::class, 'cancelarListaEspera']);
+
+    // Promover de lista de espera (solo entrenadores)
+    Route::middleware('role:entrenador|jefe_entrenadores|superusuario')->group(function () {
+        Route::patch('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera'])->name('lista-espera.promover');
+        Route::post('/lista-espera/{listaEspera}/promover', [ReservaClaseController::class, 'promoverDelListaEspera']);
+    });
+
     // Guias de ejercicios
     Route::get('/guias', [GuiaController::class, 'index'])->name('guias.index');
 
-    Route::middleware('role:superusuario|entrenador')->group(function () {
+    Route::middleware('role:superusuario|entrenador|jefe_entrenadores')->group(function () {
         Route::get('/guias/crear', [GuiaController::class, 'create'])->name('guias.create');
         Route::post('/guias', [GuiaController::class, 'store'])->name('guias.store');
         Route::get('/guias/{guia}/editar', [GuiaController::class, 'edit'])->name('guias.edit');
         Route::patch('/guias/{guia}', [GuiaController::class, 'update'])->name('guias.update');
         Route::delete('/guias/{guia}', [GuiaController::class, 'destroy'])->name('guias.destroy');
 
+    Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
+    Route::get('/guias/{guia}/pdf', [GuiaController::class, 'downloadPdf'])->name('guias.downloadPdf');
+    Route::post('/guias/{guia}/assign', [GuiaController::class, 'assign'])->name('guias.assign');
+    Route::delete('/guias/{guia}/unassign', [GuiaController::class, 'unassign'])->name('guias.unassign');
+    Route::post('/guias/{guia}/save-progress', [GuiaController::class, 'saveProgress'])->name('guias.save-progress');
+    Route::get('/guias/{guia}/get-progress', [GuiaController::class, 'getProgress'])->name('guias.get-progress');
+
+    Route::middleware('role:superusuario|entrenador|jefe_entrenadores')->group(function () {
         // CRUD de ejercicios (solo para entrenadores y superusuario)
         Route::get('/ejercicios', [EjercicioController::class, 'index'])->name('ejercicios.index');
         Route::get('/ejercicios/crear', [EjercicioController::class, 'create'])->name('ejercicios.create');
@@ -67,8 +107,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/ejercicios/{ejercicio}/editar', [EjercicioController::class, 'edit'])->name('ejercicios.edit');
         Route::patch('/ejercicios/{ejercicio}', [EjercicioController::class, 'update'])->name('ejercicios.update');
         Route::delete('/ejercicios/{ejercicio}', [EjercicioController::class, 'destroy'])->name('ejercicios.destroy');
+    });
 
-        // CRUD de maquinas (solo para entrenadores y superusuario)
+    Route::middleware('role:superusuario|tecnico|jefe_tecnicos')->group(function () {
+        // CRUD de máquinas (solo para técnicos y superusuario)
         Route::get('/maquinas/crear', [MaquinaController::class, 'create'])->name('maquinas.create');
         Route::post('/maquinas', [MaquinaController::class, 'store'])->name('maquinas.store');
         Route::get('/maquinas/{maquina}/editar', [MaquinaController::class, 'edit'])->name('maquinas.edit');
@@ -76,27 +118,32 @@ Route::middleware('auth')->group(function () {
         // Cambiar estado de la máquina (mantenimiento / fuera_de_servicio / operativa)
         Route::patch('/maquinas/{maquina}/estado', [MaquinaController::class, 'cambiarEstado'])->name('maquinas.estado');
         Route::delete('/maquinas/{maquina}', [MaquinaController::class, 'destroy'])->name('maquinas.destroy');
+        // Guardar reporte de reparación
+        Route::post('/maquinas/{maquina}/reporte', [MaquinaController::class, 'storeReporte'])->name('maquinas.reporte');
     });
-
-    // Mostrar un ejercicio (accesible a usuarios autenticados)
     Route::get('/ejercicios/{ejercicio}', [EjercicioController::class, 'show'])->name('ejercicios.show');
-
-    // Listado de máquinas (accesible a usuarios autenticados)
     Route::get('/maquinas', [MaquinaController::class, 'index'])->name('maquinas.index');
-
-    // Mostrar una maquina (accesible a usuarios autenticados)
     Route::get('/maquinas/{maquina}', [MaquinaController::class, 'show'])->name('maquinas.show');
-
-    // Mostrar una guía (rutas con parámetros al final para evitar conflicto)
     Route::get('/guias/{guia}', [GuiaController::class, 'show'])->name('guias.show');
 });
 
-Route::middleware(['auth', 'role:entrenador'])->group(function () {
+Route::middleware(['auth', 'role:entrenador|jefe_entrenadores|superusuario'])->group(function () {
+    Route::get('/panel/clases', [EntrenadorPanelController::class, 'index'])->name('panel.clases.index');
+    Route::get('/panel/clases/{horarioClase}', [EntrenadorPanelController::class, 'show'])->name('panel.clases.show');
+    Route::patch('/panel/clases/{horarioClase}/promover/{listaEspera}', [EntrenadorPanelController::class, 'promover'])->name('panel.promover');
+    Route::delete('/panel/clases/{horarioClase}/lista/{listaEspera}', [EntrenadorPanelController::class, 'removerDelista'])->name('panel.remover-lista');
+});
+
+Route::middleware(['auth', 'role:entrenador|tecnico|limpieza|jefe_entrenadores|jefe_tecnicos|jefe_limpieza'])->group(function () {
+    Route::post('/panel/cambiar-estado', [EntrenadorPanelController::class, 'cambiarEstado'])->name('panel.cambiarEstado');
+});
+
+Route::middleware(['auth', 'role:entrenador|jefe_entrenadores'])->group(function () {
     Route::get('/entrenadores/clases', [EntrenadorController::class, 'clasesEntrenador']);
     Route::get('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'show']);
 });
 
-Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:superusuario|jefe_entrenadores|jefe_tecnicos|jefe_limpieza'])->group(function () {
     Route::get('/entrenadores', [EntrenadorController::class, 'index'])->name('entrenadores.index');
     Route::get('/entrenadores/crear', [EntrenadorController::class, 'create'])->name('entrenadores.create');
     Route::post('/entrenadores', [EntrenadorController::class, 'store'])->name('entrenadores.store');
@@ -104,16 +151,33 @@ Route::middleware(['auth', 'verified', 'role:superusuario'])->group(function () 
     Route::get('/entrenadores/{entrenador}/editar', [EntrenadorController::class, 'edit'])->name('entrenadores.edit');
     Route::patch('/entrenadores/{entrenador}', [EntrenadorController::class, 'update'])->name('entrenadores.update');
     Route::delete('/entrenadores/{entrenador}', [EntrenadorController::class, 'destroy'])->name('entrenadores.destroy');
+    Route::patch('/entrenadores/{entrenador}/restaurar', [EntrenadorController::class, 'restore'])->name('entrenadores.restore');
 
     Route::get('/entrenador/horario-trabajo', [HorarioTrabajoController::class, 'index']);
     Route::post('/entrenadores/{entrenador}/horario-trabajo', [HorarioTrabajoController::class, 'store']);
 
+    // Rutas para gestionar horarios del gimnasio
+    Route::get('/gimnasio/horario/editar', [GimnasioHorarioController::class, 'edit'])->name('gimnasio-horario.edit');
+    Route::post('/gimnasio/horario/actualizar', [GimnasioHorarioController::class, 'update'])->name('gimnasio-horario.update');
+
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
     Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
-    Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
-    Route::patch('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
     Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+    Route::patch('/clientes/{cliente}/restaurar', [ClienteController::class, 'restore'])->name('clientes.restore');
+    Route::post('/clientes/marcar-pagos', [ClienteController::class, 'marcarPagos'])->name('clientes.marcarPagos');
+    Route::get('/clientes/{cliente}/factura/{pago}/descargar', [ClienteController::class, 'descargarFactura'])->name('clientes.descargarFactura');
+    Route::get('/clientes/{cliente}/estadisticas', [ClienteController::class, 'estadisticas'])->name('clientes.estadisticas');
+    Route::post('/clientes/{cliente}/mediciones', [ClienteController::class, 'agregarMedicion'])->name('clientes.mediciones.store');
+
+    Route::get('/ingresos', [IngresosController::class, 'index'])->name('ingresos.index');
+
+    // Notificaciones programadas (solo superusuario)
+    Route::get('/notificaciones-programadas', [NotificacionProgramadaController::class, 'index'])->name('notificaciones-programadas.index');
+    Route::post('/notificaciones-programadas', [NotificacionProgramadaController::class, 'store'])->name('notificaciones-programadas.store');
+    Route::patch('/notificaciones-programadas/{notificacion}/toggle', [NotificacionProgramadaController::class, 'toggleActiva'])->name('notificaciones-programadas.toggle');
+    Route::post('/notificaciones-programadas/{notificacion}/enviar', [NotificacionProgramadaController::class, 'enviarAhora'])->name('notificaciones-programadas.enviar');
+    Route::delete('/notificaciones-programadas/{notificacion}', [NotificacionProgramadaController::class, 'destroy'])->name('notificaciones-programadas.destroy');
 });
 
 require __DIR__ . '/auth.php';

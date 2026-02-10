@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Ejercicio extends Model
 {
@@ -14,7 +15,17 @@ class Ejercicio extends Model
         'nombre',
         'descripcion',
         'musculo_objetivo',
+        'imagen_path',
     ];
+
+    protected $appends = [
+        'imagen_url',
+    ];
+
+    public function getImagenUrlAttribute()
+    {
+        return $this->imagen_path ? Storage::url($this->imagen_path) : null;
+    }
 
     public function claseEjercicios()
     {
