@@ -268,7 +268,7 @@ class HorarioClaseController extends Controller
                 'id' => $horarioClase->id,
                 'nombre' => $horarioClase->nombre,
                 'entrenador' => $horarioClase->entrenador->name,
-                'fecha' => $horarioClase->fecha,
+                'fecha' => $horarioClase->fecha?->format('Y-m-d'),
                 'hora_inicio' => substr($horarioClase->hora_inicio, 0, 5),
                 'hora_fin' => substr($horarioClase->hora_fin, 0, 5),
                 'descripcion' => $horarioClase->descripcion,
@@ -332,7 +332,16 @@ class HorarioClaseController extends Controller
         }
 
         return Inertia::render('Clases/Edit', [
-            'horario' => $horarioClase,
+            'horario' => [
+                'id' => $horarioClase->id,
+                'nombre' => $horarioClase->nombre,
+                'capacidad' => $horarioClase->capacidad,
+                'fecha' => $horarioClase->fecha?->format('Y-m-d'),
+                'hora_inicio' => substr($horarioClase->hora_inicio, 0, 5),
+                'hora_fin' => substr($horarioClase->hora_fin, 0, 5),
+                'descripcion' => $horarioClase->descripcion,
+                'user_id' => $horarioClase->user_id,
+            ],
             'entrenadores' => $entrenadores,
             'canChangeTrainer' => $canChangeTrainer,
         ]);

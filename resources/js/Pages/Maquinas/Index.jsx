@@ -5,7 +5,7 @@ import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import MaquinaCreateModal from '@/Components/MaquinaCreateModal';
 import MaquinaReporteModal from '@/Components/MaquinaReporteModal';
 import { PageHeader, FlashMessage, Pagination, EmptyState, StatusBadge, FilterPanel } from '@/Components';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Trash2 } from 'lucide-react';
 
 export default function Index() {
     const { maquinas, flash, filtros } = usePage().props;
@@ -78,6 +78,16 @@ export default function Index() {
         setMaquinaReporte(null);
         setEstadoAnteriorReporte(null);
         router.reload();
+    };
+
+    // Eliminar máquina con confirmación
+    const handleDelete = (id, nombre) => {
+        if (confirm(`¿Seguro que deseas eliminar la máquina "${nombre}"? Esta acción no se puede deshacer.`)) {
+            router.delete(route('maquinas.destroy', id), {
+                onSuccess: () => router.reload(),
+                onError: () => alert('Error al eliminar la máquina.'),
+            });
+        }
     };
 
     return (
@@ -204,6 +214,12 @@ export default function Index() {
                                                                 }`}
                                                             >
                                                                 {loadingEstado.id === m.id ? '...' : (m.estado === 'fuera_de_servicio' ? 'Operativa' : 'Fuera de servicio')}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(m.id, m.nombre)}
+                                                                className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-lg transition text-sm"
+                                                            >
+                                                                <Trash2 className="w-4 h-4 inline" /> Eliminar
                                                             </button>
                                                         </>
                                                     )}

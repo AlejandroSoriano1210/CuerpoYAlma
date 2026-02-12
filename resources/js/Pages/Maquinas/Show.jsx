@@ -3,9 +3,17 @@ import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import { BackLink, FlashMessage, StatusBadge, StatCard, EmptyState } from '@/Components';
-import { Wrench, Calendar, DollarSign, AlertTriangle } from 'lucide-react';
+import { Wrench, Calendar, DollarSign, AlertTriangle, Trash2 } from 'lucide-react';
 
 export default function Show({ maquina, reportes, estadisticas }) {
+    const handleDelete = () => {
+        if (confirm(`¿Seguro que deseas eliminar la máquina "${maquina.nombre}"? Esta acción no se puede deshacer.`)) {
+            router.delete(route('maquinas.destroy', maquina.id), {
+                onSuccess: () => router.visit(route('maquinas.index')),
+                onError: () => alert('Error al eliminar la máquina.'),
+            });
+        }
+    };
     const { hasAnyRole } = usaRoleUser();
 
     const formatDate = (dateString) => {
@@ -53,10 +61,18 @@ export default function Show({ maquina, reportes, estadisticas }) {
 
                         {maquina.descripcion ? <p className="text-gray-700">{maquina.descripcion}</p> : <p className="text-gray-500">Sin descripción.</p>}
 
-                        <div className="mt-4">
-                            {hasAnyRole(['superusuario', 'tecnico', 'jefe_tecnicos']) &&
-                                <Link href={route('maquinas.edit', maquina.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Editar</Link>
-                            }
+                        <div className="mt-4 flex gap-2">
+                            {hasAnyRole(['superusuario', 'tecnico', 'jefe_tecnicos']) && (
+                                <>
+                                    <Link href={route('maquinas.edit', maquina.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Editar</Link>
+                                    <button
+                                        onClick={handleDelete}
+                                        className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded ml-2"
+                                    >
+                                        <Trash2 className="w-4 h-4 inline" /> Eliminar
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
 

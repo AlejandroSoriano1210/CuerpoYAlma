@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BackLink } from '@/Components';
-import { CalendarDays, Clock, Check } from 'lucide-react';
+import { CalendarDays, Clock, Check, Trash2 } from 'lucide-react';
 
 export default function ClientesShow({ cliente, mesActual, anoActual }) {
     const [paginaActual, setPaginaActual] = useState(1);
@@ -89,9 +89,9 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
                             <div className="mt-8 space-y-3">
                                 <button
                                     onClick={handleDelete}
-                                    className="block w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                                    className="block w-full bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded"
                                 >
-                                    Eliminar Cliente
+                                    <Trash2 className="w-4 h-4 inline" /> Eliminar Cliente
                                 </button>
                             </div>
                         </div>

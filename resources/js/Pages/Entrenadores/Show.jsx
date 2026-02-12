@@ -1,31 +1,29 @@
 import React from "react";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { CalendarDays, Clock, Users, MapPin } from 'lucide-react';
+import { CalendarDays, Clock, Users, MapPin, Trash2 } from 'lucide-react';
 import { BackLink, FlashMessage, StatusBadge } from '@/Components';
 import { Wrench, DollarSign } from 'lucide-react';
 
-const DIAS_SEMANA = [
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
-];
-
-const ROLE_COLORS = {
-    entrenador: 'bg-blue-100 text-blue-800',
-    jefe_entrenadores: 'bg-blue-200 text-blue-900',
-    tecnico: 'bg-green-100 text-green-800',
-    jefe_tecnicos: 'bg-green-200 text-green-900',
-    limpieza: 'bg-purple-100 text-purple-800',
-    jefe_limpieza: 'bg-purple-200 text-purple-900',
-};
-
 export default function Show({ entrenador }) {
-    const getRoleBadge = (rol) => {
-        return ROLE_COLORS[rol] || 'bg-gray-100 text-gray-800';
+
+    const DIAS_SEMANA = [
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes",
+        "Sábado",
+    ];
+
+    const handleDelete = () => {
+        if (confirm(`¿Estás seguro de que deseas eliminar a ${entrenador.name}?`)) {
+            router.delete(route('entrenadores.destroy', entrenador.id), {
+                onSuccess: () => {
+                    // Redirige automáticamente
+                },
+            });
+        }
     };
 
     return (
@@ -126,29 +124,28 @@ export default function Show({ entrenador }) {
                             </h2>
 
                             {entrenador.horarioTrabajo &&
-                            Object.keys(entrenador.horarioTrabajo).length >
+                                Object.keys(entrenador.horarioTrabajo).length >
                                 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {DIAS_SEMANA.map((dia, index) => (
                                         <div
                                             key={index}
-                                            className={`p-4 rounded-lg border-2 ${
-                                                entrenador.horarioTrabajo[
-                                                    index
-                                                ] &&
+                                            className={`p-4 rounded-lg border-2 ${entrenador.horarioTrabajo[
+                                                index
+                                            ] &&
                                                 entrenador.horarioTrabajo[index]
                                                     .length > 0
-                                                    ? "bg-green-50 border-green-200"
-                                                    : "bg-gray-100 border-gray-200"
-                                            }`}
+                                                ? "bg-green-50 border-green-200"
+                                                : "bg-gray-100 border-gray-200"
+                                                }`}
                                         >
                                             <h3 className="font-semibold text-gray-900 mb-2">
                                                 {dia}
                                             </h3>
 
                                             {entrenador.horarioTrabajo[index] &&
-                                            entrenador.horarioTrabajo[index]
-                                                .length > 0 ? (
+                                                entrenador.horarioTrabajo[index]
+                                                    .length > 0 ? (
                                                 <div className="space-y-2">
                                                     {entrenador.horarioTrabajo[
                                                         index
@@ -204,7 +201,7 @@ export default function Show({ entrenador }) {
                                 </div>
 
                                 {entrenador.clasesCreadas &&
-                                entrenador.clasesCreadas.length > 0 ? (
+                                    entrenador.clasesCreadas.length > 0 ? (
                                     <div className="space-y-4">
                                         {entrenador.clasesCreadas.map((clase) => (
                                             <div
@@ -232,12 +229,11 @@ export default function Show({ entrenador }) {
                                                         </p>
                                                     </div>
                                                     <span
-                                                        className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                                            clase.inscritos >=
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold ${clase.inscritos >=
                                                             clase.capacidad
-                                                                ? "bg-red-200 text-red-800"
-                                                                : "bg-green-200 text-green-800"
-                                                        }`}
+                                                            ? "bg-red-200 text-red-800"
+                                                            : "bg-green-200 text-green-800"
+                                                            }`}
                                                     >
                                                         {clase.inscritos}/
                                                         {clase.capacidad}
@@ -284,16 +280,15 @@ export default function Show({ entrenador }) {
                                 </h2>
 
                                 {entrenador.maquinasMantenimiento &&
-                                entrenador.maquinasMantenimiento.length > 0 ? (
+                                    entrenador.maquinasMantenimiento.length > 0 ? (
                                     <div className="space-y-4">
                                         {entrenador.maquinasMantenimiento.map((maquina) => (
                                             <div
                                                 key={maquina.id}
-                                                className={`p-4 border rounded-lg ${
-                                                    maquina.estado === 'mantenimiento'
-                                                        ? 'bg-yellow-50 border-yellow-200'
-                                                        : 'bg-red-50 border-red-200'
-                                                }`}
+                                                className={`p-4 border rounded-lg ${maquina.estado === 'mantenimiento'
+                                                    ? 'bg-yellow-50 border-yellow-200'
+                                                    : 'bg-red-50 border-red-200'
+                                                    }`}
                                             >
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div className="flex-1">
@@ -305,11 +300,10 @@ export default function Show({ entrenador }) {
                                                         </p>
                                                     </div>
                                                     <span
-                                                        className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
-                                                            maquina.estado === 'mantenimiento'
-                                                                ? 'bg-yellow-200 text-yellow-800'
-                                                                : 'bg-red-200 text-red-800'
-                                                        }`}
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${maquina.estado === 'mantenimiento'
+                                                            ? 'bg-yellow-200 text-yellow-800'
+                                                            : 'bg-red-200 text-red-800'
+                                                            }`}
                                                     >
                                                         {maquina.estado.replace('_', ' ')}
                                                     </span>
@@ -369,11 +363,10 @@ export default function Show({ entrenador }) {
                                                             {reporte.maquina_nombre}
                                                         </Link>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                reporte.estado_anterior === 'mantenimiento'
-                                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                                    : 'bg-red-100 text-red-800'
-                                                            }`}>
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${reporte.estado_anterior === 'mantenimiento'
+                                                                ? 'bg-yellow-100 text-yellow-800'
+                                                                : 'bg-red-100 text-red-800'
+                                                                }`}>
                                                                 {reporte.estado_anterior.replace('_', ' ')}
                                                             </span>
                                                             <span className="text-gray-400">→</span>
@@ -401,8 +394,8 @@ export default function Show({ entrenador }) {
                                                                 reporte.unidad_tiempo === 'minutos'
                                                                     ? (reporte.tiempo_reparacion === 1 ? 'minuto' : 'minutos')
                                                                     : reporte.unidad_tiempo === 'horas'
-                                                                    ? (reporte.tiempo_reparacion === 1 ? 'hora' : 'horas')
-                                                                    : (reporte.tiempo_reparacion === 1 ? 'día' : 'días')
+                                                                        ? (reporte.tiempo_reparacion === 1 ? 'hora' : 'horas')
+                                                                        : (reporte.tiempo_reparacion === 1 ? 'día' : 'días')
                                                             }
                                                         </p>
                                                     </div>
@@ -440,6 +433,13 @@ export default function Show({ entrenador }) {
                             >
                                 Editar
                             </Link>
+
+                            <button
+                                onClick={handleDelete}
+                                className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded"
+                            >
+                                <Trash2 className="w-4 h-4 inline" /> Eliminar Entrenador
+                            </button>
 
                             <Link
                                 href={route("entrenadores.index")}

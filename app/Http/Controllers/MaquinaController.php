@@ -21,8 +21,8 @@ class MaquinaController extends Controller
         $zona = $request->string('zona')->toString();
 
         $maquinas = Maquina::query()
-            ->when($estado && in_array($estado, $estadosValidos, true), fn ($q) => $q->where('estado', $estado))
-            ->when($zona, fn ($q) => $q->where('ubicacion', $zona))
+            ->when($estado && in_array($estado, $estadosValidos, true), fn($q) => $q->where('estado', $estado))
+            ->when($zona, fn($q) => $q->where('ubicacion', $zona))
             ->orderBy('nombre')
             ->paginate(15)
             ->withQueryString();
@@ -154,11 +154,8 @@ class MaquinaController extends Controller
      */
     public function destroy(Maquina $maquina)
     {
-        if ($maquina->imagen_path) {
-            Storage::disk('public')->delete($maquina->imagen_path);
-        }
         $maquina->delete();
-        return redirect()->route('maquinas.index')->with('success', 'Máquina eliminada.');
+        return redirect()->route('maquinas.index')->with('success', 'Máquina eliminada correctamente.');
     }
 
     /**

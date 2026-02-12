@@ -77,7 +77,7 @@ class ClaseController extends Controller
                     'tipo_clase' => $horario->clase->tipo_clase,
                     'entrenador' => $horario->entrenador->name,
                     'entrenador_id' => $horario->user_id,
-                    'fecha' => $horario->fecha,
+                    'fecha' => $horario->fecha?->format('Y-m-d'),
                     'hora_inicio' => $horario->hora_inicio,
                     'hora_fin' => $horario->hora_fin,
                     'inscritos' => $inscritos,

@@ -27,7 +27,7 @@ class MaquinaReporte extends Model
 
     public function maquina()
     {
-        return $this->belongsTo(Maquina::class);
+        return $this->belongsTo(Maquina::class)->withTrashed();
     }
 
     public function tecnico()
