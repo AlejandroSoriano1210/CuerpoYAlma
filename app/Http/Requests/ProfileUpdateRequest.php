@@ -26,6 +26,8 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'telefono' => ['nullable', 'string', 'max:50'],
+            'dni' => ['required', 'string', 'max:20'],
+            'direccion' => ['required', 'string', 'max:255'],
         ];
     }
 }

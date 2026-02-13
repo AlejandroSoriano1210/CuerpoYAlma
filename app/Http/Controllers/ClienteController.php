@@ -68,6 +68,8 @@ class ClienteController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
+            'dni' => 'required|string|max:20',
+            'direccion' => 'required|string|max:255',
         ]);
 
         try {
@@ -75,6 +77,8 @@ class ClienteController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => bcrypt($validated['password']),
+                'dni' => $validated['dni'],
+                'direccion' => $validated['direccion'],
             ]);
 
             $user->assignRole('cliente');
@@ -127,6 +131,8 @@ class ClienteController extends Controller
                 'name' => $cliente->name,
                 'email' => $cliente->email,
                 'telefono' => $cliente->telefono,
+                'dni' => $cliente->dni,
+                'direccion' => $cliente->direccion,
                 'created_at' => $cliente->created_at,
                 'updated_at' => $cliente->updated_at,
                 'clasesReservadas' => $cliente->clasesReservadas->map(function ($clase) {
@@ -174,6 +180,8 @@ class ClienteController extends Controller
                 'name' => $cliente->name,
                 'email' => $cliente->email,
                 'telefono' => $cliente->telefono,
+                'dni' => $cliente->dni,
+                'direccion' => $cliente->direccion,
             ],
         ]);
     }
@@ -188,6 +196,8 @@ class ClienteController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $cliente->id,
             'telefono' => 'nullable|string|max:50',
+            'dni' => 'required|string|max:20',
+            'direccion' => 'required|string|max:255',
         ]);
 
         $cliente->update($validated);

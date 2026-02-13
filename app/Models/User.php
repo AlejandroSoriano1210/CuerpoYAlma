@@ -29,6 +29,8 @@ class User extends Authenticatable
         'email',
         'password',
         'telefono',
+        'dni',
+        'direccion',
         'peso_kg',
         'altura_cm',
         'grasa_corporal_pct',

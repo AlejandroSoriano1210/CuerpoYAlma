@@ -15,6 +15,8 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
         name: '',
         email: '',
         telefono: '',
+        dni: '',
+        direccion: '',
         password: '',
         password_confirmation: '',
         remember: false,
@@ -24,6 +26,8 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
         name: false,
         email: false,
         telefono: false,
+        dni: false,
+        direccion: false,
         password: false,
         password_confirmation: false,
     });
@@ -32,6 +36,8 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
     const nombreError = validarNombre(data.name);
     const emailError = validarEmail(data.email);
     const telefonoError = validarTelefono(data.telefono, true);
+    const dniError = data.dni.trim() ? true : 'El DNI es requerido';
+    const direccionError = data.direccion.trim() ? true : 'La dirección es requerida';
     const passwordError = validarPassword(data.password, 8);
     const passwordConfirmationError = validarPasswordConfirmation(data.password, data.password_confirmation);
 
@@ -42,6 +48,8 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
             name: false,
             email: false,
             telefono: false,
+        dni: false,
+        direccion: false,
             password: false,
             password_confirmation: false,
         });
@@ -64,6 +72,16 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
 
         if (!isLogin && telefonoError !== true) {
             setTouched(prev => ({ ...prev, telefono: true }));
+            return;
+        }
+
+        if (!isLogin && dniError !== true) {
+            setTouched(prev => ({ ...prev, dni: true }));
+            return;
+        }
+
+        if (!isLogin && direccionError !== true) {
+            setTouched(prev => ({ ...prev, direccion: true }));
             return;
         }
 
@@ -100,6 +118,8 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
             name: false,
             email: false,
             telefono: false,
+        dni: false,
+        direccion: false,
             password: false,
             password_confirmation: false,
         });
@@ -186,6 +206,55 @@ export default function AuthModal({ show, onClose, mode = 'login', onSwitchMode 
                                 <p className="text-red-500 text-sm mt-1">{telefonoError}</p>
                             )}
                             <InputError message={errors?.telefono} className="mt-1" />
+                        </div>
+                    )}
+
+
+                    {!isLogin && (
+                        <div className="mb-4"> 
+                            <InputLabel htmlFor="dni" value="DNI" />
+                            <TextInput
+                                id="dni"
+                                type="text"
+                                name="dni"
+                                value={data.dni}
+                                className={`mt-1 block w-full ${
+                                    touched.dni && dniError !== true
+                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                        : ''
+                                }`}
+                                onChange={(e) => setData('dni', e.target.value)}
+                                onBlur={() => setTouched({ ...touched, dni: true })}
+                                placeholder="12345678A"
+                            />
+                            {touched.dni && dniError !== true && (
+                                <p className="text-red-500 text-sm mt-1">{dniError}</p>
+                            )}
+                            <InputError message={errors?.dni} className="mt-1" />
+                        </div>
+                    )}
+
+                    {!isLogin && (
+                        <div className="mb-4"> 
+                            <InputLabel htmlFor="direccion" value="Dirección" />
+                            <TextInput
+                                id="direccion"
+                                type="text"
+                                name="direccion"
+                                value={data.direccion}
+                                className={`mt-1 block w-full ${
+                                    touched.direccion && direccionError !== true
+                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                        : ''
+                                }`}
+                                onChange={(e) => setData('direccion', e.target.value)}
+                                onBlur={() => setTouched({ ...touched, direccion: true })}
+                                placeholder="Calle Ejemplo 123"
+                            />
+                            {touched.direccion && direccionError !== true && (
+                                <p className="text-red-500 text-sm mt-1">{direccionError}</p>
+                            )}
+                            <InputError message={errors?.direccion} className="mt-1" />
                         </div>
                     )}
 

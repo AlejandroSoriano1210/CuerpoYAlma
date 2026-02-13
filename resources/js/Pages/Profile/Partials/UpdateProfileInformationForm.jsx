@@ -17,6 +17,8 @@ export default function UpdateProfileInformation({
             name: user.name,
             email: user.email,
             telefono: user.telefono || '',
+            dni: user.dni || '',
+            direccion: user.direccion || '',
         });
 
     const submit = (e) => {
@@ -83,6 +85,37 @@ export default function UpdateProfileInformation({
                     />
 
                     <InputError className="mt-2" message={errors.telefono} />
+                </div>
+
+
+                <div>
+                    <InputLabel htmlFor="dni" value="DNI" />
+
+                    <TextInput
+                        id="dni"
+                        type="text"
+                        className="mt-1 block w-full"
+                        value={data.dni}
+                        onChange={(e) => setData('dni', e.target.value)}
+                        required
+                    />
+
+                    <InputError className="mt-2" message={errors.dni} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="direccion" value="Dirección" />
+
+                    <TextInput
+                        id="direccion"
+                        type="text"
+                        className="mt-1 block w-full"
+                        value={data.direccion}
+                        onChange={(e) => setData('direccion', e.target.value)}
+                        required
+                    />
+
+                    <InputError className="mt-2" message={errors.direccion} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (

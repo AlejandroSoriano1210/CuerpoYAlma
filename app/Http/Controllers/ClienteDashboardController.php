@@ -191,6 +191,8 @@ class ClienteDashboardController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'telefono' => $user->telefono,
+                'dni' => $user->dni,
+                'direccion' => $user->direccion,
             ],
             'metricas' => [
                 'peso_kg' => $user->peso_kg,
@@ -259,6 +261,8 @@ class ClienteDashboardController extends Controller
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
             'telefono' => ['nullable', 'string', 'max:50'],
+            'dni' => ['required', 'string', 'max:20'],
+            'direccion' => ['required', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -266,6 +270,8 @@ class ClienteDashboardController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'telefono' => $validated['telefono'] ?? null,
+            'dni' => $validated['dni'],
+            'direccion' => $validated['direccion'],
         ]);
 
         if (!empty($validated['password'])) {

@@ -46,6 +46,16 @@ export default function Show({ resumenAnual = {}, user = null, status = null }) 
                                 <h3 className="text-sm text-gray-600">Teléfono</h3>
                                 <p className="text-sm text-gray-900">{user?.telefono || '-'}</p>
                             </div>
+
+                            <div className="p-4 border rounded">
+                                <h3 className="text-sm text-gray-600">DNI</h3>
+                                <p className="text-sm text-gray-900">{user?.dni || '-'}</p>
+                            </div>
+
+                            <div className="p-4 border rounded">
+                                <h3 className="text-sm text-gray-600">Dirección</h3>
+                                <p className="text-sm text-gray-900">{user?.direccion || '-'}</p>
+                            </div>
                         </div>
                     </div>
 

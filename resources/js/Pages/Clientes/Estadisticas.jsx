@@ -81,6 +81,8 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
         name: user?.name ?? '',
         email: user?.email ?? '',
         telefono: user?.telefono ?? '',
+        dni: user?.dni ?? '',
+        direccion: user?.direccion ?? '',
         password: '',
         password_confirmation: '',
     });
@@ -119,6 +121,14 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
             if (telefonoValidation !== true) {
                 errors.telefono = telefonoValidation;
             }
+        }
+
+        if (!profileData.dni || profileData.dni.trim() === '') {
+            errors.dni = 'El DNI es requerido';
+        }
+
+        if (!profileData.direccion || profileData.direccion.trim() === '') {
+            errors.direccion = 'La dirección es requerida';
         }
 
         if (profileData.password || profileData.password_confirmation) {
@@ -222,6 +232,12 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                     <p className="text-blue-100 text-lg flex items-center gap-2">
                                         {user.telefono}
                                     </p>
+                                    <p className="text-blue-100 text-lg flex items-center gap-2">
+                                        DNI: {user.dni}
+                                    </p>
+                                    <p className="text-blue-100 text-lg flex items-center gap-2">
+                                        Dirección: {user.direccion}
+                                    </p>
                                 </div>
                                 <p className="text-blue-200 mt-3 text-base">Revisa tu progreso y desempeño en el entrenamiento</p>
                             </div>
@@ -314,6 +330,45 @@ export default function Dashboard({ user, metricas, proximasClases, historialCla
                                         />
                                         {profileValidationErrors.telefono && (
                                             <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.telefono}</p>
+                                        )}
+                                    </div>
+
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-white mb-2">DNI</label>
+                                        <input
+                                            type="text"
+                                            className={`w-full rounded-xl border-2 px-4 py-3 bg-white/90 text-gray-900 focus:border-white focus:ring-2 focus:ring-white/50 transition-all ${profileValidationErrors.dni ? 'border-red-300' : 'border-white/30'
+                                                }`}
+                                            value={profileData.dni}
+                                            onChange={(e) => {
+                                                setProfileData('dni', e.target.value);
+                                                if (profileValidationErrors.dni) {
+                                                    setProfileValidationErrors((prev) => ({ ...prev, dni: '' }));
+                                                }
+                                            }}
+                                        />
+                                        {profileValidationErrors.dni && (
+                                            <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.dni}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-white mb-2">Dirección</label>
+                                        <input
+                                            type="text"
+                                            className={`w-full rounded-xl border-2 px-4 py-3 bg-white/90 text-gray-900 focus:border-white focus:ring-2 focus:ring-white/50 transition-all ${profileValidationErrors.direccion ? 'border-red-300' : 'border-white/30'
+                                                }`}
+                                            value={profileData.direccion}
+                                            onChange={(e) => {
+                                                setProfileData('direccion', e.target.value);
+                                                if (profileValidationErrors.direccion) {
+                                                    setProfileValidationErrors((prev) => ({ ...prev, direccion: '' }));
+                                                }
+                                            }}
+                                        />
+                                        {profileValidationErrors.direccion && (
+                                            <p className="text-sm text-red-200 bg-red-500/30 rounded-lg px-3 py-1 mt-2">{profileValidationErrors.direccion}</p>
                                         )}
                                     </div>
 

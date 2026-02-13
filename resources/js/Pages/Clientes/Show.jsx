@@ -76,6 +76,16 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
                                 </div>
 
                                 <div>
+                                    <p className="text-sm text-gray-500">DNI</p>
+                                    <p className="text-gray-900 mt-1 font-medium">{cliente.dni || '-'}</p>
+                                </div>
+
+                                <div>
+                                    <p className="text-sm text-gray-500">Dirección</p>
+                                    <p className="text-gray-900 mt-1 font-medium">{cliente.direccion || '-'}</p>
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-medium text-gray-600">Fecha de Registro</label>
                                     <p className="text-gray-900 mt-1 font-medium">
                                         {new Date(cliente.created_at).toLocaleDateString('es-ES', {
@@ -190,6 +200,12 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
                                                     </p>
                                                     <p className="text-gray-600">
                                                         <span className="font-medium">Teléfono:</span> {cliente.telefono || 'No especificado'}
+                                                    </p>
+                                                    <p className="text-gray-600">
+                                                        <span className="font-medium">DNI:</span> {cliente.dni}
+                                                    </p>
+                                                    <p className="text-gray-600">
+                                                        <span className="font-medium">Dirección:</span> {cliente.direccion}
                                                     </p>
                                                 </div>
                                             </div>

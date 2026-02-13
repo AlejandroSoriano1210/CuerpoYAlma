@@ -286,6 +286,20 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
                                             </div>
 
                                             <div>
+                                                <p className="text-sm font-medium text-gray-500">DNI</p>
+                                                <p className="text-base text-gray-900">
+                                                    {empleadoSeleccionado.dni || 'No especificado'}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Dirección</p>
+                                                <p className="text-base text-gray-900">
+                                                    {empleadoSeleccionado.direccion || 'No especificada'}
+                                                </p>
+                                            </div>
+
+                                            <div>
                                                 <p className="text-sm font-medium text-gray-500">Rol</p>
                                                 <StatusBadge
                                                     status={empleadoSeleccionado.rol}

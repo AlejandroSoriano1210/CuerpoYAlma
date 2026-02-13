@@ -86,22 +86,6 @@ export default function Footer() {
                                     Inicio
                                 </Link>
                             </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    className="text-gray-300 hover:text-green-400 transition"
-                                >
-                                    Términos de uso
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="#"
-                                    className="text-gray-300 hover:text-green-400 transition"
-                                >
-                                    Privacidad
-                                </a>
-                            </li>
                         </ul>
                     </div>
 

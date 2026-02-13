@@ -79,6 +79,20 @@ export default function Show({ entrenador }) {
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-medium text-gray-600">DNI</label>
+                                    <p className="text-gray-900 text-lg font-medium"> 
+                                        {entrenador.dni || 'No especificado'}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600">Dirección</label>
+                                    <p className="text-gray-900 text-lg font-medium"> 
+                                        {entrenador.direccion || 'No especificada'}
+                                    </p>
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-medium text-gray-600">
                                         Rol
                                     </label>

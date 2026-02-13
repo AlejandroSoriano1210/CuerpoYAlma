@@ -124,6 +124,8 @@ class RoleSeeder extends Seeder
             [
                 'name' => 'Super Usuario',
                 'password' => Hash::make('password'),
+                'dni' => '00000000S',
+                'direccion' => 'Dirección Superusuario',
             ]
         );
 
@@ -138,6 +140,8 @@ class RoleSeeder extends Seeder
             [
                 'name' => 'Jefe Entrenadores',
                 'password' => Hash::make('password'),
+                'dni' => '00000001E',
+                'direccion' => 'Dirección Jefe Entrenadores',
             ]
         );
         $jefeEntrenadoresUser->assignRole('jefe_entrenadores');
@@ -147,6 +151,8 @@ class RoleSeeder extends Seeder
             [
                 'name' => 'Jefe Tecnicos',
                 'password' => Hash::make('password'),
+                'dni' => '00000002T',
+                'direccion' => 'Dirección Jefe Tecnicos',
             ]
         );
         $jefeTecnicosUser->assignRole('jefe_tecnicos');
@@ -156,6 +162,8 @@ class RoleSeeder extends Seeder
             [
                 'name' => 'Jefe Limpieza',
                 'password' => Hash::make('password'),
+                'dni' => '00000003L',
+                'direccion' => 'Dirección Jefe Limpieza',
             ]
         );
         $jefeLimpiezaUser->assignRole('jefe_limpieza');

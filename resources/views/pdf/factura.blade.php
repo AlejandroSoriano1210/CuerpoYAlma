@@ -172,6 +172,8 @@
             <div class="client-name">{{ $cliente->name }}</div>
             <div class="detail"><strong>Email:</strong> {{ $cliente->email }}</div>
             <div class="detail"><strong>Teléfono:</strong> {{ $cliente->telefono ?? 'No especificado' }}</div>
+            <div class="detail"><strong>DNI:</strong> {{ $cliente->dni }}</div>
+            <div class="detail"><strong>Dirección:</strong> {{ $cliente->direccion }}</div>
         </div>
         <div class="info-block info-right">
             <h3>Detalles del Pago:</h3>
