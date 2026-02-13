@@ -1,20 +1,24 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import { BackLink, FlashMessage, StatusBadge, StatCard, EmptyState } from '@/Components';
 import { Wrench, Calendar, DollarSign, AlertTriangle, Trash2 } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function Show({ maquina, reportes, estadisticas }) {
-    const handleDelete = () => {
-        if (confirm(`¿Seguro que deseas eliminar la máquina "${maquina.nombre}"? Esta acción no se puede deshacer.`)) {
-            router.delete(route('maquinas.destroy', maquina.id), {
-                onSuccess: () => router.visit(route('maquinas.index')),
-                onError: () => alert('Error al eliminar la máquina.'),
-            });
-        }
-    };
     const { hasAnyRole } = usaRoleUser();
+    const confirmAction = useConfirm();
+
+    const handleDelete = async () => {
+        const accepted = await confirmAction(`¿Seguro que deseas eliminar la máquina "${maquina.nombre}"? Esta acción no se puede deshacer.`);
+        if (!accepted) return;
+
+        router.delete(route('maquinas.destroy', maquina.id), {
+            onSuccess: () => router.visit(route('maquinas.index')),
+            onError: () => alert('Error al eliminar la máquina.'),
+        });
+    };
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('es-ES', {

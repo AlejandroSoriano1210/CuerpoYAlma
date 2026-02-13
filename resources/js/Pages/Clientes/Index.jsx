@@ -4,12 +4,14 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import { SearchBar, PageHeader, FlashMessage, EmptyState } from '@/Components';
 import { Users, CreditCard, CheckCircle, AlertCircle, Check, X, RefreshCw, Trash2 } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function ClientesIndex({ clientes, search: initialSearch, mesActual, anoActual, estadoFiltro: initialEstadoFiltro }) {
     const { hasRole } = usaRoleUser();
     const [modoSeleccion, setModoSeleccion] = useState(false);
     const [clientesSeleccionados, setClientesSeleccionados] = useState([]);
     const [estadoFiltro, setEstadoFiltro] = useState(initialEstadoFiltro || 'activos');
+    const confirmAction = useConfirm();
 
     const esSuperusuario = hasRole('superusuario');
 
@@ -26,7 +28,7 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
         );
     };
 
-    const marcarPagos = () => {
+    const marcarPagos = async () => {
         if (clientesSeleccionados.length === 0) {
             alert('Selecciona al menos un cliente');
             return;
@@ -37,36 +39,39 @@ export default function ClientesIndex({ clientes, search: initialSearch, mesActu
             ? '¿Marcar este cliente como pagado?'
             : `¿Marcar ${cantidad} clientes como pagados?`;
 
-        if (confirm(mensaje)) {
-            router.post(route('clientes.marcarPagos'), {
-                cliente_ids: clientesSeleccionados
-            }, {
-                onSuccess: () => {
-                    setModoSeleccion(false);
-                    setClientesSeleccionados([]);
-                },
-            });
-        }
+        const accepted = await confirmAction(mensaje);
+        if (!accepted) return;
+
+        router.post(route('clientes.marcarPagos'), {
+            cliente_ids: clientesSeleccionados
+        }, {
+            onSuccess: () => {
+                setModoSeleccion(false);
+                setClientesSeleccionados([]);
+            },
+        });
     };
 
-    const handleDelete = (id, name) => {
-        if (confirm(`¿Estás seguro de que deseas eliminar a ${name}?`)) {
-            router.delete(route('clientes.destroy', id), {
-                onSuccess: () => {
-                    // El mensaje flash se muestra automáticamente
-                },
-            });
-        }
+    const handleDelete = async (id, name) => {
+        const accepted = await confirmAction(`¿Estás seguro de que deseas eliminar a ${name}?`);
+        if (!accepted) return;
+
+        router.delete(route('clientes.destroy', id), {
+            onSuccess: () => {
+                // El mensaje flash se muestra automáticamente
+            },
+        });
     };
 
-    const handleRestore = (id, name) => {
-        if (confirm(`¿Reactivar la cuenta de ${name}?`)) {
-            router.patch(route('clientes.restore', id), {
-                onSuccess: () => {
-                    // El mensaje flash se muestra automáticamente
-                },
-            });
-        }
+    const handleRestore = async (id, name) => {
+        const accepted = await confirmAction(`¿Reactivar la cuenta de ${name}?`);
+        if (!accepted) return;
+
+        router.patch(route('clientes.restore', id), {
+            onSuccess: () => {
+                // El mensaje flash se muestra automáticamente
+            },
+        });
     };
 
     const handleFiltroEstado = (nuevoEstado) => {

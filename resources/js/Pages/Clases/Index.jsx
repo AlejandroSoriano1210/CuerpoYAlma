@@ -3,8 +3,9 @@ import { Head, Link, usePage, router, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
 import Calendario from "@/Components/Calendario";
-import { Calendar, RotateCcw, X, CalendarDays, AlertTriangle, Clock, Users } from "lucide-react";
+import { Calendar, RotateCcw, X, CalendarDays, AlertTriangle, Clock, Users, Trash2, PenBox } from "lucide-react";
 import { validarRequerido } from "@/Utils/validations";
+import useConfirm from "@/Hooks/useConfirm";
 
 export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, entrenadores, tiposClases = [] }) {
     const { hasRole, hasAnyRole } = usaRoleUser();
@@ -17,6 +18,7 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
     const [nuevoTipoClase, setNuevoTipoClase] = useState('');
     const [momento, setMomento] = useState(filtros?.momento || "");
     const [modoCrear, setModoCrear] = useState(false); // Estado para modo crear clase
+    const confirmAction = useConfirm();
     const [touched, setTouched] = useState({
         nombre: false,
         capacidad: false,
@@ -302,77 +304,91 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
         return clase.en_lista_espera === true;
     };
 
-    const handleReserva = (clase) => {
-        if (confirm('¿Deseas reservar un lugar en esta clase?')) {
-            setIsReservando(clase.id);
-            router.post(
-                route('reservas.store'),
-                { horario_clase_id: clase.id },
-                {
-                    onSuccess: () => {
-                        setIsReservando(null);
-                        // Reload data to reflect reservation state
-                        router.reload();
-                    },
-                    onError: () => {
-                        setIsReservando(null);
-                        alert('Error al realizar la reserva');
-                    },
-                }
-            );
-        }
+    const handleReserva = async (clase) => {
+        const accepted = await confirmAction('¿Deseas reservar un lugar en esta clase?');
+        if (!accepted) return;
+
+        setIsReservando(clase.id);
+        router.post(
+            route('reservas.store'),
+            { horario_clase_id: clase.id },
+            {
+                onSuccess: () => {
+                    setIsReservando(null);
+                    // Reload data to reflect reservation state
+                    router.reload();
+                },
+                onError: () => {
+                    setIsReservando(null);
+                    alert('Error al realizar la reserva');
+                },
+            }
+        );
     };
 
-    const handleCancelarReserva = (clase) => {
+    const handleCancelarReserva = async (clase) => {
         if (!clase.reserva_id) {
             alert('Reserva no encontrada.');
             return;
         }
 
-        if (confirm('¿Deseas cancelar tu reserva en esta clase?')) {
-            setIsCancelando(clase.reserva_id);
+        const accepted = await confirmAction('¿Deseas cancelar tu reserva en esta clase?');
+        if (!accepted) return;
 
-            router.patch(
-                route('reservas.cancelar', clase.reserva_id),
-                {},
-                {
-                    onSuccess: () => {
-                        setIsCancelando(null);
-                        router.reload();
-                    },
-                    onError: () => {
-                        setIsCancelando(null);
-                        alert('Error al cancelar la reserva');
-                    },
-                }
-            );
-        }
+        setIsCancelando(clase.reserva_id);
+
+        router.patch(
+            route('reservas.cancelar', clase.reserva_id),
+            {},
+            {
+                onSuccess: () => {
+                    setIsCancelando(null);
+                    router.reload();
+                },
+                onError: () => {
+                    setIsCancelando(null);
+                    alert('Error al cancelar la reserva');
+                },
+            }
+        );
     };
 
-    const handleCancelarListaEspera = (clase) => {
+    const handleCancelarListaEspera = async (clase) => {
         if (!clase.lista_espera_id) {
             alert('No estás en la lista de espera.');
             return;
         }
 
-        if (confirm('¿Deseas cancelar tu lugar en la lista de espera?')) {
-            setIsCancelando(clase.lista_espera_id);
+        const accepted = await confirmAction('¿Deseas cancelar tu lugar en la lista de espera?');
+        if (!accepted) return;
 
-            router.patch(
-                route('lista-espera.cancelar', clase.lista_espera_id),
-                {},
-                {
-                    onSuccess: () => {
-                        setIsCancelando(null);
-                        router.reload();
-                    },
-                    onError: () => {
-                        setIsCancelando(null);
-                        alert('Error al cancelar');
-                    },
-                }
-            );
-        }
+        setIsCancelando(clase.lista_espera_id);
+
+        router.patch(
+            route('lista-espera.cancelar', clase.lista_espera_id),
+            {},
+            {
+                onSuccess: () => {
+                    setIsCancelando(null);
+                    router.reload();
+                },
+                onError: () => {
+                    setIsCancelando(null);
+                    alert('Error al cancelar');
+                },
+            }
+        );
+    };
+
+    const handleEliminarClase = async (claseId) => {
+        const accepted = await confirmAction('¿Estás seguro de que deseas eliminar esta clase?');
+        if (!accepted) return;
+
+        router.delete(route('clases.destroy', claseId), {}, {
+            onSuccess: () => {
+                // El mensaje flash se muestra solo
+            },
+        });
     };
 
     return (
@@ -532,8 +548,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 onChange={(e) => setData('nombre', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, nombre: true })}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.nombre && nombreError !== true
-                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                                        : 'border-gray-300'
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                    : 'border-gray-300'
                                                     }`}
                                                 placeholder="Yoga, Pilates, Zumba..."
                                             />
@@ -553,8 +569,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 onChange={(e) => setData('capacidad', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, capacidad: true })}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.capacidad && capacidadError !== true
-                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                                        : 'border-gray-300'
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                    : 'border-gray-300'
                                                     }`}
                                                 min="1"
                                                 max="50"
@@ -609,8 +625,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 onChange={(e) => setData('fecha', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, fecha: true })}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.fecha && fechaError !== true
-                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                                        : 'border-gray-300'
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                    : 'border-gray-300'
                                                     }`}
                                             />
                                             {touched.fecha && fechaError !== true && (
@@ -634,8 +650,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 onChange={(e) => setData('hora_inicio', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, hora_inicio: true })}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.hora_inicio && horaInicioError !== true
-                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                                        : 'border-gray-300'
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                    : 'border-gray-300'
                                                     }`}
                                             />
                                             {touched.hora_inicio && horaInicioError !== true && (
@@ -654,8 +670,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                 onChange={(e) => setData('hora_fin', e.target.value)}
                                                 onBlur={() => setTouched({ ...touched, hora_fin: true })}
                                                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition ${touched.hora_fin && horaFinError !== true
-                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                                        : 'border-gray-300'
+                                                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                    : 'border-gray-300'
                                                     }`}
                                             />
                                             {touched.hora_fin && horaFinError !== true && (
@@ -671,8 +687,8 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                     onChange={(e) => setData('user_id', e.target.value)}
                                                     onBlur={() => setTouched({ ...touched, user_id: true })}
                                                     className={`w-full px-3 py-2 border rounded-lg ${touched.user_id && entrenadorError !== true
-                                                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                                                            : 'border-gray-300'
+                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                                        : 'border-gray-300'
                                                         }`}
                                                 >
                                                     <option value="">-- Seleccionar --</option>
@@ -890,32 +906,12 @@ export default function ClasesIndex({ horarios, mes, ano, mesNombre, filtros, en
                                                                                 )}
                                                                                 className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-2 rounded text-center text-sm"
                                                                             >
-                                                                                Editar
+                                                                                <PenBox className="w-4 h-4 inline" /> Editar
                                                                             </Link>
                                                                             <button
-                                                                                onClick={() => {
-                                                                                    if (
-                                                                                        confirm(
-                                                                                            "¿Estás seguro de que deseas eliminar esta clase?"
-                                                                                        )
-                                                                                    ) {
-                                                                                        router.delete(
-                                                                                            route(
-                                                                                                "clases.destroy",
-                                                                                                clase.id
-                                                                                            ),
-                                                                                            {},
-                                                                                            {
-                                                                                                onSuccess: () => {
-                                                                                                    // El mensaje flash se muestra solo
-                                                                                                },
-                                                                                            }
-                                                                                        );
-                                                                                    }
-                                                                                }}
-                                                                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm"
-                                                                            >
-                                                                                Eliminar
+                                                                                onClick={() => handleEliminarClase(clase.id)}
+                                                                                className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1 px-2 rounded-lg transition text-sm">
+                                                                                <Trash2 className="w-4 h-4 inline" /> Eliminar
                                                                             </button>
                                                                         </div>
                                                                     )}

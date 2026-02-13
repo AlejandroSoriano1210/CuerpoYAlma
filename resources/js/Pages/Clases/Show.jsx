@@ -4,11 +4,13 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BackLink, InfoGrid, ReservationStatus } from '@/Components';
 import { formatDate } from '@/Utils/formatDate';
 import { CalendarDays, Clock, Users } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function ClasesShow({ horario }) {
     const { auth } = usePage().props;
     const [isReservando, setIsReservando] = useState(false);
     const [isCancelando, setIsCancelando] = useState(false);
+    const confirmAction = useConfirm();
 
     // preferimos usar el flag 'reservado' enviado por el controlador (considera reservas pendientes)
     const yaInscrito = horario.reservado === true;
@@ -22,61 +24,64 @@ export default function ClasesShow({ horario }) {
         return 'disponible';
     };
 
-    const handleReserva = () => {
-        if (confirm('¿Deseas reservar un lugar en esta clase?')) {
-            setIsReservando(true);
+    const handleReserva = async () => {
+        const accepted = await confirmAction('¿Deseas reservar un lugar en esta clase?');
+        if (!accepted) return;
 
-            router.post(route('reservas.store'),
-                { horario_clase_id: horario.id },
-                {
-                    onSuccess: () => {
-                        setIsReservando(false);
-                    },
-                    onError: () => {
-                        setIsReservando(false);
-                        alert('Error al realizar la reserva');
-                    },
-                }
-            );
-        }
+        setIsReservando(true);
+
+        router.post(route('reservas.store'),
+            { horario_clase_id: horario.id },
+            {
+                onSuccess: () => {
+                    setIsReservando(false);
+                },
+                onError: () => {
+                    setIsReservando(false);
+                    alert('Error al realizar la reserva');
+                },
+            }
+        );
     };
 
-    const handleCancelarReserva = () => {
+    const handleCancelarReserva = async () => {
         if (!horario.reserva_id) {
             alert('Reserva no encontrada.');
             return;
         }
 
-        if (confirm('¿Deseas cancelar tu reserva en esta clase?')) {
-            setIsCancelando(true);
+        const accepted = await confirmAction('¿Deseas cancelar tu reserva en esta clase?');
+        if (!accepted) return;
 
-            router.patch(route('reservas.cancelar', horario.reserva_id), {}, {
-                onSuccess: () => setIsCancelando(false),
-                onError: () => {
-                    setIsCancelando(false);
-                    alert('Error al cancelar la reserva');
-                },
-            });
-        }
+        setIsCancelando(true);
+
+        router.patch(route('reservas.cancelar', horario.reserva_id), {}, {
+            onSuccess: () => setIsCancelando(false),
+            onError: () => {
+                setIsCancelando(false);
+                alert('Error al cancelar la reserva');
+            },
+        });
     };
 
-    const handleCancelarListaEspera = () => {
+    const handleCancelarListaEspera = async () => {
         if (!horario.lista_espera_id) {
             alert('No estás en la lista de espera.');
             return;
         }
 
-        if (confirm('¿Deseas cancelar tu lugar en la lista de espera?')) {
-            setIsCancelando(true);
+        const accepted = await confirmAction('¿Deseas cancelar tu lugar en la lista de espera?');
+        if (!accepted) return;
 
-            router.patch(route('lista-espera.cancelar', horario.lista_espera_id), {}, {
-                onSuccess: () => setIsCancelando(false),
-                onError: () => {
-                    setIsCancelando(false);
-                    alert('Error al cancelar');
-                },
-            });
-        }
+        setIsCancelando(true);
+
+        router.patch(route('lista-espera.cancelar', horario.lista_espera_id), {}, {
+            onSuccess: () => setIsCancelando(false),
+            onError: () => {
+                setIsCancelando(false);
+                alert('Error al cancelar');
+            },
+        });
     };
 
     const infoItems = [

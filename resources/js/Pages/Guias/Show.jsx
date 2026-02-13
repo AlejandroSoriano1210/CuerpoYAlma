@@ -3,7 +3,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { usaRoleUser } from '@/Hooks/usaRoleUser';
 import { BackLink, FlashMessage, StatusBadge } from '@/Components';
-import { Check, X } from 'lucide-react';
+import { Check, PenBox, Trash2, X } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function Show({ guia, clientes = [], isAssigned = false, isAssignedWeekly = false }) {
     const { hasAnyRole } = usaRoleUser();
@@ -15,6 +16,7 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
     const [cargandoProgreso, setCargandoProgreso] = useState(true);
     const [animacionCelebracion, setAnimacionCelebracion] = useState(false);
     const [imagenActiva, setImagenActiva] = useState(null);
+    const confirmAction = useConfirm();
 
     // Cargar progreso al montar el componente
     useEffect(() => {
@@ -70,18 +72,20 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
             });
     };
 
-    const manejarEliminar = () => {
-        if (confirm('¿Estás seguro de que deseas eliminar esta guía?')) {
-            router.delete(route('guias.destroy', guia.id));
-        }
+    const manejarEliminar = async () => {
+        const accepted = await confirmAction('¿Estás seguro de que deseas eliminar esta guía?');
+        if (!accepted) return;
+
+        router.delete(route('guias.destroy', guia.id));
     };
 
-    const manejarCompletar = () => {
-        if (confirm('¿Marcar esta guía como completada? Se eliminará de tu panel de estadísticas.')) {
-            router.delete(route('guias.unassign', guia.id), {
-                data: { keep_weekly: isAssignedWeekly },
-            });
-        }
+    const manejarCompletar = async () => {
+        const accepted = await confirmAction('¿Marcar esta guía como completada? Se eliminará de tu panel de estadísticas.');
+        if (!accepted) return;
+
+        router.delete(route('guias.unassign', guia.id), {
+            data: { keep_weekly: isAssignedWeekly },
+        });
     };
 
     const manejarAsignarCliente = (e) => {
@@ -216,11 +220,11 @@ export default function Show({ guia, clientes = [], isAssigned = false, isAssign
                                     >
                                         Asignar a cliente
                                     </button>
-                                    <Link href={route('guias.edit', guia.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
-                                        Editar
+                                    <Link href={route('guias.edit', guia.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-center text-sm">
+                                        <PenBox className="w-4 h-4 inline" /> Editar
                                     </Link>
-                                    <button onClick={manejarEliminar} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                                        Eliminar
+                                    <button onClick={manejarEliminar} className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-lg transition text-sm">
+                                        <Trash2 className="w-4 h-4 inline" /> Eliminar
                                     </button>
                                 </>
                             )}

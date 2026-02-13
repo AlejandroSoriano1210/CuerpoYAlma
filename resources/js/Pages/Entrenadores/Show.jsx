@@ -4,8 +4,10 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { CalendarDays, Clock, Users, MapPin, Trash2 } from 'lucide-react';
 import { BackLink, FlashMessage, StatusBadge } from '@/Components';
 import { Wrench, DollarSign } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function Show({ entrenador }) {
+    const confirmAction = useConfirm();
 
     const DIAS_SEMANA = [
         "Lunes",
@@ -16,14 +18,15 @@ export default function Show({ entrenador }) {
         "Sábado",
     ];
 
-    const handleDelete = () => {
-        if (confirm(`¿Estás seguro de que deseas eliminar a ${entrenador.name}?`)) {
-            router.delete(route('entrenadores.destroy', entrenador.id), {
-                onSuccess: () => {
-                    // Redirige automáticamente
-                },
-            });
-        }
+    const handleDelete = async () => {
+        const accepted = await confirmAction(`¿Estás seguro de que deseas eliminar a ${entrenador.name}?`);
+        if (!accepted) return;
+
+        router.delete(route('entrenadores.destroy', entrenador.id), {
+            onSuccess: () => {
+                // Redirige automáticamente
+            },
+        });
     };
 
     return (

@@ -6,6 +6,7 @@ import MaquinaCreateModal from '@/Components/MaquinaCreateModal';
 import MaquinaReporteModal from '@/Components/MaquinaReporteModal';
 import { PageHeader, FlashMessage, Pagination, EmptyState, StatusBadge, FilterPanel } from '@/Components';
 import { Dumbbell, Trash2 } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function Index() {
     const { maquinas, flash, filtros } = usePage().props;
@@ -19,6 +20,7 @@ export default function Index() {
     const [maquinaReporte, setMaquinaReporte] = useState(null);
     const [estadoAnteriorReporte, setEstadoAnteriorReporte] = useState(null);
     const estadosDisponibles = filtros?.estados ?? ['operativa', 'mantenimiento', 'fuera_de_servicio'];
+    const confirmAction = useConfirm();
 
     // Sincronizar filtros con props del servidor
     useEffect(() => {
@@ -44,7 +46,7 @@ export default function Index() {
         setZona('');
     };
 
-    const handleChangeEstado = (maquina, nuevoEstado) => {
+    const handleChangeEstado = async (maquina, nuevoEstado) => {
         // Si cambia de mantenimiento/fuera_de_servicio a operativa, mostrar modal de reporte
         if (nuevoEstado === 'operativa' && (maquina.estado === 'mantenimiento' || maquina.estado === 'fuera_de_servicio')) {
             setMaquinaReporte(maquina);
@@ -53,7 +55,8 @@ export default function Index() {
             return;
         }
 
-        if (!confirm(`¿Cambiar estado de "${maquina.nombre}" a "${nuevoEstado.replaceAll('_', ' ')}"?`)) return;
+        const accepted = await confirmAction(`¿Cambiar estado de "${maquina.nombre}" a "${nuevoEstado.replaceAll('_', ' ')}"?`);
+        if (!accepted) return;
 
         setLoadingEstado({ id: maquina.id, estado: nuevoEstado });
 
@@ -81,13 +84,14 @@ export default function Index() {
     };
 
     // Eliminar máquina con confirmación
-    const handleDelete = (id, nombre) => {
-        if (confirm(`¿Seguro que deseas eliminar la máquina "${nombre}"? Esta acción no se puede deshacer.`)) {
-            router.delete(route('maquinas.destroy', id), {
-                onSuccess: () => router.reload(),
-                onError: () => alert('Error al eliminar la máquina.'),
-            });
-        }
+    const handleDelete = async (id, nombre) => {
+        const accepted = await confirmAction(`¿Seguro que deseas eliminar la máquina "${nombre}"? Esta acción no se puede deshacer.`);
+        if (!accepted) return;
+
+        router.delete(route('maquinas.destroy', id), {
+            onSuccess: () => router.reload(),
+            onError: () => alert('Error al eliminar la máquina.'),
+        });
     };
 
     return (

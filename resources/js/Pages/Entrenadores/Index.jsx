@@ -5,6 +5,7 @@ import EntrenadorCreateModal from "@/Components/EntrenadorCreateModal";
 import { SearchBar, PageHeader, FlashMessage, EmptyState, StatusBadge } from '@/Components';
 import { Users, RotateCcw, Check, X, Plane, Clock } from "lucide-react";
 import { usaRoleUser } from "@/Hooks/usaRoleUser";
+import useConfirm from "@/Hooks/useConfirm";
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -53,6 +54,7 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
     const [rolFiltro, setRolFiltro] = useState(initialRolFiltro || '');
     const [estadoFiltro, setEstadoFiltro] = useState(initialEstadoFiltro || 'activos');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const confirmAction = useConfirm();
 
     useEffect(() => {
         if (!empleadoSeleccionado || !entrenadores.some(e => e.id === empleadoSeleccionado.id)) {
@@ -86,36 +88,38 @@ export default function Index({ entrenadores, search: initialSearch, rolFiltro: 
         });
     };
 
-    const eliminar = (id, name) => {
-        if (confirm(`¿Estás seguro de que deseas eliminar a ${name}?`)) {
-            router.delete(route("entrenadores.destroy", id), {
-                onSuccess: () => {
-                    // Si el empleado eliminado era el seleccionado, seleccionar el primero disponible
-                    if (empleadoSeleccionado?.id === id) {
-                        const empleadosRestantes = entrenadores.filter(e => e.id !== id);
-                        setEmpleadoSeleccionado(empleadosRestantes.length > 0 ? empleadosRestantes[0] : null);
-                    }
-                },
-                onError: () => {
-                    alert("Error al eliminar el empleado");
-                },
-            });
-        }
+    const eliminar = async (id, name) => {
+        const accepted = await confirmAction(`¿Estás seguro de que deseas eliminar a ${name}?`);
+        if (!accepted) return;
+
+        router.delete(route("entrenadores.destroy", id), {
+            onSuccess: () => {
+                // Si el empleado eliminado era el seleccionado, seleccionar el primero disponible
+                if (empleadoSeleccionado?.id === id) {
+                    const empleadosRestantes = entrenadores.filter(e => e.id !== id);
+                    setEmpleadoSeleccionado(empleadosRestantes.length > 0 ? empleadosRestantes[0] : null);
+                }
+            },
+            onError: () => {
+                alert("Error al eliminar el empleado");
+            },
+        });
     };
 
-    const restaurar = (id, name) => {
-        if (confirm(`¿Reactivar la cuenta de ${name}?`)) {
-            router.patch(route("entrenadores.restore", id), {
-                onSuccess: () => {
-                    if (empleadoSeleccionado?.id === id) {
-                        setEmpleadoSeleccionado({ ...empleadoSeleccionado, esta_inactivo: false });
-                    }
-                },
-                onError: () => {
-                    alert("Error al reactivar el empleado");
-                },
-            });
-        }
+    const restaurar = async (id, name) => {
+        const accepted = await confirmAction(`¿Reactivar la cuenta de ${name}?`);
+        if (!accepted) return;
+
+        router.patch(route("entrenadores.restore", id), {
+            onSuccess: () => {
+                if (empleadoSeleccionado?.id === id) {
+                    setEmpleadoSeleccionado({ ...empleadoSeleccionado, esta_inactivo: false });
+                }
+            },
+            onError: () => {
+                alert("Error al reactivar el empleado");
+            },
+        });
     };
 
     const agruparHorariosPorDia = (horarios) => {

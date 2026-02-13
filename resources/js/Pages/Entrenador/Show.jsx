@@ -2,52 +2,56 @@ import React, { useState } from "react";
 import { Head, Link, usePage, router } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Check, X, Users, MailX } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function PanelShow({ horario, inscritos, listaEspera, estadisticas }) {
     const { auth } = usePage().props;
     const [isPromoviendo, setIsPromoviendo] = useState(null);
     const [isRemoviendo, setIsRemoviendo] = useState(null);
+    const confirmAction = useConfirm();
 
-    const handlePromover = (item) => {
-        if (confirm(`¿Deseas promover a ${item.usuario_nombre} a esta clase?`)) {
-            setIsPromoviendo(item.id);
+    const handlePromover = async (item) => {
+        const accepted = await confirmAction(`¿Deseas promover a ${item.usuario_nombre} a esta clase?`);
+        if (!accepted) return;
 
-            router.patch(
-                route('panel.promover', { horarioClase: horario.id, listaEspera: item.id }),
-                {},
-                {
-                    onSuccess: () => {
-                        setIsPromoviendo(null);
-                        router.reload();
-                    },
-                    onError: (errors) => {
-                        setIsPromoviendo(null);
-                        const errorMsg = errors.error || 'Error al promover el usuario';
-                        alert(errorMsg);
-                    },
-                }
-            );
-        }
+        setIsPromoviendo(item.id);
+
+        router.patch(
+            route('panel.promover', { horarioClase: horario.id, listaEspera: item.id }),
+            {},
+            {
+                onSuccess: () => {
+                    setIsPromoviendo(null);
+                    router.reload();
+                },
+                onError: (errors) => {
+                    setIsPromoviendo(null);
+                    const errorMsg = errors.error || 'Error al promover el usuario';
+                    alert(errorMsg);
+                },
+            }
+        );
     };
 
-    const handleRemover = (item) => {
-        if (confirm(`¿Deseas remover a ${item.usuario_nombre} de la lista de espera?`)) {
-            setIsRemoviendo(item.id);
+    const handleRemover = async (item) => {
+        const accepted = await confirmAction(`¿Deseas remover a ${item.usuario_nombre} de la lista de espera?`);
+        if (!accepted) return;
 
-            router.delete(
-                route('panel.remover-lista', { horarioClase: horario.id, listaEspera: item.id }),
-                {
-                    onSuccess: () => {
-                        setIsRemoviendo(null);
-                        router.reload();
-                    },
-                    onError: () => {
-                        setIsRemoviendo(null);
-                        alert('Error al remover del usuario');
-                    },
-                }
-            );
-        }
+        setIsRemoviendo(item.id);
+
+        router.delete(
+            route('panel.remover-lista', { horarioClase: horario.id, listaEspera: item.id }),
+            {
+                onSuccess: () => {
+                    setIsRemoviendo(null);
+                    router.reload();
+                },
+                onError: () => {
+                    setIsRemoviendo(null);
+                    alert('Error al remover del usuario');
+                },
+            }
+        );
     };
 
     return (

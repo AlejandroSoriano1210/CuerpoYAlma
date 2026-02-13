@@ -3,6 +3,7 @@ import { Head, router, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { PageHeader, FlashMessage, EmptyState, StatusBadge } from "@/Components";
 import { Bell, Plus, Send, Trash2, Power, Clock, Users, Search, X, ChevronDown, ChevronUp } from "lucide-react";
+import useConfirm from "@/Hooks/useConfirm";
 
 const DESTINATARIOS_LABELS = {
     todos: "Todos los usuarios",
@@ -37,6 +38,7 @@ export default function Index({ notificaciones, usuarios, filters }) {
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
     const [filtroEstado, setFiltroEstado] = useState(filters.estado || "");
     const [filtroTipo, setFiltroTipo] = useState(filters.tipo || "");
+    const confirmAction = useConfirm();
 
     const applyFilters = (overrides = {}) => {
         const params = {
@@ -65,28 +67,31 @@ export default function Index({ notificaciones, usuarios, filters }) {
         }, 400);
     };
 
-    const toggleNotificacion = (id) => {
-        if (confirm("¿Cambiar el estado de esta notificación?")) {
-            router.patch(route("notificaciones-programadas.toggle", id), {}, {
-                preserveScroll: true,
-            });
-        }
+    const toggleNotificacion = async (id) => {
+        const accepted = await confirmAction("¿Cambiar el estado de esta notificación?");
+        if (!accepted) return;
+
+        router.patch(route("notificaciones-programadas.toggle", id), {}, {
+            preserveScroll: true,
+        });
     };
 
-    const eliminarNotificacion = (id) => {
-        if (confirm("¿Estás seguro de eliminar esta notificación programada?")) {
-            router.delete(route("notificaciones-programadas.destroy", id), {
-                preserveScroll: true,
-            });
-        }
+    const eliminarNotificacion = async (id) => {
+        const accepted = await confirmAction("¿Estás seguro de eliminar esta notificación programada?");
+        if (!accepted) return;
+
+        router.delete(route("notificaciones-programadas.destroy", id), {
+            preserveScroll: true,
+        });
     };
 
-    const enviarAhora = (id) => {
-        if (confirm("¿Enviar esta notificación ahora a todos los destinatarios?")) {
-            router.post(route("notificaciones-programadas.enviar", id), {}, {
-                preserveScroll: true,
-            });
-        }
+    const enviarAhora = async (id) => {
+        const accepted = await confirmAction("¿Enviar esta notificación ahora a todos los destinatarios?");
+        if (!accepted) return;
+
+        router.post(route("notificaciones-programadas.enviar", id), {}, {
+            preserveScroll: true,
+        });
     };
 
     return (

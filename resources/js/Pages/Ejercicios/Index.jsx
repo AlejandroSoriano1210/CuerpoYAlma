@@ -3,11 +3,13 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import EjercicioCreateModal from '@/Components/EjercicioCreateModal';
 import { PageHeader, FlashMessage, Pagination, EmptyState, StatusBadge } from '@/Components';
-import { Zap } from 'lucide-react';
+import { PenBox, Trash2, Zap } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function Index() {
     const { ejercicios } = usePage().props;
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const confirmAction = useConfirm();
 
     return (
         <AuthenticatedLayout>
@@ -68,15 +70,16 @@ export default function Index() {
                                             <Link href={route('ejercicios.show', e.id)} className="text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
                                                 Ver
                                             </Link>
-                                            <Link href={route('ejercicios.edit', e.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
-                                                Editar
+                                            <Link href={route('ejercicios.edit', e.id)} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-center text-sm">
+                                                <PenBox className="w-4 h-4 inline" /> Editar
                                             </Link>
-                                            <Link href={route('ejercicios.destroy', e.id)} method="delete" as="button" className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm" onClick={(e) => {
-                                                if (!confirm('¿Estás seguro de que deseas eliminar este ejercicio?')) {
+                                            <Link href={route('ejercicios.destroy', e.id)} method="delete" as="button" className="bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-lg transition text-sm" onClick={async (e) => {
+                                                const accepted = await confirmAction('¿Estás seguro de que deseas eliminar este ejercicio?');
+                                                if (!accepted) {
                                                     e.preventDefault();
                                                 }
                                             }}>
-                                                Eliminar
+                                                <Trash2 className="w-4 h-4 inline" /> Eliminar
                                             </Link>
                                         </div>
                                     </div>

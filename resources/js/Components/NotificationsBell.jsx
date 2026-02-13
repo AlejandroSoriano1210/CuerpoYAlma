@@ -3,6 +3,7 @@ import Dropdown from "@/Components/Dropdown";
 import Modal from "@/Components/Modal";
 import { Bell, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import useConfirm from "@/Hooks/useConfirm";
 
 export default function NotificationsBell() {
     const [notificaciones, establecerNotificaciones] = useState([]);
@@ -13,6 +14,7 @@ export default function NotificationsBell() {
     const [paginaActual, establecerPaginaActual] = useState(1);
     const [totalNotificaciones, establecerTotalNotificaciones] = useState(0);
     const porPagina = 5;
+    const confirmAction = useConfirm();
 
     const obtenerNotificaciones = async (limite = 3) => {
         try {
@@ -63,9 +65,8 @@ export default function NotificationsBell() {
     };
 
     const eliminarNotificacionesLeidas = async () => {
-        if (!confirm('¿Estás seguro de que deseas eliminar todas las notificaciones leídas?')) {
-            return;
-        }
+        const accepted = await confirmAction('¿Estás seguro de que deseas eliminar todas las notificaciones leídas?');
+        if (!accepted) return;
 
         establecerCargandoModal(true);
         try {

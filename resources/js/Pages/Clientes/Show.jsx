@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BackLink } from '@/Components';
 import { CalendarDays, Clock, Check, Trash2 } from 'lucide-react';
+import useConfirm from '@/Hooks/useConfirm';
 
 export default function ClientesShow({ cliente, mesActual, anoActual }) {
     const [paginaActual, setPaginaActual] = useState(1);
@@ -11,6 +12,7 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
     const subtotal = cliente.pagoSeleccionado?.monto ?? 0;
     const ivaAmount = subtotal * ivaRate;
     const totalConIva = subtotal + ivaAmount;
+    const confirmAction = useConfirm();
 
     const mesesNombres = [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -31,14 +33,15 @@ export default function ClientesShow({ cliente, mesActual, anoActual }) {
     const indexFin = indexInicio + pagosPorPagina;
     const pagosPaginados = cliente.pagos?.slice(indexInicio, indexFin) || [];
 
-    const handleDelete = () => {
-        if (confirm(`¿Estás seguro de que deseas eliminar a ${cliente.name}?`)) {
-            router.delete(route('clientes.destroy', cliente.id), {
-                onSuccess: () => {
-                    // Redirige automáticamente
-                },
-            });
-        }
+    const handleDelete = async () => {
+        const accepted = await confirmAction(`¿Estás seguro de que deseas eliminar a ${cliente.name}?`);
+        if (!accepted) return;
+
+        router.delete(route('clientes.destroy', cliente.id), {
+            onSuccess: () => {
+                // Redirige automáticamente
+            },
+        });
     };
 
     return (
