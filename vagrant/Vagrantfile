@@ -1,0 +1,206 @@
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "debian/bookworm64"
+
+  config.vm.network "public_network", ip: "192.168.111.201"
+  config.vm.network "private_network", ip: "192.168.56.10"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 3072
+    vb.cpus = 2
+  end
+
+  config.vm.provision "shell", inline: <<-'SHELL'
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt update -y
+    apt upgrade -y
+
+    timedatectl set-timezone Europe/Madrid
+
+    apt install -y \
+      git curl unzip gnupg2 ca-certificates \
+      apache2 bind9 proftpd-basic \
+      postgresql postgresql-contrib \
+      software-properties-common
+
+    add-apt-repository ppa:ondrej/php -y
+    apt update
+
+    apt install -y \
+      php8.2 php8.2-cli libapache2-mod-php8.2 \
+      php8.2-pgsql php8.2-mbstring php8.2-xml \
+      php8.2-curl php8.2-gd php8.2-zip
+
+    echo "date.timezone = Europe/Madrid" >> /etc/php/8.2/apache2/php.ini
+    echo "date.timezone = Europe/Madrid" >> /etc/php/8.2/cli/php.ini
+
+    curl -sS https://getcomposer.org/installer | php
+    mv composer.phar /usr/local/bin/composer
+
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    apt install -y nodejs
+
+    sudo -u postgres psql <<EOF
+DROP DATABASE IF EXISTS cuerpoyalma;
+DROP ROLE IF EXISTS cuerpoyalma;
+CREATE ROLE cuerpoyalma LOGIN PASSWORD 'cuerpoyalma';
+CREATE DATABASE cuerpoyalma OWNER cuerpoyalma;
+EOF
+
+    git clone https://github.com/AlejandroSoriano1210/CuerpoYAlma.git /var/www/cuerpoyalma
+
+    cd /var/www/cuerpoyalma
+    git config --global --add safe.directory /var/www/cuerpoyalma
+
+    chown -R vagrant:vagrant /var/www/cuerpoyalma
+
+    composer install --no-dev --optimize-autoloader
+
+    cp .env.example .env
+
+    printf "\nDB_CONNECTION=pgsql\nDB_HOST=127.0.0.1\nDB_PORT=5432\nDB_DATABASE=cuerpoyalma\nDB_USERNAME=cuerpoyalma\nDB_PASSWORD=cuerpoyalma\n" >> .env
+
+    printf "\nAPP_TIMEZONE=Europe/Madrid\nAPP_SCHEDULE_TIMEZONE=Europe/Madrid\n" >> .env
+
+    sed -i "s|MAIL_MAILER=.*|MAIL_MAILER=smtp|" .env
+    sed -i "s|MAIL_HOST=.*|MAIL_HOST=smtp.gmail.com|" .env
+    sed -i "s|MAIL_PORT=.*|MAIL_PORT=587|" .env
+    sed -i "s|MAIL_USERNAME=.*|MAIL_USERNAME=alejandro.soriano@iesdonana.org|" .env
+    sed -i "s|MAIL_PASSWORD=.*|MAIL_PASSWORD=xxx|" .env
+    sed -i "s|MAIL_ENCRYPTION=.*|MAIL_ENCRYPTION=tls|" .env
+    sed -i "s|MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"alejandro.soriano@iesdonana.org\"|" .env
+    sed -i "s|MAIL_FROM_NAME=.*|MAIL_FROM_NAME=\"Cuerpo y Alma\"|" .env
+
+    php artisan config:clear
+    php artisan config:cache
+
+    php artisan key:generate
+
+    mkdir -p storage/logs
+    mkdir -p storage/app/public
+
+    chown -R www-data:www-data /var/www/cuerpoyalma
+    chmod -R 775 storage
+    chmod -R 775 bootstrap/cache
+
+    # enlace storage público
+    sudo -u www-data php artisan storage:link || true
+
+    composer require fakerphp/faker --no-update
+    composer update fakerphp/faker --ignore-platform-reqs
+
+    # Ejecutar como Apache user
+    sudo -u www-data php artisan migrate --force
+    sudo -u www-data php artisan db:seed --force
+
+    php artisan route:cache
+    php artisan view:cache
+
+    npm install
+    npm run build
+
+    chown -R www-data:www-data /var/www/cuerpoyalma
+
+    a2enmod rewrite headers ssl
+
+    mkdir -p /etc/apache2/ssl
+
+    openssl req -x509 -nodes -days 365 \
+      -newkey rsa:2048 \
+      -keyout /etc/apache2/ssl/cuerpoyalma.key \
+      -out /etc/apache2/ssl/cuerpoyalma.crt \
+      -subj "/C=ES/ST=Andalucia/L=Huelva/O=CuerpoYAlma/OU=IT/CN=cuerpoyalma.com"
+
+    cat > /etc/apache2/sites-available/cuerpoyalma.conf <<APACHE
+
+<VirtualHost *:80>
+ServerName cuerpoyalma.com
+ServerAlias www.cuerpoyalma.com
+Redirect permanent / https://cuerpoyalma.com/
+</VirtualHost>
+
+APACHE
+
+    cat > /etc/apache2/sites-available/cuerpoyalma-ssl.conf <<APACHE
+
+<VirtualHost *:443>
+ServerName cuerpoyalma.com
+ServerAlias www.cuerpoyalma.com
+DocumentRoot /var/www/cuerpoyalma/public
+
+SSLEngine on
+SSLCertificateFile /etc/apache2/ssl/cuerpoyalma.crt
+SSLCertificateKeyFile /etc/apache2/ssl/cuerpoyalma.key
+
+<Directory /var/www/cuerpoyalma/public>
+    AllowOverride All
+    Require all granted
+    Options -Indexes
+</Directory>
+Header always set Strict-Transport-Security "max-age=31536000"
+</VirtualHost>
+
+APACHE
+
+    a2dissite 000-default
+    a2ensite cuerpoyalma
+    a2ensite cuerpoyalma-ssl
+    systemctl restart apache2
+
+    cat >> /etc/bind/named.conf.local <<'EOF'
+
+zone "cuerpoyalma.com" {
+ type master;
+ file "/etc/bind/db.cuerpoyalma";
+};
+zone "111.168.192.in-addr.arpa" {
+ type master;
+ file "/etc/bind/db.reverse";
+};
+EOF
+
+    cat > /etc/bind/db.cuerpoyalma <<'EOF'
+$TTL 604800
+@   IN  SOA ns.cuerpoyalma.com. root.cuerpoyalma.com. (
+        3 604800 86400 2419200 604800 )
+@   IN NS ns.cuerpoyalma.com.
+ns  IN A 192.168.111.201
+@   IN A 192.168.111.201
+www IN A 192.168.111.201
+EOF
+
+    cat > /etc/bind/db.reverse <<'EOF'
+$TTL 604800
+@ IN SOA ns.cuerpoyalma.com. root.cuerpoyalma.com. (
+        2 604800 86400 2419200 604800 )
+@ IN NS ns.cuerpoyalma.com.
+201 IN PTR cuerpoyalma.com.
+EOF
+
+    systemctl restart bind9
+
+#ProFTPd#
+
+    ftpasswd --passwd \
+      --name usuario \
+      --uid 2001 \
+      --gid 2001 \
+      --home /etc \
+      --shell /bin/false \
+      --file /etc/proftpd/ftpd.passwd --stdin <<'EOF'
+usuario
+usuario
+EOF
+
+    grep -qxF "AuthUserFile /etc/proftpd/ftpd.passwd" /etc/proftpd/proftpd.conf || echo "AuthUserFile /etc/proftpd/ftpd.passwd" >> /etc/proftpd/proftpd.conf
+    grep -qxF "RequireValidShell off" /etc/proftpd/proftpd.conf || echo "RequireValidShell off" >> /etc/proftpd/proftpd.conf
+    grep -qxF "DefaultRoot ~" /etc/proftpd/proftpd.conf || echo "DefaultRoot ~" >> /etc/proftpd/proftpd.conf
+
+    systemctl restart proftpd
+
+    (crontab -l 2>/dev/null; echo "* * * * * php /var/www/cuerpoyalma/artisan schedule:run >> /dev/null 2>&1") | crontab -
+
+    echo "DEPLOYMENT COMPLETE"
+  SHELL
+end
