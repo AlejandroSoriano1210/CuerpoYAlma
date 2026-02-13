@@ -66,7 +66,7 @@ EOF
     sed -i "s|MAIL_MAILER=.*|MAIL_MAILER=smtp|" .env
     sed -i "s|MAIL_HOST=.*|MAIL_HOST=smtp.gmail.com|" .env
     sed -i "s|MAIL_PORT=.*|MAIL_PORT=587|" .env
-    sed -i "s|MAIL_USERNAME=.*|MAIL_USERNAME=alejandro.soriano@iesdonana.org|" .env
+    sed -i "s|MAIL_USERNAME=.*|MAIL_USERNAME=xxx|" .env
     sed -i "s|MAIL_PASSWORD=.*|MAIL_PASSWORD=xxx|" .env
     sed -i "s|MAIL_ENCRYPTION=.*|MAIL_ENCRYPTION=tls|" .env
     sed -i "s|MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"alejandro.soriano@iesdonana.org\"|" .env
